@@ -1,6 +1,6 @@
 """
-Climate Guard AI - Flood Prediction for Nashik, Maharashtra
-Professional Streamlit Decision Support Dashboard
+Climate Guard AI - Flood Prediction & Early Warning Decision Support System
+Nashik & Maharashtra Basin Hydrological Command Center
 """
 
 from datetime import datetime
@@ -28,13 +28,13 @@ from src.historical_data_sources import HISTORICAL_DATA_REGISTRY, fetch_open_met
 
 # Page Setup
 st.set_page_config(
-    page_title="Climate Guard AI | Nashik Flood Prediction",
+    page_title="Climate Guard AI | Maharashtra Flood Intelligence",
     page_icon="🌊",
     layout="wide",
-    initial_sidebar_state="auto"
+    initial_sidebar_state="expanded"
 )
 
-# Custom Styling: Dark Navy Command Center with Hexagon Motifs, Glassmorphism & Neon Risk Badges
+# Custom Styling: Dark Navy Command Center with Glassmorphism, Hexagon Motifs & Neon Risk Badges
 st.markdown("""
 <style>
     /* Transparent Header & Remove Decoration */
@@ -70,7 +70,7 @@ st.markdown("""
 
     /* Titles & Typography */
     .main-title {
-        font-size: 2.25rem;
+        font-size: 2.15rem;
         font-weight: 900;
         letter-spacing: -0.025em;
         background: linear-gradient(135deg, #ffffff 0%, #bae6fd 50%, #38bdf8 100%);
@@ -79,9 +79,9 @@ st.markdown("""
         margin-bottom: 0.25rem;
     }
     .sub-title {
-        font-size: 1.02rem;
+        font-size: 0.98rem;
         color: #94a3b8;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.15rem;
         font-weight: 400;
         line-height: 1.45;
     }
@@ -194,67 +194,41 @@ st.markdown("""
         background: rgba(245, 158, 11, 0.08) !important;
         border-left: 4px solid #f59e0b !important;
         border: 1px solid rgba(245, 158, 11, 0.28) !important;
-        border-left-width: 4px !important;
         backdrop-filter: blur(14px) !important;
         -webkit-backdrop-filter: blur(14px) !important;
         padding: 0.9rem 1.25rem !important;
         border-radius: 10px !important;
-        margin-bottom: 1.5rem !important;
+        margin-bottom: 1.25rem !important;
         color: #fef3c7 !important;
-        font-size: 0.9rem !important;
+        font-size: 0.88rem !important;
         line-height: 1.5 !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
     }
 
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 6px !important;
-        background: rgba(13, 22, 44, 0.5) !important;
-        padding: 5px !important;
+    /* Radio Navigation Styling */
+    div[data-testid="stRadio"] > div {
+        background: rgba(13, 22, 44, 0.65) !important;
+        border: 1px solid rgba(56, 189, 248, 0.22) !important;
         border-radius: 10px !important;
-        border: 1px solid rgba(56, 189, 248, 0.15) !important;
+        padding: 8px !important;
+        gap: 6px !important;
     }
-    .stTabs [data-baseweb="tab"] {
-        padding: 8px 18px !important;
-        font-weight: 600 !important;
-        color: #94a3b8 !important;
+    div[data-testid="stRadio"] label {
+        padding: 7px 12px !important;
         border-radius: 8px !important;
-        border: none !important;
         transition: all 0.2s ease !important;
     }
-    .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background: rgba(56, 189, 248, 0.15) !important;
-        color: #38bdf8 !important;
-        border-bottom: 2px solid #38bdf8 !important;
+    div[data-testid="stRadio"] label:hover {
+        background: rgba(56, 189, 248, 0.12) !important;
     }
 
-    /* Responsive Viewports & Auto-Reflow Grid */
+    /* Responsive Viewports */
     @media (max-width: 992px) {
-        [data-testid="stHorizontalBlock"] {
-            flex-wrap: wrap !important;
-            gap: 12px !important;
-        }
-        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
-            min-width: calc(50% - 12px) !important;
-            flex: 1 1 calc(50% - 12px) !important;
-        }
+        [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; gap: 12px !important; }
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] { min-width: calc(50% - 12px) !important; flex: 1 1 calc(50% - 12px) !important; }
     }
     @media (max-width: 520px) {
-        [data-testid="stHorizontalBlock"] > [data-testid="column"] {
-            min-width: 100% !important;
-            flex: 1 1 100% !important;
-        }
-    }
-    @media (max-width: 480px) {
-        .main-title { font-size: 1.35rem !important; }
-        .sub-title { font-size: 0.82rem !important; margin-bottom: 0.8rem !important; }
-        .metric-card { padding: 0.8rem !important; margin-bottom: 0.5rem !important; }
-        .disclaimer-banner { font-size: 0.8rem !important; padding: 0.7rem !important; }
-        .stTabs [data-baseweb="tab"] { font-size: 0.75rem !important; padding: 6px 8px !important; }
-    }
-    @media (min-width: 481px) and (max-width: 850px) {
-        .main-title { font-size: 1.7rem !important; }
-        .metric-card { padding: 0.9rem 1rem !important; }
+        [data-testid="stHorizontalBlock"] > [data-testid="column"] { min-width: 100% !important; flex: 1 1 100% !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -285,6 +259,7 @@ def load_metadata():
 predictor = load_predictor()
 hist_df = load_historical_data()
 metadata = load_metadata()
+station_names = list(NASHIK_STATIONS.keys())
 
 
 # Memoised Multi-Station Risk Assessment (TTL: 300s = 5m)
@@ -298,10 +273,6 @@ def predict_network_batch(
     soil_moisture_pct: float,
     flow_rate_cusecs: float
 ) -> Dict[str, Any]:
-    """
-    Memoises inference across all 8 monitored stations.
-    Eliminates redundant ML inference passes during repetitive UI interactions.
-    """
     ref_meta = NASHIK_STATIONS.get(reference_station, {})
     ref_warn = ref_meta.get("warning_gauge_m", 6.5)
 
@@ -320,25 +291,90 @@ def predict_network_batch(
         results[s_name] = pred
     return results
 
-# Header Section
-col_head1, col_head2 = st.columns([3, 1])
-with col_head1:
-    st.markdown('<div class="main-title">🌊 Climate Guard AI — Flood Prediction System</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="sub-title">Algorithmic Hydrological Early Warning & Risk Classification along the Godavari River Basin | Nashik, Maharashtra</div>',
-        unsafe_allow_html=True
-    )
-with col_head2:
-    current_time_str = datetime.now().strftime("%d %b %Y, %H:%M:%S IST")
-    st.markdown(f"""
-    <div style="text-align: right; font-size: 0.82rem; color: #64748b; line-height: 1.4;">
-        <b>System Clock:</b> {current_time_str}<br>
-        <b>Model:</b> Random Forest (Out-of-Time CV)<br>
-        <b>Telemetry Status:</b> <span style="color:#059669; font-weight:700;">● Online (Demo Mode)</span>
-    </div>
-    """, unsafe_allow_html=True)
 
-# Prominent Notice Banner (Requirement 4 & 10)
+# =========================================================================
+# SIDEBAR: PROFESSIONAL MODULE NAVIGATION & EMERGENCY HELPLINES
+# =========================================================================
+st.sidebar.markdown("""
+<div style="padding: 0.2rem 0 0.8rem 0;">
+    <div style="font-size: 0.76rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.08em; text-transform: uppercase;">
+        ⬡ CLIMATE GUARD AI NAVIGATION
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+nav_options = [
+    "📊 Executive Dashboard",
+    "🌊 AI Flood Prediction & Simulator",
+    "🌧️ Rainfall Monitoring & Intensity",
+    "📏 River Gauge & Dam Discharge",
+    "📜 Historical Data & Hydrographs",
+    "🧠 Risk Analysis & ML Lab",
+    "🚨 Emergency Alerts & SOP Protocols",
+    "🏛️ Data Schema & Sources Registry"
+]
+
+selected_page = st.sidebar.radio(
+    "Select System Module:",
+    nav_options,
+    index=0
+)
+
+st.sidebar.markdown("---")
+
+# Quick Baseline Simulation Controls in Sidebar
+st.sidebar.markdown("### 🎛️ Basin Baseline Telemetry")
+sidebar_loc = st.sidebar.selectbox("Monitored Station", station_names, index=0)
+st_meta = NASHIK_STATIONS[sidebar_loc]
+st.sidebar.caption(
+    f"📍 **Elev:** {st_meta['elevation_m']}m | **Slope:** {st_meta['slope_deg']}° | "
+    f"**Warning:** {st_meta['warning_gauge_m']}m | **Danger:** {st_meta['danger_gauge_m']}m"
+)
+
+# Preset scenario buttons
+quick_preset = st.sidebar.selectbox(
+    "Load Preset Condition:",
+    [
+        "Normal Monsoon Flow (Routine July Day)",
+        "Moderate River Surge (Blue Line Advisory)",
+        "Severe Dam Discharge (Red Line Flood Breach)",
+        "2019-Style Cloudburst & Reservoir Surge"
+    ]
+)
+
+if quick_preset == "Normal Monsoon Flow (Routine July Day)":
+    base_rain, base_int, base_gauge, base_rate, base_sm, base_flow = 12.0, 3.0, 2.1, 0.05, 48.0, 2800.0
+elif quick_preset == "Moderate River Surge (Blue Line Advisory)":
+    base_rain, base_int, base_gauge, base_rate, base_sm, base_flow = 65.0, 14.0, 6.6, 0.7, 78.0, 21500.0
+elif quick_preset == "Severe Dam Discharge (Red Line Flood Breach)":
+    base_rain, base_int, base_gauge, base_rate, base_sm, base_flow = 135.0, 32.0, 8.8, 1.6, 91.0, 38000.0
+elif quick_preset == "2019-Style Cloudburst & Reservoir Surge":
+    base_rain, base_int, base_gauge, base_rate, base_sm, base_flow = 175.0, 45.0, 9.4, 2.2, 96.0, 46000.0
+else:
+    base_rain, base_int, base_gauge, base_rate, base_sm, base_flow = 18.0, 4.0, 2.4, 0.1, 52.0, 3500.0
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🏛️ Emergency Helplines (Nashik)")
+st.sidebar.markdown("""
+- **NMC Disaster Cell:** `0253-2578500`
+- **Nashik District Control:** `1077`
+- **Fire Brigade Emergency:** `101`
+- **Police Emergency:** `112`
+""")
+
+# Run Memoised Network Inference
+network_predictions = predict_network_batch(
+    reference_station=sidebar_loc,
+    rainfall_mm=base_rain,
+    rainfall_intensity_mm_h=base_int,
+    river_water_level_m=base_gauge,
+    water_level_change_rate_m_h=base_rate,
+    soil_moisture_pct=base_sm,
+    flow_rate_cusecs=base_flow
+)
+prediction_result = network_predictions[sidebar_loc]
+
+# Data Notice Banner
 is_synthetic = metadata.get("is_synthetic_training_data", True)
 mode_label = "SYNTHETIC BENCHMARK DEMO DATA" if is_synthetic else "VERIFIED FIELD TELEMETRY"
 st.markdown(f"""
@@ -349,125 +385,175 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Sidebar: Controls & Scenario Simulator
-st.sidebar.header("🕹️ Hydrological Scenario Simulator")
-st.sidebar.markdown("Configure weather and river parameters or load preset emergency scenarios:")
-
-# Preset Selector
-preset = st.sidebar.selectbox(
-    "Choose Preset Scenario",
-    [
-        "Custom Input",
-        "Normal Monsoon Flow (Routine July Day)",
-        "Moderate River Surge (Blue Line Advisory)",
-        "Severe Dam Discharge (Red Line Flood Breach)",
-        "2019-Style Cloudburst & Reservoir Surge"
-    ]
-)
-
-# Preset Values
-default_loc = "Ramkund (Panchavati)"
-default_rain = 18.0
-default_int = 4.0
-default_gauge = 2.4
-default_rate = 0.1
-default_sm = 52.0
-default_flow = 3500.0
-
-if preset == "Normal Monsoon Flow (Routine July Day)":
-    default_loc = "Ramkund (Panchavati)"
-    default_rain = 12.0
-    default_int = 3.0
-    default_gauge = 2.1
-    default_rate = 0.05
-    default_sm = 48.0
-    default_flow = 2800.0
-elif preset == "Moderate River Surge (Blue Line Advisory)":
-    default_loc = "Ramkund (Panchavati)"
-    default_rain = 65.0
-    default_int = 14.0
-    default_gauge = 6.6
-    default_rate = 0.7
-    default_sm = 78.0
-    default_flow = 21500.0
-elif preset == "Severe Dam Discharge (Red Line Flood Breach)":
-    default_loc = "Ramkund (Panchavati)"
-    default_rain = 135.0
-    default_int = 32.0
-    default_gauge = 8.8
-    default_rate = 1.6
-    default_sm = 91.0
-    default_flow = 38000.0
-elif preset == "2019-Style Cloudburst & Reservoir Surge":
-    default_loc = "Someshwar (Gangapur Rd)"
-    default_rain = 175.0
-    default_int = 45.0
-    default_gauge = 9.4
-    default_rate = 2.2
-    default_sm = 96.0
-    default_flow = 46000.0
-
-# Station selection
-station_names = list(NASHIK_STATIONS.keys())
-loc_idx = station_names.index(default_loc) if default_loc in station_names else 0
-selected_station = st.sidebar.selectbox("Monitoring Station", station_names, index=loc_idx)
-
-# Station Metadata Quick Card
-st_meta = NASHIK_STATIONS[selected_station]
-st.sidebar.caption(
-    f"📍 **Elev:** {st_meta['elevation_m']}m | **Slope:** {st_meta['slope_deg']}° | "
-    f"**Warning Gauge:** {st_meta['warning_gauge_m']}m | **Danger Gauge:** {st_meta['danger_gauge_m']}m"
-)
-
-# Sliders
-input_rain = st.sidebar.slider("24h Cumulative Rainfall (mm)", 0.0, 350.0, float(default_rain), 1.0)
-input_int = st.sidebar.slider("Peak Rainfall Intensity (mm/h)", 0.0, 120.0, float(default_int), 0.5)
-input_gauge = st.sidebar.slider("River Water Gauge Level (m)", 0.5, 14.0, float(default_gauge), 0.1)
-input_rate = st.sidebar.slider("Water Level Rate of Change (m/h)", -3.0, 4.0, float(default_rate), 0.05)
-input_sm = st.sidebar.slider("Volumetric Soil Moisture (%)", 10.0, 100.0, float(default_sm), 1.0)
-input_flow = st.sidebar.slider("Gangapur Dam Discharge (cusecs)", 500.0, 75000.0, float(default_flow), 500.0)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 🏛️ Emergency Helplines (Nashik)")
-st.sidebar.markdown("""
-- **NMC Disaster Management Cell:** `0253-2578500`
-- **Nashik District Control Room:** `1077`
-- **Fire Brigade Emergency:** `101`
-- **Police Emergency:** `112`
-""")
-
-# Run Memoised Network-Wide Inference
-network_predictions = predict_network_batch(
-    reference_station=selected_station,
-    rainfall_mm=input_rain,
-    rainfall_intensity_mm_h=input_int,
-    river_water_level_m=input_gauge,
-    water_level_change_rate_m_h=input_rate,
-    soil_moisture_pct=input_sm,
-    flow_rate_cusecs=input_flow
-)
-prediction_result = network_predictions[selected_station]
-
-# Tabs
-tab1, tab2, tab3, tab4 = st.tabs([
-    "🛰️ Live Risk & Geo-Map",
-    "📈 Hydrological Time-Series",
-    "🧠 ML & Leakage Prevention Audit",
-    "📋 Data Schema & Sources"
-])
 
 # =========================================================================
-# TAB 1: Live Risk & Geo-Map
+# MODULE 1: 📊 EXECUTIVE DASHBOARD
 # =========================================================================
-with tab1:
-    # Metric Summary Row
+if selected_page == "📊 Executive Dashboard":
+    st.markdown('<div class="main-title">📊 Executive Command Dashboard</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-title">Statewide & Regional Godavari Basin Hydrological Overview | Nashik, Maharashtra</div>',
+        unsafe_allow_html=True
+    )
+
+    # Top KPI Metrics Row
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    normal_count = sum(1 for p in network_predictions.values() if "NORMAL" in p["risk_badge"])
+    warning_count = sum(1 for p in network_predictions.values() if "WARNING" in p["risk_badge"] or "BLUE" in p["risk_badge"])
+    danger_count = sum(1 for p in network_predictions.values() if "DANGER" in p["risk_badge"] or "RED" in p["risk_badge"])
+
+    with kpi1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="card-label">MONITORED STATIONS</span>
+                <span class="hex-chip">⬡ NETWORK</span>
+            </div>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem;">
+                8 <span style="font-size:1rem; color:#94a3b8; font-weight:500;">Active</span>
+            </div>
+            <div class="card-subtext"><span class="hex-icon">⬢</span> Godavari River Corridor</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with kpi2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="card-label">NORMAL / SAFE</span>
+                <span class="hex-chip">⬡ TIER 1</span>
+            </div>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #34d399; margin-top: 0.2rem;">
+                {normal_count} <span style="font-size:1rem; color:#94a3b8; font-weight:500;">Stations</span>
+            </div>
+            <div class="card-subtext" style="color:#10b981;"><span class="hex-icon">⬢</span> Flow Within Normal Banks</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with kpi3:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="card-label">BLUE LINE WARNING</span>
+                <span class="hex-chip">⬡ TIER 2</span>
+            </div>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #fbbf24; margin-top: 0.2rem;">
+                {warning_count} <span style="font-size:1rem; color:#94a3b8; font-weight:500;">Stations</span>
+            </div>
+            <div class="card-subtext" style="color:#f59e0b;"><span class="hex-icon">⬢</span> Riparian Precaution Active</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with kpi4:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="card-label">RED LINE DANGER</span>
+                <span class="hex-chip">⬡ TIER 3</span>
+            </div>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #f87171; margin-top: 0.2rem;">
+                {danger_count} <span style="font-size:1rem; color:#94a3b8; font-weight:500;">Stations</span>
+            </div>
+            <div class="card-subtext" style="color:#ef4444;"><span class="hex-icon">⬢</span> Inundation Hazard Breach</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Station Matrix Table & Basin Map
+    col_map, col_table = st.columns([1.2, 1])
+
+    with col_map:
+        st.subheader("🗺️ Godavari River Basin Geographical Surveillance Map")
+        m = folium.Map(location=[20.015, 73.800], zoom_start=11, tiles="CartoDB dark_matter", prefer_canvas=True)
+        river_coords = [
+            [19.9320, 73.5300], [20.0489, 73.6890], [20.0315, 73.7432],
+            [20.0077, 73.7915], [20.0125, 73.7980], [19.9982, 73.8156],
+            [19.9620, 73.8650], [20.0890, 74.0520]
+        ]
+        folium.PolyLine(river_coords, color="#00f0ff", weight=4.5, opacity=0.9, tooltip="Godavari River Flow Direction").add_to(m)
+
+        for s_name, meta in NASHIK_STATIONS.items():
+            st_pred = network_predictions[s_name]
+            col = st_pred["risk_color"]
+            prob = st_pred["flood_probability_pct"]
+            folium.CircleMarker(
+                location=[meta["lat"], meta["lon"]],
+                radius=9,
+                color=col,
+                weight=2,
+                fill=True,
+                fill_color=col,
+                fill_opacity=0.9,
+                tooltip=f"{s_name}: {st_pred['risk_badge']} ({prob}%)"
+            ).add_to(m)
+        st_folium(m, height=420, use_container_width=True)
+
+    with col_table:
+        st.subheader("📋 Active Basin Telemetry Matrix")
+        matrix_rows = []
+        for s_name, meta in NASHIK_STATIONS.items():
+            st_pred = network_predictions[s_name]
+            matrix_rows.append({
+                "Station": s_name,
+                "Elevation (m)": meta["elevation_m"],
+                "Warning Gauge": f"{meta['warning_gauge_m']}m",
+                "Danger Gauge": f"{meta['danger_gauge_m']}m",
+                "Risk Tier": st_pred["risk_badge"],
+                "Flood Prob": f"{st_pred['flood_probability_pct']}%"
+            })
+        st.dataframe(pd.DataFrame(matrix_rows), use_container_width=True, hide_index=True)
+
+        st.markdown("#### 🚨 Quick Action Directive")
+        if danger_count > 0:
+            st.error(f"⚠️ **CRITICAL ALERT:** {danger_count} station(s) exceed Red Line flood limits! Immediate emergency response initiated.")
+        elif warning_count > 0:
+            st.warning(f"⚠️ **ADVISORY:** {warning_count} station(s) at Blue Line warning level. Riparian settlements advised to prepare.")
+        else:
+            st.success("✅ **STABLE:** All river gauging stations report water levels within normal seasonal channel capacity.")
+
+
+# =========================================================================
+# MODULE 2: 🌊 AI FLOOD PREDICTION & SCENARIO SIMULATOR
+# =========================================================================
+elif selected_page == "🌊 AI Flood Prediction & Simulator":
+    st.markdown('<div class="main-title">🌊 AI Flood Prediction & Scenario Simulator</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-title">Calibrated Random Forest Risk Engine with Real-Time Hydrological Sliders | Nashik Basin</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown("### 🎛️ Interactive Hydrological Parameter Sliders")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        sim_rain = st.slider("24h Cumulative Catchment Rainfall (mm)", 0.0, 350.0, float(base_rain), 1.0)
+        sim_int = st.slider("Peak Rainfall Intensity (mm/h)", 0.0, 120.0, float(base_int), 0.5)
+    with c2:
+        sim_gauge = st.slider("River Water Level Gauge (m)", 0.5, 14.0, float(base_gauge), 0.1)
+        sim_rate = st.slider("Water Level Rate of Change (m/h)", -3.0, 4.0, float(base_rate), 0.05)
+    with c3:
+        sim_sm = st.slider("Volumetric Soil Moisture (%)", 10.0, 100.0, float(base_sm), 1.0)
+        sim_flow = st.slider("Gangapur Dam Spillway Outflow (cusecs)", 500.0, 75000.0, float(base_flow), 500.0)
+
+    sim_predictions = predict_network_batch(
+        reference_station=sidebar_loc,
+        rainfall_mm=sim_rain,
+        rainfall_intensity_mm_h=sim_int,
+        river_water_level_m=sim_gauge,
+        water_level_change_rate_m_h=sim_rate,
+        soil_moisture_pct=sim_sm,
+        flow_rate_cusecs=sim_flow
+    )
+    sim_res = sim_predictions[sidebar_loc]
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Metric Row
     m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+    risk_badge = sim_res["risk_badge"]
+    risk_color = sim_res["risk_color"]
+    prob_pct = sim_res["flood_probability_pct"]
 
-    risk_badge = prediction_result["risk_badge"]
-    risk_color = prediction_result["risk_color"]
-    prob_pct = prediction_result["flood_probability_pct"]
-
-    # Select badge styling class based on risk tier
     if "RED" in risk_badge or "CRITICAL" in risk_badge:
         badge_cls = "risk-badge-danger"
     elif "BLUE" in risk_badge or "WARNING" in risk_badge:
@@ -478,224 +564,287 @@ with tab1:
     with m_col1:
         st.markdown(f"""
         <div class="metric-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="card-label">ESTIMATED FLOOD STATUS</span>
-                <span class="hex-chip">⬡ EWS</span>
-            </div>
-            <div style="margin-top: 0.55rem;">
-                <span class="{badge_cls}">
-                    <span class="pulse-dot"></span>
-                    {risk_badge}
-                </span>
-            </div>
-            <div class="card-subtext"><span class="hex-icon">⬢</span> Station: <b style="color:#cbd5e1;">{selected_station}</b></div>
+            <span class="card-label">RISK STATUS</span>
+            <div style="margin-top: 0.55rem;"><span class="{badge_cls}"><span class="pulse-dot"></span>{risk_badge}</span></div>
+            <div class="card-subtext">Station: <b>{sidebar_loc}</b></div>
         </div>
         """, unsafe_allow_html=True)
 
     with m_col2:
         st.markdown(f"""
         <div class="metric-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="card-label">FLOOD PROBABILITY</span>
-                <span class="hex-chip">⬡ RF-PROB</span>
-            </div>
-            <div style="font-size: 2.1rem; font-weight: 900; color: {risk_color}; margin-top: 0.2rem; text-shadow: 0 0 16px {risk_color}60;">
-                {prob_pct}%
-            </div>
-            <div class="card-subtext"><span class="hex-icon">⬢</span> Model Confidence Score</div>
+            <span class="card-label">INUNDATION PROBABILITY</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: {risk_color}; margin-top: 0.2rem;">{prob_pct}%</div>
+            <div class="card-subtext">Calibrated RF Confidence</div>
         </div>
         """, unsafe_allow_html=True)
 
     with m_col3:
-        w_thresh = st_meta["warning_gauge_m"]
         d_thresh = st_meta["danger_gauge_m"]
-        delta_to_danger = d_thresh - input_gauge
+        delta_to_danger = d_thresh - sim_gauge
         status_gauge = f"{abs(delta_to_danger):.1f}m {'BELOW' if delta_to_danger >= 0 else 'ABOVE'} RED LINE"
         st.markdown(f"""
         <div class="metric-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="card-label">RIVER WATER GAUGE</span>
-                <span class="hex-chip">⬡ TELEMETRY</span>
-            </div>
-            <div style="font-size: 2.1rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem; text-shadow: 0 0 14px rgba(56, 189, 248, 0.3);">
-                {input_gauge:.1f} <span style="font-size:1.1rem; color:#94a3b8; font-weight:600;">m</span>
-            </div>
-            <div class="card-subtext" style="color:{'#ef4444' if delta_to_danger < 0 else '#38bdf8'}; font-weight:700;"><span class="hex-icon">⬢</span> {status_gauge}</div>
+            <span class="card-label">RIVER LEVEL</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem;">{sim_gauge:.1f} m</div>
+            <div class="card-subtext" style="color:{'#ef4444' if delta_to_danger < 0 else '#38bdf8'}; font-weight:700;">{status_gauge}</div>
         </div>
         """, unsafe_allow_html=True)
 
     with m_col4:
-        discharge_warn = st_meta["warning_discharge_cusecs"]
         st.markdown(f"""
         <div class="metric-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="card-label">DAM SPILLWAY DISCHARGE</span>
-                <span class="hex-chip">⬡ CUSECS</span>
-            </div>
-            <div style="font-size: 2.1rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem; text-shadow: 0 0 14px rgba(56, 189, 248, 0.3);">
-                {input_flow:,.0f} <span style="font-size:1.05rem; color:#94a3b8; font-weight:500;">cusecs</span>
-            </div>
-            <div class="card-subtext"><span class="hex-icon">⬢</span> Gangapur Reservoir Outflow</div>
+            <span class="card-label">DAM DISCHARGE</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem;">{sim_flow:,.0f} cusecs</div>
+            <div class="card-subtext">Gangapur Spillway Release</div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Middle Row: Gauge Chart + Folium Map
-    left_c, right_c = st.columns([1, 1.8])
-
-    with left_c:
+    # Gauge Chart + Advisories
+    gc1, gc2 = st.columns([1, 1.2])
+    with gc1:
         st.subheader("📊 Hydro-Risk Gauge")
         gauge_fig = go.Figure(go.Indicator(
             mode="gauge+number",
             value=prob_pct,
             domain={'x': [0, 1], 'y': [0, 1]},
-            title={'text': "Flood Inundation Probability (%)", 'font': {'size': 15, 'color': '#94a3b8'}},
+            title={'text': "Flood Inundation Probability (%)", 'font': {'size': 14, 'color': '#94a3b8'}},
             number={'font': {'size': 44, 'color': '#f8fafc'}},
             gauge={
-                'axis': {'range': [0, 100], 'tickwidth': 1.5, 'tickcolor': "#475569", 'tickfont': {'color': '#94a3b8'}},
+                'axis': {'range': [0, 100], 'tickcolor': "#475569"},
                 'bar': {'color': risk_color, 'thickness': 0.28},
                 'bgcolor': "rgba(15, 23, 42, 0.8)",
-                'borderwidth': 1.5,
-                'bordercolor': "rgba(56, 189, 248, 0.3)",
                 'steps': [
                     {'range': [0, 40], 'color': 'rgba(16, 185, 129, 0.18)'},
                     {'range': [40, 70], 'color': 'rgba(245, 158, 11, 0.20)'},
                     {'range': [70, 100], 'color': 'rgba(239, 68, 68, 0.25)'}
-                ],
-                'threshold': {
-                    'line': {'color': "#ef4444", 'width': 3},
-                    'thickness': 0.8,
-                    'value': 70
-                }
+                ]
             }
         ))
-        gauge_fig.update_layout(
+        gauge_fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", height=280, margin=dict(l=20, r=20, t=40, b=20))
+        st.plotly_chart(gauge_fig, use_container_width=True)
+
+    with gc2:
+        st.subheader("🛡️ Actionable Precautionary Protocols")
+        for p in sim_res["precautions"]:
+            st.info(f"• {p}")
+        for a in sim_res["recommended_actions"]:
+            st.warning(f"• {a}")
+
+
+# =========================================================================
+# MODULE 3: 🌧️ RAINFALL MONITORING & INTENSITY
+# =========================================================================
+elif selected_page == "🌧️ Rainfall Monitoring & Intensity":
+    st.markdown('<div class="main-title">🌧️ Rainfall Monitoring & Catchment Saturation</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-title">Precipitation Dynamics, Intensity Categorization & Soil Infiltration Curves | Western Ghats Catchment</div>',
+        unsafe_allow_html=True
+    )
+
+    r_col1, r_col2, r_col3, r_col4 = st.columns(4)
+
+    # IMD Rainfall Bracket classification
+    if base_rain == 0:
+        imd_cat = "No Rain"
+    elif base_rain < 15.6:
+        imd_cat = "Light Rainfall"
+    elif base_rain <= 64.4:
+        imd_cat = "Moderate Rainfall"
+    elif base_rain <= 115.5:
+        imd_cat = "Heavy Rainfall"
+    elif base_rain <= 204.4:
+        imd_cat = "Very Heavy Rainfall"
+    else:
+        imd_cat = "Extremely Heavy Rainfall"
+
+    with r_col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">24H CUMULATIVE RAINFALL</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #38bdf8; margin-top: 0.2rem;">{base_rain:.1f} mm</div>
+            <div class="card-subtext">IMD Basin Gauge Benchmark</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with r_col2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">PEAK INTENSITY</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem;">{base_int:.1f} mm/h</div>
+            <div class="card-subtext">Hourly Downpour Rate</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with r_col3:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">IMD CLASSIFICATION</span>
+            <div style="font-size: 1.25rem; font-weight: 800; color: #fbbf24; margin-top: 0.4rem;">{imd_cat}</div>
+            <div class="card-subtext">Official IMD Weather Criteria</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with r_col4:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">SOIL SATURATION</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #34d399; margin-top: 0.2rem;">{base_sm:.1f}%</div>
+            <div class="card-subtext">Volumetric Infiltration Index</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        st.subheader("📈 Catchment Soil Saturation vs. Surface Runoff Curve")
+        sm_range = np.linspace(10, 100, 50)
+        # Hydrological runoff curve: below 60% infiltration dominates; above 75% runoff explodes exponentially
+        runoff_est = [max(0.0, (s - 45) ** 2 / 30 if s > 45 else 0) for s in sm_range]
+        fig_runoff = go.Figure()
+        fig_runoff.add_trace(go.Scatter(x=sm_range, y=runoff_est, mode='lines', line=dict(color='#38bdf8', width=3), name='Runoff Coefficient'))
+        fig_runoff.add_vline(x=base_sm, line_dash="dash", line_color="#ef4444", annotation_text=f"Current Soil Moisture: {base_sm}%")
+        fig_runoff.update_layout(
             template="plotly_dark",
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
-            height=280,
-            margin=dict(l=20, r=20, t=40, b=20)
+            title="Soil Moisture Saturation Threshold",
+            xaxis=dict(title="Volumetric Soil Moisture (%)"),
+            yaxis=dict(title="Estimated Surface Runoff (mm/h)"),
+            height=340
         )
-        st.plotly_chart(gauge_fig, use_container_width=True)
+        st.plotly_chart(fig_runoff, use_container_width=True)
 
-        # Telemetry & Sensor Warnings
-        warnings = prediction_result["sensor_warnings"]
-        if warnings:
-            st.error("⚠️ **Sensor & Telemetry Diagnostic Warnings:**")
-            for w in warnings:
-                st.markdown(f"- {w}")
+    with rc2:
+        st.subheader("⛈️ Historical Multi-Station Monsoon Rainfall Distribution")
+        if hist_df is not None:
+            fig_rain_dist = px.box(
+                hist_df,
+                x="location",
+                y="rainfall_mm",
+                color="location",
+                template="plotly_dark",
+                title="Rainfall Variance Across Stations (Monsoon Dataset)"
+            )
+            fig_rain_dist.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", height=340, showlegend=False)
+            st.plotly_chart(fig_rain_dist, use_container_width=True)
         else:
-            st.success("✅ **Sensor Diagnostics:** All readings are within standard physical operational limits.")
+            st.info("Historical dataset loading...")
 
-    with right_c:
-        st.subheader("🗺️ Nashik Basin Flood Vulnerability Map")
 
-        # Create Folium Map with CartoDB Dark Matter tiles and Canvas acceleration
-        m = folium.Map(
-            location=[20.015, 73.800],
-            zoom_start=12,
-            tiles="CartoDB dark_matter",
-            prefer_canvas=True
-        )
+# =========================================================================
+# MODULE 4: 📏 RIVER GAUGE & DAM DISCHARGE
+# =========================================================================
+elif selected_page == "📏 River Gauge & Dam Discharge":
+    st.markdown('<div class="main-title">📏 River Gauge & Dam Discharge Tracker</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-title">Godavari Riverbed Gauge Levels & Gangapur Dam Discharge Dynamics | WRD Maharashtra Telemetry</div>',
+        unsafe_allow_html=True
+    )
 
-        # Add glowing river corridor line
-        river_coords = [
-            [19.9320, 73.5300],  # Trimbakeshwar (Upper Catchment)
-            [20.0489, 73.6890],  # Gangapur Dam Catchment
-            [20.0315, 73.7432],  # Someshwar
-            [20.0077, 73.7915],  # Ramkund
-            [20.0125, 73.7980],  # Holkar Bridge
-            [19.9982, 73.8156],  # Tapovan
-            [19.9620, 73.8650],  # Darna Confluence (Chehdi)
-            [20.0890, 74.0520]   # Saykheda
-        ]
-        folium.PolyLine(
-            river_coords,
-            color="#00f0ff",
-            weight=4.5,
-            opacity=0.9,
-            tooltip="Godavari River Corridor (Flow Direction: Trimbakeshwar ➔ Gangapur Dam ➔ Saykheda)"
-        ).add_to(m)
+    st_selected = st.selectbox("Select Station for Hydrological Cross-Section", station_names, index=0)
+    meta = NASHIK_STATIONS[st_selected]
 
-        # Plot all stations using cached network predictions
-        for s_name, meta in NASHIK_STATIONS.items():
-            st_pred = network_predictions[s_name]
-            col = st_pred["risk_color"]
-            prob = st_pred["flood_probability_pct"]
+    w_val = meta["warning_gauge_m"]
+    d_val = meta["danger_gauge_m"]
 
-            popup_html = f"""
-            <div style="font-family:'Inter',sans-serif; width:230px; background:#070d1e; color:#f8fafc; padding:10px; border-radius:10px; border:1px solid rgba(56,189,248,0.35); box-shadow:0 8px 24px rgba(0,0,0,0.6);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <b style="color:#38bdf8; font-size:0.95rem;">{s_name}</b>
-                    <span style="font-size:0.75rem; color:#94a3b8;">⬡ STN</span>
-                </div>
-                <div style="margin:4px 0;"><b>Risk Tier:</b> <span style="color:{col}; font-weight:800; text-shadow:0 0 8px {col};">{st_pred['risk_badge']}</span></div>
-                <div style="margin:2px 0;"><b>Probability:</b> <span style="color:#f8fafc; font-weight:700;">{prob}%</span></div>
-                <div style="margin:2px 0; font-size:0.82rem; color:#94a3b8;">Elev: {meta['elevation_m']}m | Warn: {meta['warning_gauge_m']}m</div>
-                <p style="font-size:0.78rem; color:#64748b; margin:6px 0 0 0; line-height:1.3;">{meta['description']}</p>
-            </div>
-            """
+    g_col1, g_col2, g_col3 = st.columns(3)
+    with g_col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">CURRENT RIVER LEVEL</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #38bdf8; margin-top: 0.2rem;">{base_gauge:.1f} m</div>
+            <div class="card-subtext">Gauge Height at {st_selected}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-            folium.CircleMarker(
-                location=[meta["lat"], meta["lon"]],
-                radius=10 if s_name == selected_station else 7,
-                color="#ffffff" if s_name == selected_station else col,
-                weight=3 if s_name == selected_station else 2,
-                fill=True,
-                fill_color=col,
-                fill_opacity=0.95,
-                tooltip=f"⬡ {s_name}: {st_pred['risk_badge']} ({prob}%)",
-                popup=folium.Popup(popup_html, max_width=260)
-            ).add_to(m)
+    with g_col2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">BLUE LINE (WARNING)</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #fbbf24; margin-top: 0.2rem;">{w_val:.1f} m</div>
+            <div class="card-subtext">Official NMC Warning Marker</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st_folium(m, height=350, use_container_width=True)
+    with g_col3:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">RED LINE (DANGER)</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #f87171; margin-top: 0.2rem;">{d_val:.1f} m</div>
+            <div class="card-subtext">Official NMC Danger Marker</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Precautionary Information & Evacuation Protocols
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Bullet / Level Progress
+    st.subheader(f"📊 River Channel Water Level vs. Hazard Boundaries ({st_selected})")
+    bullet_fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=base_gauge,
+        title={'text': f"Gauge Level at {st_selected} (m)", 'font': {'color': '#94a3b8'}},
+        gauge={
+            'shape': "bullet",
+            'axis': {'range': [0, max(d_val + 3.0, 12.0)]},
+            'threshold': {
+                'line': {'color': "#ef4444", 'width': 4},
+                'thickness': 0.8,
+                'value': d_val
+            },
+            'steps': [
+                {'range': [0, w_val], 'color': "rgba(16, 185, 129, 0.3)"},
+                {'range': [w_val, d_val], 'color': "rgba(245, 158, 11, 0.4)"},
+                {'range': [d_val, 15.0], 'color': "rgba(239, 68, 68, 0.5)"}
+            ],
+            'bar': {'color': "#38bdf8"}
+        }
+    ))
+    bullet_fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", height=180)
+    st.plotly_chart(bullet_fig, use_container_width=True)
+
+    # Dam Spillway Outflow Dynamics
     st.markdown("---")
-    st.subheader("🛡️ Actionable Precautionary Protocols & Disaster Advisories")
-
-    p_col1, p_col2 = st.columns(2)
-    with p_col1:
-        st.markdown("#### 📢 Hydrological Advisory")
-        for item in prediction_result["precautions"]:
-            st.info(f"• {item}")
-
-    with p_col2:
-        st.markdown("#### 🚨 Standard Operating Procedures (SOP)")
-        for action in prediction_result["recommended_actions"]:
-            st.warning(f"• {action}")
+    st.subheader("🌊 Gangapur Reservoir Spillway Release & Hydrograph Travel Times")
+    st.markdown("""
+    - **Gangapur Dam to Someshwar:** ~15–20 minutes travel time
+    - **Gangapur Dam to Ramkund (Panchavati):** ~35–45 minutes travel time
+    - **Ramkund to Holkar Bridge:** ~10–15 minutes travel time
+    - **Ramkund to Saykheda (Downstream Confluence):** ~2.5–3.5 hours travel time
+    """)
 
 
 # =========================================================================
-# TAB 2: Hydrological Time-Series & Hydrographs
+# MODULE 5: 📜 HISTORICAL DATA & HYDROGRAPHS
 # =========================================================================
-with tab2:
-    st.subheader("📈 Multi-Year Monsoon Hydrograph Explorer (Nashik Basin)")
-    st.caption("Visualizing the relationship between catchment rainfall, Gangapur dam discharge, and downstream Godavari river level.")
+elif selected_page == "📜 Historical Data & Hydrographs":
+    st.markdown('<div class="main-title">📜 Historical Data & Multi-Year Hydrographs</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-title">Synchronized 3-Axis Monsoon Dynamics | Godavari River Basin Historical Time-Series</div>',
+        unsafe_allow_html=True
+    )
 
     if hist_df is not None:
         station_filter = st.selectbox("Select Station for Hydrograph Analysis", station_names, index=0)
         st_data = hist_df[hist_df["location"] == station_filter].copy()
 
-        # Date range selector
         min_date = st_data["timestamp"].dt.date.min()
         max_date = st_data["timestamp"].dt.date.max()
 
-        dr_col1, dr_col2 = st.columns(2)
-        with dr_col1:
+        dr1, dr2 = st.columns(2)
+        with dr1:
             start_sel = st.date_input("Start Date", min_date, min_value=min_date, max_value=max_date)
-        with dr_col2:
+        with dr2:
             end_sel = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date)
 
         mask = (st_data["timestamp"].dt.date >= start_sel) & (st_data["timestamp"].dt.date <= end_sel)
         filtered_st_data = st_data[mask]
 
         if not filtered_st_data.empty:
-            # Multi-Axis Plotly Figure
             fig = go.Figure()
-
-            # Rainfall (Bar on secondary axis)
             fig.add_trace(go.Bar(
                 x=filtered_st_data["timestamp"],
                 y=filtered_st_data["rainfall_mm"],
@@ -704,8 +853,6 @@ with tab2:
                 opacity=0.5,
                 yaxis="y2"
             ))
-
-            # Dam Discharge (Area/Line)
             fig.add_trace(go.Scatter(
                 x=filtered_st_data["timestamp"],
                 y=filtered_st_data["flow_rate_cusecs"],
@@ -713,8 +860,6 @@ with tab2:
                 line=dict(color="#6366f1", width=1.5),
                 yaxis="y3"
             ))
-
-            # River Water Level (Line)
             fig.add_trace(go.Scatter(
                 x=filtered_st_data["timestamp"],
                 y=filtered_st_data["river_water_level_m"],
@@ -723,24 +868,10 @@ with tab2:
                 yaxis="y1"
             ))
 
-            # Warning & Danger horizontal lines
             w_val = NASHIK_STATIONS[station_filter]["warning_gauge_m"]
             d_val = NASHIK_STATIONS[station_filter]["danger_gauge_m"]
-
-            fig.add_hline(
-                y=w_val,
-                line_dash="dot",
-                line_color="#f59e0b",
-                annotation_text=f"Blue Line Warning ({w_val}m)",
-                annotation_position="top left"
-            )
-            fig.add_hline(
-                y=d_val,
-                line_dash="dash",
-                line_color="#dc2626",
-                annotation_text=f"Red Line Danger ({d_val}m)",
-                annotation_position="top left"
-            )
+            fig.add_hline(y=w_val, line_dash="dot", line_color="#f59e0b", annotation_text=f"Blue Line Warning ({w_val}m)")
+            fig.add_hline(y=d_val, line_dash="dash", line_color="#dc2626", annotation_text=f"Red Line Danger ({d_val}m)")
 
             fig.update_layout(
                 template="plotly_dark",
@@ -748,35 +879,16 @@ with tab2:
                 plot_bgcolor="rgba(0,0,0,0)",
                 title=dict(text=f"Hydrological Dynamics at {station_filter}", font=dict(color="#f8fafc", size=17)),
                 xaxis=dict(title="Timestamp", gridcolor="rgba(255,255,255,0.07)"),
-                yaxis=dict(
-                    title=dict(text="River Gauge (m)", font=dict(color="#38bdf8")),
-                    tickfont=dict(color="#38bdf8"),
-                    gridcolor="rgba(255,255,255,0.07)"
-                ),
-                yaxis2=dict(
-                    title=dict(text="Rainfall (mm)", font=dict(color="#38bdf8")),
-                    tickfont=dict(color="#38bdf8"),
-                    overlaying="y",
-                    side="right",
-                    range=[0, filtered_st_data["rainfall_mm"].max() * 3]
-                ),
-                yaxis3=dict(
-                    title=dict(text="Discharge (cusecs)", font=dict(color="#818cf8")),
-                    tickfont=dict(color="#818cf8"),
-                    anchor="free",
-                    overlaying="y",
-                    autoshift=True,
-                    side="right"
-                ),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#cbd5e1")),
+                yaxis=dict(title=dict(text="River Gauge (m)", font=dict(color="#38bdf8")), tickfont=dict(color="#38bdf8")),
+                yaxis2=dict(title=dict(text="Rainfall (mm)", font=dict(color="#38bdf8")), overlaying="y", side="right"),
+                yaxis3=dict(title=dict(text="Discharge (cusecs)", font=dict(color="#818cf8")), overlaying="y", autoshift=True, side="right"),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 height=480,
                 hovermode="x unified"
             )
-
             st.plotly_chart(fig, use_container_width=True)
 
-            # Statistical Summary table
-            st.markdown("#### Hydrological Summary Statistics for Selected Period")
+            st.markdown("#### Hydrological Summary Statistics")
             summary_stats = filtered_st_data[[
                 "rainfall_mm", "rainfall_intensity_mm_h", "river_water_level_m",
                 "water_level_change_rate_m_h", "soil_moisture_pct", "flow_rate_cusecs", "flood_label"
@@ -784,38 +896,37 @@ with tab2:
             summary_stats.columns = ["Mean", "Min", "Median (50%)", "Max", "Std Dev"]
             st.dataframe(summary_stats.round(2), use_container_width=True)
         else:
-            st.warning("No telemetry records found for the selected date window.")
+            st.warning("No records found for the selected date window.")
     else:
-        st.warning("Historical dataset is not loaded. Run `synthetic_data_generator.py` to generate.")
+        st.warning("Historical dataset is not loaded.")
 
 
 # =========================================================================
-# TAB 3: Machine Learning & Leakage Prevention Audit
+# MODULE 6: 🧠 RISK ANALYSIS & ML VALIDATION LAB
 # =========================================================================
-with tab3:
-    st.subheader("🧠 Machine Learning Architecture & Anti-Leakage Audit")
-    st.markdown("""
-    To guarantee scientific validity, the pipeline strictly adheres to **chronological out-of-time evaluation**.
-    Standard random K-Fold cross-validation is intentionally prohibited to prevent future flood crest information from leaking into past training steps.
-    """)
+elif selected_page == "🧠 Risk Analysis & ML Lab":
+    st.markdown('<div class="main-title">🧠 Risk Analysis & ML Validation Lab</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-title">Model Diagnostics, Chronological Anti-Leakage Audit & Feature Explanations</div>',
+        unsafe_allow_html=True
+    )
 
     leak_meta = metadata.get("leakage_prevention", {})
     metrics = metadata.get("metrics", {})
 
-    # Leakage Audit Cards
-    lk_col1, lk_col2, lk_col3 = st.columns(3)
-    with lk_col1:
+    lk1, lk2, lk3 = st.columns(3)
+    with lk1:
         st.markdown(f"""
         <div class="metric-card">
             <span class="card-label">EVALUATION STRATEGY</span>
             <div style="font-size:1.15rem; font-weight:800; color:#f8fafc; margin-top:0.3rem;">
-                {leak_meta.get('evaluation_mode', 'Chronological Split')}
+                {leak_meta.get('evaluation_mode', 'Chronological Out-of-Time')}
             </div>
             <div style="font-size:0.8rem; color:#34d399; font-weight:700; margin-top:0.3rem;"><span class="hex-icon">⬢</span> ZERO Lookahead Leakage</div>
         </div>
         """, unsafe_allow_html=True)
 
-    with lk_col2:
+    with lk2:
         train_win = leak_meta.get("train_window", ["-", "-"])
         st.markdown(f"""
         <div class="metric-card">
@@ -823,11 +934,11 @@ with tab3:
             <div style="font-size:0.95rem; font-weight:800; color:#f8fafc; margin-top:0.3rem;">
                 {train_win[0][:10]} ➔ {train_win[1][:10]}
             </div>
-            <div class="card-subtext"><span class="hex-icon">⬡</span> Samples: {leak_meta.get('train_sample_count', '-'):,}</div>
+            <div class="card-subtext">Samples: {leak_meta.get('train_sample_count', '-'):,}</div>
         </div>
         """, unsafe_allow_html=True)
 
-    with lk_col3:
+    with lk3:
         test_win = leak_meta.get("test_window", ["-", "-"])
         st.markdown(f"""
         <div class="metric-card">
@@ -835,13 +946,12 @@ with tab3:
             <div style="font-size:0.95rem; font-weight:800; color:#f8fafc; margin-top:0.3rem;">
                 {test_win[0][:10]} ➔ {test_win[1][:10]}
             </div>
-            <div class="card-subtext"><span class="hex-icon">⬡</span> Samples: {leak_meta.get('test_sample_count', '-'):,}</div>
+            <div class="card-subtext">Samples: {leak_meta.get('test_sample_count', '-'):,}</div>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Metrics Table & Confusion Matrix
     ev_col1, ev_col2 = st.columns([1.2, 1])
     with ev_col1:
         st.markdown("#### 🎯 Out-of-Time Test Performance Metrics")
@@ -860,75 +970,105 @@ with tab3:
     with ev_col2:
         st.markdown("#### 🔍 Test Set Confusion Matrix")
         cm = metrics.get("confusion_matrix", [[0, 0], [0, 0]])
-        cm_df = pd.DataFrame(
-            cm,
-            index=["Actual Normal", "Actual Flood"],
-            columns=["Pred Normal", "Pred Flood"]
-        )
-        fig_cm = px.imshow(
-            cm_df,
-            text_auto=True,
-            color_continuous_scale="Blues",
-            title="Confusion Matrix (Unseen Test Data)"
-        )
-        fig_cm.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#f8fafc"),
-            height=320,
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
+        cm_df = pd.DataFrame(cm, index=["Actual Normal", "Actual Flood"], columns=["Pred Normal", "Pred Flood"])
+        fig_cm = px.imshow(cm_df, text_auto=True, color_continuous_scale="Blues", title="Confusion Matrix (Unseen Test Data)")
+        fig_cm.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", height=320)
         st.plotly_chart(fig_cm, use_container_width=True)
 
     # Feature Importances
     st.markdown("#### 🌲 Random Forest Feature Importances (Gini Impurity)")
     importances = metadata.get("feature_importances", {})
     if importances:
-        imp_df = pd.DataFrame([
-            {"Feature": k, "Importance": v} for k, v in importances.items()
-        ]).sort_values(by="Importance", ascending=True)
-
-        fig_imp = px.bar(
-            imp_df,
-            x="Importance",
-            y="Feature",
-            orientation="h",
-            color="Importance",
-            color_continuous_scale="Tealgrn",
-            title="Relative Hydrological Predictive Power"
-        )
-        fig_imp.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#f8fafc"),
-            height=400,
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
+        imp_df = pd.DataFrame([{"Feature": k, "Importance": v} for k, v in importances.items()]).sort_values(by="Importance", ascending=True)
+        fig_imp = px.bar(imp_df, x="Importance", y="Feature", orientation="h", color="Importance", color_continuous_scale="Tealgrn", title="Relative Hydrological Predictive Power")
+        fig_imp.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", height=380)
         st.plotly_chart(fig_imp, use_container_width=True)
 
 
 # =========================================================================
-# TAB 4: Data Schema & Sources
+# MODULE 7: 🚨 EMERGENCY ALERTS & SOP PROTOCOLS
 # =========================================================================
-with tab4:
-    st.subheader("📋 Dataset Schema Specification & Quality Standards")
-    st.markdown("""
-    The system defines a standardized schema covering **13 mandatory attributes**.
-    All input streams undergo verification before ingestion:
-    """)
+elif selected_page == "🚨 Emergency Alerts & SOP Protocols":
+    st.markdown('<div class="main-title">🚨 Emergency Alerts & Disaster SOP Protocols</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-title">Nashik Municipal Corporation (NMC) & District Disaster Management Operational Guidelines</div>',
+        unsafe_allow_html=True
+    )
 
+    t1, t2, t3 = st.columns(3)
+    with t1:
+        st.markdown("""
+        <div class="metric-card" style="border-color: #10b981;">
+            <div class="card-label" style="color: #34d399;">TIER 1 — NORMAL FLOW</div>
+            <div style="font-size: 1.15rem; font-weight: 800; color: #f8fafc; margin: 0.3rem 0;">Gauge < 6.5m</div>
+            <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.4;">
+                • Standard hydrological monitoring.<br>
+                • Gangapur dam gate checks.<br>
+                • Routine ghat advisory for pilgrims.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with t2:
+        st.markdown("""
+        <div class="metric-card" style="border-color: #f59e0b;">
+            <div class="card-label" style="color: #fbbf24;">TIER 2 — BLUE LINE WARNING</div>
+            <div style="font-size: 1.15rem; font-weight: 800; color: #f8fafc; margin: 0.3rem 0;">Gauge 6.5m – 8.5m</div>
+            <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.4;">
+                • Evacuate Ramkund riverside vendors.<br>
+                • Sound siren alerts across Panchavati.<br>
+                • Pre-position NDRF & Fire rescue squads.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with t3:
+        st.markdown("""
+        <div class="metric-card" style="border-color: #ef4444;">
+            <div class="card-label" style="color: #f87171;">TIER 3 — RED LINE DANGER</div>
+            <div style="font-size: 1.15rem; font-weight: 800; color: #f8fafc; margin: 0.3rem 0;">Gauge > 8.5m</div>
+            <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.4;">
+                • Full evacuation of low-lying wards.<br>
+                • Close Holkar Bridge and river crossings.<br>
+                • Activate municipal relief shelters.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    st.subheader("📍 High Vulnerability Flood Zones in Urban Nashik")
+    v_col1, v_col2 = st.columns(2)
+    with v_col1:
+        st.markdown("""
+        - **Ramkund / Panchavati Ghats:** Most vulnerable urban flood plain. Submergence begins at ~20,000 cusecs.
+        - **Saraf Bazar & Dahipul:** Low-lying market zone prone to backflow from overloaded stormwater drains.
+        - **Godavari Riverfront Walkways:** Fully submerged during Blue Line advisory releases.
+        """)
+    with v_col2:
+        st.markdown("""
+        - **Tapovan Lowlands:** Downstream flood plain with agricultural backwaters.
+        - **Saykheda / Niphad:** Confluence with Darna river; severe water stagnation risk during prolonged discharges.
+        - **Someshwar Waterfalls Area:** High rocky gradient with rapid localized surge.
+        """)
+
+
+# =========================================================================
+# MODULE 8: 🏛️ DATA SCHEMA & SOURCES REGISTRY
+# =========================================================================
+elif selected_page == "🏛️ Data Schema & Sources Registry":
+    st.markdown('<div class="main-title">🏛️ Data Schema & Sources Registry</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-title">13-Attribute Engineering Schema, Official Government Data Providers & Latency Benchmarks</div>',
+        unsafe_allow_html=True
+    )
+
+    st.subheader("📋 Dataset Schema Specification (13 Mandatory Features)")
     schema_table = get_schema_summary()
     st.dataframe(schema_table, use_container_width=True, hide_index=True)
 
     st.markdown("---")
     st.subheader("🏛️ Official Historical Data Sources Manifest")
-    st.markdown("""
-    To maintain complete scientific integrity, reliable historical telemetry sources for the Nashik basin are cataloged below.
-    **No measurements are invented.**
-    """)
-
     for key, src in HISTORICAL_DATA_REGISTRY.items():
         with st.expander(f"📌 {src['name']} ({src['reliability_rating']})"):
             st.markdown(f"**Description:** {src['description']}")
@@ -938,50 +1078,40 @@ with tab4:
             st.markdown(f"**Licensing:** {src['licensing']}")
 
     st.markdown("---")
-    st.subheader("⚡ Live Open-Meteo Batched Telemetry & Upstream Latency Profiler")
-    st.caption("Validating multi-station coordinate batching and TTL cache acceleration across all 8 Nashik stations.")
-
-    om_col1, om_col2, om_col3 = st.columns(3)
-    with om_col1:
+    st.subheader("⚡ Upstream Latency Profiler & Coordinate Batching Benchmark")
+    om1, om2, om3 = st.columns(3)
+    with om1:
         st.markdown("""
         <div class="metric-card">
-            <span class="card-label">UPSTREAM BATCH STRATEGY</span>
+            <span class="card-label">BATCH STRATEGY</span>
             <div style="font-size:1.1rem; font-weight:800; color:#38bdf8; margin-top:0.3rem;">Single HTTP Request</div>
-            <div class="card-subtext"><span class="hex-icon">⬢</span> 8 Stations / Request</div>
+            <div class="card-subtext">8 Stations / Request</div>
         </div>
         """, unsafe_allow_html=True)
-    with om_col2:
+    with om2:
         st.markdown("""
         <div class="metric-card">
-            <span class="card-label">CACHE INLINE POLICY</span>
+            <span class="card-label">IN-MEMORY CACHE</span>
             <div style="font-size:1.1rem; font-weight:800; color:#34d399; margin-top:0.3rem;">TTL: 900s (15 min)</div>
-            <div class="card-subtext"><span class="hex-icon">⬢</span> Sub-ms Memory Hits</div>
+            <div class="card-subtext">Sub-ms Memory Hits</div>
         </div>
         """, unsafe_allow_html=True)
-    with om_col3:
+    with om3:
         st.markdown("""
         <div class="metric-card">
-            <span class="card-label">NETWORK LATENCY GAIN</span>
+            <span class="card-label">SPEEDUP FACTOR</span>
             <div style="font-size:1.1rem; font-weight:800; color:#f8fafc; margin-top:0.3rem;">~9.2x Speedup</div>
-            <div class="card-subtext"><span class="hex-icon">⬢</span> 8.9s ➔ 0.97s (P95 < 1.1s)</div>
+            <div class="card-subtext">8.9s ➔ 0.97s (P95 < 1.1s)</div>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.subheader("⚠️ Model Limitations & Assumptions")
-    st.markdown("""
-    1. **Dam Operations Latency:** Reservoir outflow gates at Gangapur Dam are operated manually or via supervisory control based on engineer judgment. Sudden unscheduled emergency releases cannot be predicted purely from upstream rain without real-time WRD gate telemetry.
-    2. **Urban Micro-Drainage:** Localized urban waterlogging caused by choked municipal culverts at Nashik road underpasses operates independently of riverbed flooding.
-    3. **Groundwater Infiltration Limits:** In high-slope rocky basalt regions (Trimbak Ghats), infiltration rapidly plateaus, causing fast hydrograph response times (~3 to 5 hours).
-    4. **Synthetic Benchmark Status:** Results in demo mode are benchmark simulations. For operational disaster deployment, plug in official verified WRD/IMD CSV files into `data/raw/` and retrain.
-    """)
 
 # Footer
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: #64748b; font-size: 0.85rem;'>"
-    "Climate Guard AI — Hackathon Edition | Nashik Hydrological Decision Support System | "
-    "Zero-Leakage Chronological Pipeline | Python, Scikit-learn, Pandas, Streamlit"
+    "Climate Guard AI — Flood Prediction & Early Warning Decision Support System | "
+    "Zero-Leakage Chronological Random Forest Pipeline | Python, Scikit-learn, Pandas, Streamlit"
     "</div>",
     unsafe_allow_html=True
 )
