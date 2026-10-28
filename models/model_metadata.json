@@ -1,0 +1,163 @@
+{
+    "trained_at": "2026-10-27T20:07:32.308332",
+    "model_type": "RandomForestClassifier",
+    "is_synthetic_training_data": true,
+    "disclaimer": "NOTICE: This system provides algorithmic decision support for flood risk estimation in Nashik. In demo mode, physics-consistent synthetic benchmark datasets are utilized. Never treat synthetic benchmark results as official real-time meteorological forecasts. Always adhere to official directives from the Nashik Municipal Corporation (NMC), District Disaster Management Authority (DDMA), and Water Resources Department (WRD) Maharashtra.",
+    "leakage_prevention": {
+        "evaluation_mode": "Strict Chronological Split (Out-of-Time)",
+        "train_window": [
+            "2018-06-15 00:00:00",
+            "2023-08-18 12:00:00"
+        ],
+        "test_window": [
+            "2023-08-18 18:00:00",
+            "2024-09-30 18:00:00"
+        ],
+        "train_sample_count": 19352,
+        "test_sample_count": 4840,
+        "cv_method": "TimeSeriesSplit(n_splits=4)"
+    },
+    "metrics": {
+        "accuracy": 0.9998,
+        "precision": 1.0,
+        "recall": 0.9977,
+        "f1_score": 0.9988,
+        "roc_auc": 1.0,
+        "pr_auc": 1.0,
+        "brier_score": 0.0005,
+        "tscv_mean_f1": 0.9944,
+        "tscv_mean_recall": 0.9905,
+        "confusion_matrix": [
+            [
+                4408,
+                0
+            ],
+            [
+                1,
+                431
+            ]
+        ],
+        "location_wise": {
+            "Darna Confluence (Chehdi)": {
+                "sample_count": 605,
+                "flood_event_count": 52,
+                "accuracy": 1.0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0,
+                "pr_auc": 1.0
+            },
+            "Gangapur Dam Catchment": {
+                "sample_count": 605,
+                "flood_event_count": 59,
+                "accuracy": 1.0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0,
+                "pr_auc": 1.0
+            },
+            "Holkar Bridge": {
+                "sample_count": 605,
+                "flood_event_count": 52,
+                "accuracy": 1.0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0,
+                "pr_auc": 1.0
+            },
+            "Ramkund (Panchavati)": {
+                "sample_count": 605,
+                "flood_event_count": 52,
+                "accuracy": 1.0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0,
+                "pr_auc": 1.0
+            },
+            "Saykheda (Niphad Downstream)": {
+                "sample_count": 605,
+                "flood_event_count": 52,
+                "accuracy": 1.0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0,
+                "pr_auc": 1.0
+            },
+            "Someshwar (Gangapur Rd)": {
+                "sample_count": 605,
+                "flood_event_count": 54,
+                "accuracy": 0.9983,
+                "precision": 1.0,
+                "recall": 0.9815,
+                "f1_score": 0.9907,
+                "pr_auc": 0.9997
+            },
+            "Tapovan (Kapila Sangam)": {
+                "sample_count": 605,
+                "flood_event_count": 52,
+                "accuracy": 1.0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0,
+                "pr_auc": 1.0
+            },
+            "Trimbakeshwar (Upper Catchment)": {
+                "sample_count": 605,
+                "flood_event_count": 59,
+                "accuracy": 1.0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0,
+                "pr_auc": 1.0
+            }
+        }
+    },
+    "feature_names": [
+        "rainfall_mm",
+        "rainfall_intensity_mm_h",
+        "river_water_level_m",
+        "water_level_change_rate_m_h",
+        "soil_moisture_pct",
+        "elevation_m",
+        "slope_deg",
+        "flow_rate_cusecs",
+        "rain_12h_accum_mm",
+        "rain_24h_accum_mm",
+        "rain_72h_accum_mm",
+        "flow_lag_6h_cusecs",
+        "flow_lag_12h_cusecs",
+        "discharge_acceleration_cusecs_h",
+        "soil_saturation_deficit_pct",
+        "runoff_generation_potential",
+        "surge_saturation_index",
+        "topo_wetness_index"
+    ],
+    "feature_importances": {
+        "flow_rate_cusecs": 0.26598229551617,
+        "rainfall_mm": 0.19823103600944075,
+        "rain_12h_accum_mm": 0.1750318570584461,
+        "flow_lag_6h_cusecs": 0.08919739661705124,
+        "runoff_generation_potential": 0.07809462478014816,
+        "rainfall_intensity_mm_h": 0.05845327822469053,
+        "soil_moisture_pct": 0.03231001233841328,
+        "rain_24h_accum_mm": 0.029626987414282605,
+        "flow_lag_12h_cusecs": 0.028848752712009634,
+        "soil_saturation_deficit_pct": 0.01629164117342855,
+        "river_water_level_m": 0.012584575970117572,
+        "discharge_acceleration_cusecs_h": 0.004942039097695303,
+        "slope_deg": 0.003098136429961864,
+        "topo_wetness_index": 0.0021522838635526327,
+        "elevation_m": 0.0021361425550631688,
+        "water_level_change_rate_m_h": 0.0016868504859281865,
+        "surge_saturation_index": 0.0007430320617002879,
+        "rain_72h_accum_mm": 0.000589057691900371
+    },
+    "hyperparameters": {
+        "n_estimators": 100,
+        "max_depth": 10,
+        "min_samples_split": 2,
+        "min_samples_leaf": 2,
+        "class_weight": "balanced_subsample",
+        "random_state": 42
+    }
+}

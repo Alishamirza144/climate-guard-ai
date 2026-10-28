@@ -1,0 +1,93 @@
+{
+    "IMD_PUNE": {
+        "name": "India Meteorological Department (IMD) Pune / National Data Centre",
+        "description": "Official gridded rainfall (0.25\u00b0 x 0.25\u00b0) and Automatic Weather Station (AWS) data.",
+        "parameters": [
+            "Daily rainfall (mm)",
+            "Hourly rainfall intensity",
+            "Temperature (\u00b0C)",
+            "Relative Humidity (%)"
+        ],
+        "coverage": "Nashik City, Trimbakeshwar, Igatpuri, Peth (1901-Present)",
+        "access_url": "https://imdpune.gov.in / https://mausam.imd.gov.in",
+        "licensing": "Government of India Open Data / IMD Data Request Portal",
+        "reliability_rating": "Official Tier-1 Ground Truth"
+    },
+    "WRD_MAHARASHTRA": {
+        "name": "Water Resources Department (WRD), Government of Maharashtra",
+        "description": "Daily dam storage, live reservoir levels, and spillway discharge (cusecs) for Godavari Basin.",
+        "parameters": [
+            "Gangapur Dam storage & discharge",
+            "Darna Dam discharge",
+            "Kashyapi & Gautami Dam water balance",
+            "Nandur Madhmeshwar weir levels"
+        ],
+        "coverage": "Nashik District Dam Network (Historical bulletins & monsoon daily flood logs)",
+        "access_url": "https://wrd.maharashtra.gov.in",
+        "licensing": "Government of Maharashtra Public Water Information System",
+        "reliability_rating": "Official Tier-1 Hydrological Telemetry"
+    },
+    "CWC_INDIA": {
+        "name": "Central Water Commission (CWC) - Godavari Basin Organization",
+        "description": "Hydrological observation stations, warning/danger level river gauge telemetry.",
+        "parameters": [
+            "River water level (m)",
+            "Discharge rate (m\u00b3/s / cusecs)",
+            "Hydrograph trends"
+        ],
+        "coverage": "Godavari River gauging stations at Nashik and downstream Niphad",
+        "access_url": "https://ffs.india-water.gov.in / https://cwc.gov.in",
+        "licensing": "Ministry of Jal Shakti, Government of India",
+        "reliability_rating": "Official Tier-1 Flood Forecasting Authority"
+    },
+    "OPEN_METEO_ARCHIVE": {
+        "name": "Open-Meteo Historical Weather API (ERA5-Land / Reanalysis)",
+        "description": "Open-access hourly meteorological reanalysis combining ECMWF ERA5 with localized downscaling.",
+        "parameters": [
+            "Hourly precipitation (mm)",
+            "Soil moisture 0-7cm (m\u00b3/m\u00b3)",
+            "Surface runoff"
+        ],
+        "coverage": "Global 0.1\u00b0 grid, including exact Nashik coordinates (20.00\u00b0N, 73.78\u00b0E)",
+        "access_url": "https://open-meteo.com/en/docs/historical-weather-api",
+        "licensing": "Creative Commons Attribution 4.0 (CC BY 4.0) / ECMWF License",
+        "reliability_rating": "High-Resolution Scientific Reanalysis (Secondary Verification)"
+    },
+    "NASA_POWER": {
+        "name": "NASA POWER (Prediction Of Worldwide Energy Resources)",
+        "description": "Satellite-observed and assimilation model precipitation and surface wetness.",
+        "parameters": [
+            "Precipitation (PRECTOTCORR)",
+            "Root-zone soil wetness (GWETROOT)"
+        ],
+        "coverage": "Point and regional grids across Nashik (1981-Present)",
+        "access_url": "https://power.larc.nasa.gov",
+        "licensing": "NASA Open Science Data",
+        "reliability_rating": "Satellite-Observed Global Baseline"
+    },
+    "ISRO_CARTODEM": {
+        "name": "ISRO Bhuvan CartoDEM / USGS SRTM",
+        "description": "High-resolution Digital Elevation Model (DEM) for elevation and slope gradient extraction.",
+        "parameters": [
+            "Elevation above sea level (m)",
+            "Topographic slope (degrees)"
+        ],
+        "coverage": "Nashik terrain and Godavari riverbed corridor",
+        "access_url": "https://bhuvan.nrsc.gov.in",
+        "licensing": "Government of India / NRSC Data Policy",
+        "reliability_rating": "Official Geodetic Reference"
+    },
+    "NMC_DISASTER_MANAGEMENT": {
+        "name": "Nashik Municipal Corporation (NMC) & District Disaster Management Cell",
+        "description": "Official ground flood warning (Blue Line) and danger (Red Line) markers.",
+        "parameters": [
+            "Ramkund Warning Level (Blue Line: ~20,000 cusecs / 560m)",
+            "Ramkund Danger Level (Red Line: ~35,000 cusecs / Dutondya Maruti chest level)",
+            "Historical inundation records (2005, 2006, 2008, 2016, 2019 floods)"
+        ],
+        "coverage": "Urban Nashik Riverfront and Panchavati Ghats",
+        "access_url": "https://nashikcorporation.in",
+        "licensing": "Municipal Records & Disaster Management Gazette",
+        "reliability_rating": "Official Ground Hazard Markers"
+    }
+}
