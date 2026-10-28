@@ -48,6 +48,7 @@ from src.drainage_engine import (
     NASHIK_DRAINAGE_NODES,
     evaluate_drainage_health
 )
+import src.chart_utils as cu
 
 # Page Setup
 st.set_page_config(
@@ -98,7 +99,7 @@ st.markdown("""
         margin-bottom: 0.25rem;
     }
     .sub-title {
-        font-size: 0.98rem;
+        font-size: 0.96rem;
         color: #94a3b8;
         margin-bottom: 1.15rem;
         font-weight: 400;
@@ -259,7 +260,7 @@ st.sidebar.markdown("---")
 # Global Disclaimer Notice
 st.markdown("""
 <div class="disclaimer-banner">
-    <b>⚠️ DATA MODE NOTICE:</b> Operating on <b>SIMULATED & BENCHMARK DEMO DATA</b>.
+    <b>⚠️ DATA MODE NOTICE:</b> Operating on <b>DATA-DRIVEN BENCHMARK DEMO & SIMULATED SCENARIOS</b>.
     Environmental metrics, wildfire ratings, crop water indices, and drainage models in this deployment are physics-grounded engineering benchmarks designed to showcase the full multi-hazard AI capabilities without presenting unverified transmissions as official live government directives.
 </div>
 """, unsafe_allow_html=True)
@@ -276,9 +277,9 @@ if active_module == "🌊 1. Flood Guard AI":
     )
 
     fg_tab1, fg_tab2, fg_tab3 = st.tabs([
-        "🎛️ AI Flood Simulator & Predictor",
-        "🗺️ Godavari River Basin Flood Map",
-        "📈 Multi-Year Monsoon Hydrographs"
+        "🎛️ AI Flood Simulator & Analytics",
+        "📈 Time-Series Hydrographs & Sensitivity Curves",
+        "🗺️ Godavari River Basin Flood Map"
     ])
 
     with fg_tab1:
@@ -381,37 +382,41 @@ if active_module == "🌊 1. Flood Guard AI":
             """, unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        gc1, gc2 = st.columns([1, 1.2])
-        with gc1:
-            st.subheader("📊 Hydro-Risk Gauge")
-            gauge_fig = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=prob,
-                domain={'x': [0, 1], 'y': [0, 1]},
-                title={'text': "Flood Inundation Probability (%)", 'font': {'size': 14, 'color': '#94a3b8'}},
-                number={'font': {'size': 44, 'color': '#f8fafc'}},
-                gauge={
-                    'axis': {'range': [0, 100], 'tickcolor': "#475569"},
-                    'bar': {'color': r_color, 'thickness': 0.28},
-                    'bgcolor': "rgba(15, 23, 42, 0.8)",
-                    'steps': [
-                        {'range': [0, 40], 'color': 'rgba(16, 185, 129, 0.18)'},
-                        {'range': [40, 70], 'color': 'rgba(245, 158, 11, 0.20)'},
-                        {'range': [70, 100], 'color': 'rgba(239, 68, 68, 0.25)'}
-                    ]
-                }
-            ))
-            gauge_fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", height=270, margin=dict(l=20, r=20, t=35, b=20))
-            st.plotly_chart(gauge_fig, use_container_width=True)
 
-        with gc2:
-            st.subheader("🛡️ Precautionary Protocols & Disaster Advisories")
-            for p in pred_res["precautions"]:
-                st.info(f"• {p}")
-            for a in pred_res["recommended_actions"]:
-                st.warning(f"• {a}")
+        # Dynamic Sensitivity Graphs (Requirements 1.4 & 1.5)
+        st.subheader("📊 Real-Time Sensitivity Analysis Curves")
+        st.caption("Graphs dynamically re-compute through the Random Forest model as you adjust telemetry sliders above:")
+        sc1, sc2 = st.columns(2)
+        with sc1:
+            fig_sens_int = cu.build_flood_intensity_sensitivity_chart(
+                predictor, sel_station, input_rain, input_int, input_gauge, input_rate, input_sm, input_flow
+            )
+            st.plotly_chart(fig_sens_int, use_container_width=True)
+
+        with sc2:
+            fig_sens_gauge = cu.build_flood_gauge_sensitivity_chart(
+                predictor, sel_station, input_rain, input_int, input_gauge, input_rate, input_sm, input_flow
+            )
+            st.plotly_chart(fig_sens_gauge, use_container_width=True)
 
     with fg_tab2:
+        st.subheader("📈 Multi-Year Monsoon Time-Series & Trends")
+        st.caption("Historical & benchmark sensor telemetry trends: Rainfall Intensity, Gauge Height, Discharge, and Soil Moisture:")
+        fig_ts = cu.build_flood_time_series_chart(hist_df, sel_station, window_records=168)
+        if fig_ts:
+            st.plotly_chart(fig_ts, use_container_width=True)
+        else:
+            st.info("Loading time-series records...")
+
+        # Summary Statistics Table
+        if hist_df is not None:
+            st.markdown("#### Hydrological Baseline Statistics for Monitored Season")
+            st_slice = hist_df[hist_df["location"] == sel_station]
+            stats = st_slice[["rainfall_mm", "rainfall_intensity_mm_h", "river_water_level_m", "soil_moisture_pct", "flow_rate_cusecs"]].describe().T[["mean", "min", "50%", "max", "std"]]
+            stats.columns = ["Mean", "Min", "Median (50%)", "Max", "Std Dev"]
+            st.dataframe(stats.round(2), use_container_width=True)
+
+    with fg_tab3:
         st.subheader("🗺️ Godavari River Basin Flood Vulnerability Map")
         m_flood = folium.Map(location=[20.015, 73.800], zoom_start=11, tiles="CartoDB dark_matter", prefer_canvas=True)
         river_coords = [
@@ -443,22 +448,6 @@ if active_module == "🌊 1. Flood Guard AI":
                 tooltip=f"{s_name}: {sp['risk_badge']} ({sp['flood_probability_pct']}%)"
             ).add_to(m_flood)
         st_folium(m_flood, height=450, use_container_width=True)
-
-    with fg_tab3:
-        st.subheader("📈 Multi-Year Monsoon Hydrographs")
-        if hist_df is not None:
-            fig_h = go.Figure()
-            st_hist = hist_df[hist_df["location"] == sel_station].tail(200)
-            fig_h.add_trace(go.Bar(x=st_hist["timestamp"], y=st_hist["rainfall_mm"], name="Rainfall (mm)", marker_color="#38bdf8", opacity=0.5, yaxis="y2"))
-            fig_h.add_trace(go.Scatter(x=st_hist["timestamp"], y=st_hist["river_water_level_m"], name="Gauge (m)", line=dict(color="#0284c7", width=2.5)))
-            fig_h.update_layout(
-                template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
-                yaxis=dict(title="River Gauge (m)"), yaxis2=dict(title="Rainfall (mm)", overlaying="y", side="right"),
-                height=380
-            )
-            st.plotly_chart(fig_h, use_container_width=True)
-        else:
-            st.info("Historical telemetry dataset is ready.")
 
 
 # =========================================================================
@@ -529,10 +518,21 @@ elif active_module == "🔥 2. Heat Guard AI":
             st.warning(f"• {p}")
 
     st.markdown("---")
+    # Interactive Heat Graphs (Requirements 2.1 - 2.4)
+    st.subheader("📊 Interactive Heat Risk Dynamics & Sensitivity Curves")
+    hg_c1, hg_c2 = st.columns(2)
+    with hg_c1:
+        fig_diurnal = cu.build_heat_diurnal_chart(heat_temp, heat_rh, heat_city)
+        st.plotly_chart(fig_diurnal, use_container_width=True)
+
+    with hg_c2:
+        fig_heat_sens = cu.build_heat_sensitivity_curve(heat_temp, heat_rh)
+        st.plotly_chart(fig_heat_sens, use_container_width=True)
+
+    st.markdown("---")
     st.subheader("🗺️ Maharashtra State Thermal Vulnerability Map")
     m_heat = folium.Map(location=[19.5, 76.0], zoom_start=6, tiles="CartoDB dark_matter", prefer_canvas=True)
     for c_name, c_data in MAHARASHTRA_HEAT_CITIES.items():
-        # Evaluate representative score
         c_eval = evaluate_heat_risk(c_name, heat_temp, heat_rh)
         folium.CircleMarker(
             location=[c_data["lat"], c_data["lon"]],
@@ -610,6 +610,18 @@ elif active_module == "🌲 3. Fire Guard AI":
         st.markdown("#### 🚨 Forest Ranger Operational Advisories")
         for adv in fwi_eval["advisories"]:
             st.error(f"• {adv}")
+
+    st.markdown("---")
+    # Interactive Fire Graphs (Requirements 3.1 - 3.4)
+    st.subheader("📊 Interactive Fire Risk Trends & Meteorological Sensitivity")
+    fg_c1, fg_c2 = st.columns(2)
+    with fg_c1:
+        fig_fwi_trend = cu.build_fire_weather_trend_chart(f_temp, f_rh, f_wind, f_dry_days)
+        st.plotly_chart(fig_fwi_trend, use_container_width=True)
+
+    with fg_c2:
+        fig_fwi_wind = cu.build_fire_wind_sensitivity_chart(f_temp, f_rh, f_dry_days, f_wind)
+        st.plotly_chart(fig_fwi_wind, use_container_width=True)
 
     st.markdown("---")
     st.subheader("🗺️ Maharashtra Protected Reserves Fire Danger Map")
@@ -694,6 +706,23 @@ elif active_module == "🌾 4. Crop Shield AI":
         for rec in crop_eval["recommendations"]:
             st.info(f"• {rec}")
 
+    st.markdown("---")
+    # Interactive Crop Graphs (Requirements 4.1 - 4.4)
+    st.subheader("📊 Interactive Agronomic Water Demand & Soil Stress Curves")
+    cg_c1, cg_c2 = st.columns(2)
+    with cg_c1:
+        fig_demand = cu.build_crop_water_demand_chart(sel_crop, stage_idx, cr_eto)
+        st.plotly_chart(fig_demand, use_container_width=True)
+
+    with cg_c2:
+        fig_balance = cu.build_crop_water_balance_chart(crop_eval["etc_mm_day"], cr_rain, cr_sm)
+        st.plotly_chart(fig_balance, use_container_width=True)
+
+    # Soil Spectrum Indicator
+    st.markdown("#### 🌾 Root-Zone Moisture Spectrum & Stress Boundaries")
+    fig_spectrum = cu.build_crop_soil_spectrum_chart(cr_sm)
+    st.plotly_chart(fig_spectrum, use_container_width=True)
+
 
 # =========================================================================
 # MODULE 5: 🚰 DRAINAGE NETWORK
@@ -761,6 +790,22 @@ elif active_module == "🚰 5. Drainage Network":
             st.warning(f"• {act}")
 
     st.markdown("---")
+    # Interactive Drainage Graphs (Requirements 5.1 - 5.4)
+    st.subheader("📊 Interactive Hydraulic Balancing & Blockage Curves")
+    dg_c1, dg_c2 = st.columns(2)
+    with dg_c1:
+        fig_storm = cu.build_drainage_storm_hydrograph(
+            sel_drain, d_meta["critical_depth_cm"], d_meta["capacity_lpm"], d_depth, d_flow, d_rain
+        )
+        st.plotly_chart(fig_storm, use_container_width=True)
+
+    with dg_c2:
+        fig_cap = cu.build_drainage_capacity_sensitivity_chart(
+            d_meta["critical_depth_cm"], d_meta["capacity_lpm"], d_rain
+        )
+        st.plotly_chart(fig_cap, use_container_width=True)
+
+    st.markdown("---")
     st.subheader("🗺️ Nashik Urban Stormwater & Drainage Nodes Map")
     m_drain = folium.Map(location=[19.998, 73.788], zoom_start=13, tiles="CartoDB dark_matter", prefer_canvas=True)
     for n_name, n_data in NASHIK_DRAINAGE_NODES.items():
@@ -777,56 +822,98 @@ elif active_module == "🚰 5. Drainage Network":
 
 
 # =========================================================================
-# MODULE 6: 📊 EXECUTIVE COMMAND CENTER
+# MODULE 6: 📊 EXECUTIVE CLIMATE COMMAND CENTER
 # =========================================================================
 elif active_module == "📊 Executive Command Center":
-    st.markdown('<div class="main-title">📊 Executive Command Center — Statewide Situational Awareness</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-title">📊 Executive Climate Command Center — Statewide Situational Matrix</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="sub-title">Unified Multi-Hazard Operational Matrix Across All 5 ClimateGuard AI Engines</div>',
+        '<div class="sub-title">Unified Multi-Hazard Operational Matrix Across All Five Climate Guard AI Risk Engines</div>',
         unsafe_allow_html=True
     )
 
+    # Compute baseline assessments for the radar view
+    fg_eval = predictor.predict_scenario(
+        location="Ramkund (Panchavati)", rainfall_mm=55.0, rainfall_intensity_mm_h=12.0,
+        river_water_level_m=4.8, water_level_change_rate_m_h=0.3, soil_moisture_pct=68.0, flow_rate_cusecs=15000.0
+    )
+    hg_eval = evaluate_heat_risk("Nagpur (Vidarbha)", 42.0, 36.0)
+    fr_eval = calculate_fwi_system(39.0, 24.0, 22.0, days_without_rain=8)
+    cr_eval = assess_crop_health("Onion (Nashik Red)", 2, 33.0, 58.0, 10.0)
+    dr_eval = evaluate_drainage_health("Saraf Bazar Storm Culvert", 50.0, 1600.0, 20.0)
+
+    # Top KPI Metrics Across 5 Hazards
     k1, k2, k3, k4, k5 = st.columns(5)
     with k1:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-card">
-            <span class="card-label">1. FLOOD GUARD</span>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #38bdf8; margin: 0.3rem 0;">8 Stations Monitored</div>
-            <div class="card-subtext">Godavari Basin Active</div>
+            <span class="card-label">1. FLOOD INUNDATION</span>
+            <div style="font-size: 1.45rem; font-weight: 900; color: {fg_eval['risk_color']}; margin: 0.2rem 0;">{fg_eval['flood_probability_pct']}%</div>
+            <div class="card-subtext">{fg_eval['risk_badge']}</div>
         </div>
         """, unsafe_allow_html=True)
     with k2:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-card">
-            <span class="card-label">2. HEAT GUARD</span>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; margin: 0.3rem 0;">7 Cities Tracked</div>
-            <div class="card-subtext">IMD Criteria Active</div>
+            <span class="card-label">2. HEATWAVE THREAT</span>
+            <div style="font-size: 1.45rem; font-weight: 900; color: {hg_eval['risk_color']}; margin: 0.2rem 0;">{hg_eval['risk_score']}/100</div>
+            <div class="card-subtext">{hg_eval['risk_badge']}</div>
         </div>
         """, unsafe_allow_html=True)
     with k3:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-card">
-            <span class="card-label">3. FIRE GUARD</span>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #ef4444; margin: 0.3rem 0;">6 Reserves Scanned</div>
-            <div class="card-subtext">Canadian FWI System</div>
+            <span class="card-label">3. WILDFIRE (FWI)</span>
+            <div style="font-size: 1.45rem; font-weight: 900; color: {fr_eval['risk_color']}; margin: 0.2rem 0;">FWI {fr_eval['fwi_score']}</div>
+            <div class="card-subtext">{fr_eval['risk_badge']}</div>
         </div>
         """, unsafe_allow_html=True)
     with k4:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-card">
-            <span class="card-label">4. CROP SHIELD</span>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #34d399; margin: 0.3rem 0;">5 Key Crops</div>
-            <div class="card-subtext">FAO-56 Water Demand</div>
+            <span class="card-label">4. CROP STRESS</span>
+            <div style="font-size: 1.45rem; font-weight: 900; color: {cr_eval['water_color']}; margin: 0.2rem 0;">{cr_eval['etc_mm_day']} mm/d</div>
+            <div class="card-subtext">{cr_eval['water_badge']}</div>
         </div>
         """, unsafe_allow_html=True)
     with k5:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-card">
-            <span class="card-label">5. DRAINAGE</span>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #818cf8; margin: 0.3rem 0;">5 Chokepoints</div>
-            <div class="card-subtext">Hydraulic Balancing</div>
+            <span class="card-label">5. URBAN DRAINAGE</span>
+            <div style="font-size: 1.45rem; font-weight: 900; color: {dr_eval['color']}; margin: 0.2rem 0;">{dr_eval['blockage_pct']}%</div>
+            <div class="card-subtext">{dr_eval['badge']}</div>
         </div>
         """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Multi-Hazard Integrated Plotly Visualizations (Requirement 9)
+    cmd_col1, cmd_col2 = st.columns([1.1, 1])
+    with cmd_col1:
+        st.subheader("🌐 Multi-Hazard Threat Profile Comparison")
+        # Approximate crop stress percentage: 100 if waterlogged/drought, 20 if optimum
+        crop_stress = 85.0 if "Waterlogged" in cr_eval["water_status"] or "Deficit" in cr_eval["water_status"] else 25.0
+        fig_radar = cu.build_multi_hazard_radar_chart(
+            fg_eval["flood_probability_pct"],
+            hg_eval["risk_score"],
+            fr_eval["fwi_score"],
+            crop_stress,
+            dr_eval["blockage_pct"]
+        )
+        st.plotly_chart(fig_radar, use_container_width=True)
+
+    with cmd_col2:
+        st.subheader("🚨 Emergency Helpline & Operational Command Directory")
+        st.markdown("""
+        <div class="glass-card" style="margin-bottom: 0.8rem;">
+            <b>🏛️ Nashik Municipal Corporation Disaster Cell:</b> <code style="color:#38bdf8;">0253-2578500</code><br>
+            <b>🚨 District Disaster Control Room:</b> <code style="color:#38bdf8;">1077</code><br>
+            <b>🚒 Fire Brigade Emergency:</b> <code style="color:#ef4444;">101</code><br>
+            <b>🚓 Maharashtra Police Emergency:</b> <code style="color:#34d399;">112</code><br>
+            <b>🌾 Krishi Vigyan Kendra (KVK) Agronomy Advisory:</b> <code style="color:#fbbf24;">1800-180-1551</code>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.info("💡 **Operational Posture:** All five AI inference engines run locally and in-cloud with zero external API failure dependencies, guaranteeing 24/7 uptime during severe storm contingencies.")
 
 
 # =========================================================================
@@ -868,7 +955,7 @@ st.markdown(
     "<div style='text-align: center; color: #64748b; font-size: 0.82rem;'>"
     "Climate Guard AI — Multi-Hazard Environmental Intelligence Platform | "
     "Flood Guard • Heat Guard • Fire Guard • Crop Shield • Drainage Network | "
-    "Python, Streamlit, Scikit-learn, Folium"
+    "Python, Streamlit, Scikit-learn, Plotly, Folium"
     "</div>",
     unsafe_allow_html=True
 )
