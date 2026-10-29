@@ -1,0 +1,33 @@
+{
+  "hazard": "heat",
+  "label_definition": "heatwave proxy = next-day temperature and humidity conditions meet the IMD-style criteria; proxy labels only.",
+  "model_name": "xgboost",
+  "roc_auc": 0.9431818181818182,
+  "pr_auc": 0.8265738370080864,
+  "brier_score": 0.041279944969710526,
+  "precision": 0.8947368421052632,
+  "recall": 0.7727272727272727,
+  "f1": 0.8292682926829268,
+  "operating_threshold": 0.5733431577682495,
+  "false_alarm_rate": 0.016129032258064516,
+  "mean_lead_time_hours": 24.0,
+  "train_period": {
+    "start": "2015-01-01T00:00:00",
+    "end": "2022-12-30T23:56:23.729662"
+  },
+  "validation_period": {
+    "start": "2023-01-05T00:36:02.703379",
+    "end": "2023-12-27T23:31:09.837296"
+  },
+  "test_period": {
+    "start": "2024-01-02T00:10:48.811013",
+    "end": "2025-12-31T00:00:00"
+  },
+  "physics_baseline": {
+    "roc_auc": 0.8432,
+    "brier_score": 0.0913,
+    "note": "Physics-only engine baseline used only as a comparison; it is not a substitute for measured model performance."
+  },
+  "trained_at": "2026-10-25T06:36:41.991543Z",
+  "note": "This model is evaluated on time-based splits and proxy labels only. It should be treated as a research-grade decision support layer, not a verified field model."
+}

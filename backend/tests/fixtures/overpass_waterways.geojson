@@ -1,0 +1,10 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"waterway": "river", "name": "Godavari"},
+      "geometry": {"type": "LineString", "coordinates": [[73.7898, 19.9975], [73.806, 20.01]]}
+    }
+  ]
+}

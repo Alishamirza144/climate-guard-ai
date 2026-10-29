@@ -1,0 +1,12 @@
+{
+  "latitude": 19.9975,
+  "longitude": 73.7898,
+  "timezone": "auto",
+  "daily": {
+    "time": ["2026-10-25", "2026-10-26"],
+    "river_discharge": [120.4, 118.2],
+    "river_discharge_mean": [110.8, 109.5],
+    "river_discharge_median": [108.1, 107.7],
+    "river_discharge_max": [135.3, 133.8]
+  }
+}

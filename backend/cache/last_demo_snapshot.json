@@ -1,0 +1,40 @@
+{
+  "alerts": [
+    {
+      "hazard": "flood",
+      "level": "High",
+      "message": "River inflow and urban drainage exceed safe operating limits.",
+      "score": 86.1
+    }
+  ],
+  "generated_at": "2026-10-27T19:28:29.916955+00:00",
+  "hazard": "flood",
+  "location": {
+    "lat": 20.011,
+    "lon": 73.79,
+    "name": "Nashik"
+  },
+  "scenario_id": "flood-dam-release",
+  "simulation_mode": true,
+  "summary": {
+    "lead_time_hours": 24,
+    "level": "High",
+    "probability": 0.89,
+    "score": 86.1,
+    "simulation_mode": true
+  },
+  "synthetic_inputs": {
+    "humidity_percent": 82.0,
+    "lat": 20.011,
+    "lon": 73.79,
+    "rainfall_24h_mm": 142.0,
+    "river_ratio": 2.3,
+    "runoff_depth_mm": 36.0,
+    "shortwave_radiation_wm2": 720.0,
+    "soil_saturation": 0.75,
+    "temperature_c": 30.5,
+    "terrain_exposure": 0.72,
+    "wind_speed_kph": 12.0
+  },
+  "title": "Nashik Godavari flood with dam release"
+}

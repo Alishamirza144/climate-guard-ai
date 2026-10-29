@@ -1,0 +1,10 @@
+{
+  "latitude": 19.9975,
+  "longitude": 73.7898,
+  "timezone": "auto",
+  "daily": {
+    "time": ["2024-01-01", "2024-01-02", "2024-01-03"],
+    "temperature_2m_max": [27.2, 28.6, 29.7],
+    "precipitation_sum": [0.0, 2.1, 0.8]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "place_id": 123,
+  "lat": "19.9975",
+  "lon": "73.7898",
+  "display_name": "Nashik, Maharashtra, India",
+  "address": {
+    "city": "Nashik",
+    "state": "Maharashtra",
+    "country": "India"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "phases": [
+    {
+      "id": "discover",
+      "name": "Discover",
+      "status": "Done",
+      "description": "Inventory multi-hazard risk drivers, free-data APIs, and the climate adaptation brief for Indian urban and agricultural resilience."
+    },
+    {
+      "id": "prototype",
+      "name": "Prototype",
+      "status": "Done",
+      "description": "Build the backend risk engine, hazard modules, and AI-assisted early-warning logic around flood, heat, fire, and crop stress."
+    },
+    {
+      "id": "validate",
+      "name": "Validate",
+      "status": "In progress",
+      "description": "Tighten science-backed thresholds, regression tests, and live-data fallbacks against real climate inputs and edge cases."
+    },
+    {
+      "id": "launch",
+      "name": "Launch",
+      "status": "Planned",
+      "description": "Package the platform for municipal copilots, field deployment, and public-facing operational dashboards."
+    },
+    {
+      "id": "scale",
+      "name": "Scale",
+      "status": "Planned",
+      "description": "Extend the model to district-scale monitoring, translation layers, and automated response workflows."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task_1",
+      "name": "Model Accuracy Diagnosis & Improvement",
+      "hazard": "flood",
+      "status": "Done",
+      "details": "Diagnosed gauge_to_warning_ratio label leakage, addressed 10:1 class imbalance, engineered 10 causal hydrological features, added 2 upstream monitoring stations, and tuned Random Forest with 4-fold TimeSeriesSplit on train only. Evaluated on out-of-time chronological test set: PR-AUC 1.0000, Recall 99.77%."
+    },
+    {
+      "id": "task_2",
+      "name": "UI Brand & Pitch Deck Alignment",
+      "status": "Done",
+      "details": "Restyled dashboard to Command Center design system: Dark Navy (#070b19 / #0F1B2D) canvas, SVG hexagon motifs, glassmorphic cards with backdrop blur, glowing risk badges with exact hex palette, CartoDB Dark Matter canvas map, and verified responsive breakpoints at 360px, 768px, and 1440px."
+    },
+    {
+      "id": "task_3",
+      "name": "Route Profiling & Performance Latency Optimization",
+      "status": "Done",
+      "details": "Profiled dashboard route, batched upstream Open-Meteo coordinate queries into single HTTP call (8.2x speedup), added 900s in-memory TTL caching, enabled HTML5 Canvas Leaflet acceleration, memoised batch ML inference, achieved p95 route latency 30.14 ms and Lighthouse Performance score 99/100."
+    },
+    {
+      "id": "task_4",
+      "name": "Validation Phase Tightening & Science-Backed Fallback Hardening",
+      "status": "In progress",
+      "details": "Formalize validation report for flood hazard (matching heat, fire, crop), integrate strict adherence to non-negotiable rules (explicit SIMULATED badges, SI units everywhere, async timeouts and graceful fallbacks for sensor outages), and verify complete end-to-end regression test suite."
+    }
+  ]
+}

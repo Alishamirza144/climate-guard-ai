@@ -1,0 +1,33 @@
+{
+  "hazard": "flood",
+  "label_definition": "event day = river discharge exceeds the 95th percentile proxy or 24h rainfall >= 115.6 mm; proxy labels only, not field-verified flood records.",
+  "model_name": "hist_gradient_boosting",
+  "roc_auc": 0.738189346884999,
+  "pr_auc": 0.7094839565763406,
+  "brier_score": 0.22249503243148194,
+  "precision": 0.6623376623376623,
+  "recall": 0.7391304347826086,
+  "f1": 0.6986301369863014,
+  "operating_threshold": 0.4222222222222222,
+  "false_alarm_rate": 0.33766233766233766,
+  "mean_lead_time_hours": 24.0,
+  "train_period": {
+    "start": "2015-01-01T00:00:00",
+    "end": "2022-12-30T23:56:23.729662"
+  },
+  "validation_period": {
+    "start": "2023-01-05T00:36:02.703379",
+    "end": "2023-12-27T23:31:09.837296"
+  },
+  "test_period": {
+    "start": "2024-01-02T00:10:48.811013",
+    "end": "2025-12-31T00:00:00"
+  },
+  "physics_baseline": {
+    "roc_auc": 0.6382,
+    "brier_score": 0.2725,
+    "note": "Physics-only engine baseline used only as a comparison; it is not a substitute for measured model performance."
+  },
+  "trained_at": "2026-10-25T06:36:35.803031Z",
+  "note": "This model is evaluated on time-based splits and proxy labels only. It should be treated as a research-grade decision support layer, not a verified field model."
+}
