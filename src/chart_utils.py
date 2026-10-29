@@ -22,10 +22,10 @@ from src.fire_engine import calculate_fwi_system
 from src.crop_engine import CROP_PROFILES, assess_crop_health
 from src.drainage_engine import NASHIK_DRAINAGE_NODES, evaluate_drainage_health
 
-# Common Theme Styling Constants
-CHART_THEME = "plotly_dark"
-BG_COLOR = "rgba(0,0,0,0)"
-GRID_COLOR = "rgba(255, 255, 255, 0.08)"
+# Common Theme Styling Constants (Sky-Blue Climate Theme)
+CHART_THEME = "plotly_white"
+BG_COLOR = "#EDF7FF"
+GRID_COLOR = "#D1E6F8"
 FONT_FAMILY = "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
 
 
@@ -34,8 +34,8 @@ def _base_layout(title: str, height: int = 340) -> Dict[str, Any]:
         template=CHART_THEME,
         paper_bgcolor=BG_COLOR,
         plot_bgcolor=BG_COLOR,
-        title=dict(text=title, font=dict(family=FONT_FAMILY, size=15, color="#f8fafc")),
-        font=dict(family=FONT_FAMILY, color="#94a3b8"),
+        title=dict(text=title, font=dict(family=FONT_FAMILY, size=14, color="#20364D")),
+        font=dict(family=FONT_FAMILY, color="#20364D"),
         margin=dict(l=35, r=35, t=45, b=35),
         height=height,
         hovermode="x unified"
@@ -292,7 +292,7 @@ def build_heat_diurnal_chart(temp_max: float, rh_at_tmax: float, city_name: str)
 
     fig = go.Figure()
     # Temperature & Heat Index lines
-    fig.add_trace(go.Scatter(x=hours, y=temps, name="Ambient Temp (°C)", line=dict(color="#f8fafc", width=2)))
+    fig.add_trace(go.Scatter(x=hours, y=temps, name="Ambient Temp (°C)", line=dict(color="#20364D", width=2)))
     fig.add_trace(go.Scatter(x=hours, y=his, name="NWS Heat Index (°C)", line=dict(color="#f59e0b", width=3)))
     fig.add_trace(go.Scatter(x=hours, y=wbs, name="Wet-Bulb Temp (°C)", line=dict(color="#38bdf8", width=2, dash="dot")))
     # Relative Humidity (secondary axis)
@@ -335,7 +335,7 @@ def build_heat_sensitivity_curve(current_temp: float, current_rh: float) -> go.F
         name="Current Reading",
         text=[f"Current: {curr_hi}°C"],
         textposition="top left",
-        marker=dict(color="#f8fafc", size=13, line=dict(color="#ef4444", width=3))
+        marker=dict(color="#2784D8", size=13, line=dict(color="#ef4444", width=3))
     ))
 
     # Reference Hazard Thresholds
@@ -520,9 +520,9 @@ def build_crop_soil_spectrum_chart(current_sm_pct: float) -> go.Figure:
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=current_sm_pct,
-        title={'text': "Root-Zone Soil Moisture (%) & Stress Zones", 'font': {'color': '#94a3b8'}},
+        title={'text': "Root-Zone Soil Moisture (%) & Stress Zones", 'font': {'color': '#20364D'}},
         gauge={
-            'axis': {'range': [0, 100], 'tickcolor': "#475569"},
+            'axis': {'range': [0, 100], 'tickcolor': "#20364D"},
             'bar': {'color': "#38bdf8", 'thickness': 0.3},
             'steps': [
                 {'range': [0, 35], 'color': "rgba(239, 68, 68, 0.45)"},      # Permanent Wilting / Drought
@@ -695,10 +695,10 @@ def build_multi_hazard_radar_chart(
         template=CHART_THEME,
         paper_bgcolor=BG_COLOR,
         polar=dict(
-            radialaxis=dict(visible=True, range=[0, 100], gridcolor=GRID_COLOR, tickfont=dict(color="#94a3b8")),
-            angularaxis=dict(gridcolor=GRID_COLOR, tickfont=dict(family=FONT_FAMILY, color="#f8fafc", size=12))
+            radialaxis=dict(visible=True, range=[0, 100], gridcolor=GRID_COLOR, tickfont=dict(color="#5B7188")),
+            angularaxis=dict(gridcolor=GRID_COLOR, tickfont=dict(family=FONT_FAMILY, color="#20364D", size=12))
         ),
-        title=dict(text="Statewide Multi-Hazard Threat Profile (Normalized 0-100%)", font=dict(family=FONT_FAMILY, size=15, color="#f8fafc")),
+        title=dict(text="Statewide Multi-Hazard Threat Profile (Normalized 0-100%)", font=dict(family=FONT_FAMILY, size=15, color="#20364D")),
         height=380,
         margin=dict(l=45, r=45, t=50, b=45)
     )

@@ -50,15 +50,19 @@ from src.drainage_engine import (
 )
 import src.chart_utils as cu
 
+# =========================================================================
 # Page Setup
+# =========================================================================
 st.set_page_config(
     page_title="Climate Guard AI | Maharashtra Multi-Hazard Intelligence",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Custom Styling: Dark Navy Command Center with Glassmorphism, Hexagon Motifs & Neon Risk Badges
+# =========================================================================
+# Custom Styling: Sky-Blue Climate Theme Palette
+# =========================================================================
 st.markdown("""
 <style>
     /* Transparent Header */
@@ -68,138 +72,199 @@ st.markdown("""
     }
     [data-testid="stDecoration"] { display: none !important; }
 
-    /* Dark Navy Command Center & Hexagon Background */
+    /* Soft Sky-Blue Page Background (#DFF1FF) with Subtle Gradient */
     .stApp {
-        background-color: #070b19 !important;
+        background-color: #DFF1FF !important;
         background-image: 
-            radial-gradient(circle at 50% 0%, rgba(30, 58, 138, 0.32) 0%, rgba(7, 11, 25, 0.98) 70%),
-            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='84' viewBox='0 0 48 84'%3E%3Cpath d='M24 0 L48 14 L48 42 L24 56 L0 42 L0 14 Z M24 84 L48 70 L48 42 L24 56 L0 42 L0 70 Z' fill='none' stroke='rgba(56,189,248,0.06)' stroke-width='1.2'/%3E%3C/svg%3E") !important;
+            radial-gradient(circle at 50% 0%, #EDF7FF 0%, #DFF1FF 65%, #CDE8FF 100%) !important;
         background-attachment: fixed !important;
-        color: #f1f5f9 !important;
+        color: #20364D !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* Sidebar Dark Navy Glass */
+    /* Collapsible Sidebar (Pale Blue #CDE8FF) */
     [data-testid="stSidebar"], [data-testid="stSidebarContent"], [data-testid="stSidebarNav"] {
-        background-color: #050813 !important;
-        background-image: radial-gradient(circle at 50% 10%, rgba(14, 165, 233, 0.12) 0%, rgba(5, 8, 19, 0.98) 60%) !important;
-        border-right: 1px solid rgba(56, 189, 248, 0.18) !important;
+        background-color: #CDE8FF !important;
+        border-right: 1px solid #B9D9F5 !important;
     }
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
-    [data-testid="stSidebar"] label { color: #cbd5e1 !important; }
+    [data-testid="stSidebar"] label { color: #20364D !important; }
 
-    /* Titles & Typography */
+    /* Top Horizontal Navigation Container (Deeper Sky-Blue #B9DEFF) */
+    [data-testid="stTabs"] {
+        background: #B9DEFF !important;
+        padding: 8px 12px 0 12px !important;
+        border-radius: 14px !important;
+        border: 1px solid #B9D9F5 !important;
+        box-shadow: 0 4px 14px rgba(39, 132, 216, 0.12) !important;
+        margin-bottom: 1.25rem !important;
+    }
+
+    [data-testid="stTabs"] [role="tablist"] {
+        gap: 6px !important;
+        border-bottom: none !important;
+        background: transparent !important;
+    }
+
+    /* Tabs: Inactive (#F0F8FF) & Active (#2784D8) */
+    [data-testid="stTabs"] button[role="tab"] {
+        background-color: #F0F8FF !important;
+        color: #20364D !important;
+        border: 1px solid #B9D9F5 !important;
+        border-radius: 10px 10px 0 0 !important;
+        padding: 8px 18px !important;
+        font-weight: 700 !important;
+        font-size: 0.90rem !important;
+        transition: all 0.2s ease !important;
+        margin-bottom: -1px !important;
+    }
+
+    [data-testid="stTabs"] button[role="tab"]:hover {
+        background-color: #CDE8FF !important;
+        border-color: #2784D8 !important;
+        color: #102a43 !important;
+    }
+
+    [data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+        background: #2784D8 !important;
+        color: #ffffff !important;
+        border-color: #2784D8 !important;
+        box-shadow: 0 3px 10px rgba(39, 132, 216, 0.3) !important;
+    }
+
+    /* Top Brand Banner */
+    .top-banner {
+        background: #F0F8FF;
+        border: 1px solid #B9D9F5;
+        border-radius: 14px;
+        padding: 1rem 1.4rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 16px rgba(39, 132, 216, 0.08);
+    }
+
     .main-title {
-        font-size: 2.15rem;
+        font-size: 1.85rem;
         font-weight: 900;
         letter-spacing: -0.025em;
-        background: linear-gradient(135deg, #ffffff 0%, #bae6fd 50%, #38bdf8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #20364D;
         margin-bottom: 0.25rem;
     }
+
     .sub-title {
-        font-size: 0.96rem;
-        color: #94a3b8;
+        font-size: 0.95rem;
+        color: #5B7188;
         margin-bottom: 1.15rem;
-        font-weight: 400;
+        font-weight: 500;
         line-height: 1.45;
     }
 
-    /* Hexagon Motifs & Chips */
-    .hex-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 2px 8px;
-        border-radius: 4px;
-        background: rgba(56, 189, 248, 0.12);
-        border: 1px solid rgba(56, 189, 248, 0.28);
-        font-size: 0.74rem;
-        font-weight: 700;
-        color: #38bdf8;
-        letter-spacing: 0.05em;
-    }
-    .hex-icon { color: #38bdf8; filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.5)); }
-
-    /* Glass Cards */
+    /* Cards: Very Light Icy Blue (#F0F8FF) */
     .metric-card, .glass-card {
-        background: rgba(13, 22, 44, 0.72) !important;
-        backdrop-filter: blur(16px) !important;
-        -webkit-backdrop-filter: blur(16px) !important;
-        border: 1px solid rgba(56, 189, 248, 0.22) !important;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.08) !important;
-        border-radius: 14px !important;
-        padding: 1.1rem 1.25rem !important;
+        background: #F0F8FF !important;
+        border: 1px solid #B9D9F5 !important;
+        box-shadow: 0 4px 14px 0 rgba(39, 132, 216, 0.08) !important;
+        border-radius: 12px !important;
+        padding: 1.05rem 1.2rem !important;
         transition: transform 0.2s ease, border-color 0.2s ease;
     }
     .metric-card:hover, .glass-card:hover {
-        border-color: rgba(56, 189, 248, 0.45) !important;
-        box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.15) !important;
+        border-color: #2784D8 !important;
+        box-shadow: 0 6px 20px 0 rgba(39, 132, 216, 0.16) !important;
     }
-    .card-label { color: #94a3b8; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; }
-    .card-subtext { font-size: 0.8rem; color: #64748b; margin-top: 0.45rem; }
+    .card-label { 
+        color: #5B7188; 
+        font-size: 0.78rem; 
+        font-weight: 700; 
+        letter-spacing: 0.05em; 
+        text-transform: uppercase;
+    }
+    .card-subtext { 
+        font-size: 0.80rem; 
+        color: #5B7188; 
+        margin-top: 0.40rem; 
+    }
 
-    /* Glowing Risk Badges */
+    /* Glowing Risk Badges with Sky-Blue Palette Accents */
     .risk-badge-normal {
-        display: inline-flex; align-items: center; gap: 6px; padding: 0.38rem 0.95rem; border-radius: 9999px;
-        background: rgba(16, 185, 129, 0.16); border: 1px solid #10b981; color: #34d399; font-weight: 700;
-        font-size: 0.88rem; box-shadow: 0 0 16px rgba(16, 185, 129, 0.42); letter-spacing: 0.02em;
+        display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.9rem; border-radius: 9999px;
+        background: #D9F5E8; border: 1px solid #299765; color: #135c3c; font-weight: 700;
+        font-size: 0.85rem; letter-spacing: 0.02em;
     }
     .risk-badge-warning {
-        display: inline-flex; align-items: center; gap: 6px; padding: 0.38rem 0.95rem; border-radius: 9999px;
-        background: rgba(245, 158, 11, 0.18); border: 1px solid #f59e0b; color: #fbbf24; font-weight: 700;
-        font-size: 0.88rem; box-shadow: 0 0 18px rgba(245, 158, 11, 0.45); letter-spacing: 0.02em;
+        display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.9rem; border-radius: 9999px;
+        background: #FEF3C7; border: 1px solid #F2B544; color: #92400e; font-weight: 700;
+        font-size: 0.85rem; letter-spacing: 0.02em;
     }
     .risk-badge-danger {
-        display: inline-flex; align-items: center; gap: 6px; padding: 0.38rem 0.95rem; border-radius: 9999px;
-        background: rgba(239, 68, 68, 0.22); border: 1px solid #ef4444; color: #f87171; font-weight: 700;
-        font-size: 0.88rem; box-shadow: 0 0 22px rgba(239, 68, 68, 0.65); letter-spacing: 0.02em;
+        display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.9rem; border-radius: 9999px;
+        background: #FEE2E2; border: 1px solid #E45B62; color: #991b1b; font-weight: 700;
+        font-size: 0.85rem; letter-spacing: 0.02em;
         animation: pulse-danger 2s infinite ease-in-out;
     }
     @keyframes pulse-danger {
-        0%, 100% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.5); }
-        50% { box-shadow: 0 0 28px rgba(239, 68, 68, 0.9); }
+        0%, 100% { box-shadow: 0 0 10px rgba(228, 91, 98, 0.35); }
+        50% { box-shadow: 0 0 20px rgba(228, 91, 98, 0.65); }
+    }
+    .pulse-dot-green {
+        display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+        background-color: #299765; box-shadow: 0 0 6px #299765;
     }
     .pulse-dot {
         display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-        background-color: currentColor; box-shadow: 0 0 8px currentColor;
+        background-color: currentColor; box-shadow: 0 0 6px currentColor;
     }
 
-    /* Notice Banner */
+    /* Disclaimer Banner */
     .disclaimer-banner {
-        background: rgba(245, 158, 11, 0.08) !important;
-        border-left: 4px solid #f59e0b !important;
-        border: 1px solid rgba(245, 158, 11, 0.28) !important;
-        backdrop-filter: blur(14px) !important;
+        background: #EDF7FF !important;
+        border-left: 5px solid #2784D8 !important;
+        border: 1px solid #B9D9F5 !important;
         padding: 0.85rem 1.2rem !important;
         border-radius: 10px !important;
         margin-bottom: 1.25rem !important;
-        color: #fef3c7 !important;
+        color: #20364D !important;
         font-size: 0.86rem !important;
         line-height: 1.45 !important;
     }
 
-    /* Radio Navigation */
-    div[data-testid="stRadio"] > div {
-        background: rgba(13, 22, 44, 0.65) !important;
-        border: 1px solid rgba(56, 189, 248, 0.22) !important;
-        border-radius: 10px !important;
-        padding: 8px !important;
-        gap: 6px !important;
+    /* Status Pills */
+    .status-pill {
+        background: #D9F5E8; color: #135c3c; border: 1px solid #299765;
+        font-size: 0.76rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px;
+        display: inline-flex; align-items: center; gap: 5px;
     }
-    div[data-testid="stRadio"] label {
-        padding: 8px 12px !important;
+    .benchmark-pill {
+        background: #CDE8FF; color: #102a43; border: 1px solid #B9D9F5;
+        font-size: 0.76rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px;
+    }
+
+    /* Buttons */
+    div.stButton > button {
+        background-color: #2784D8 !important;
+        color: #ffffff !important;
+        border: 1px solid #1d6db5 !important;
         border-radius: 8px !important;
+        font-weight: 600 !important;
         transition: all 0.2s ease !important;
     }
-    div[data-testid="stRadio"] label:hover {
-        background: rgba(56, 189, 248, 0.12) !important;
+    div.stButton > button:hover {
+        background-color: #1d6db5 !important;
+        box-shadow: 0 4px 12px rgba(39, 132, 216, 0.3) !important;
+    }
+
+    /* Selectbox & Sliders text color */
+    div[data-testid="stSelectbox"] label,
+    div[data-testid="stSlider"] label {
+        color: #20364D !important;
+        font-weight: 600 !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 
+# =========================================================================
+# Data Loaders (Cached)
+# =========================================================================
 @st.cache_resource
 def load_predictor():
     return FloodPredictor()
@@ -229,17 +294,35 @@ nashik_station_names = list(NASHIK_STATIONS.keys())
 
 
 # =========================================================================
-# SIDEBAR: PRIMARY MODULE SELECTOR (ALL FIVE CORE MODULES)
+# Top Header Banner
 # =========================================================================
-st.sidebar.markdown("""
-<div style="padding: 0.2rem 0 0.8rem 0;">
-    <div style="font-size: 0.74rem; font-weight: 800; color: #38bdf8; letter-spacing: 0.08em; text-transform: uppercase;">
-        ⬡ CLIMATE GUARD AI MODULES
+st.markdown("""
+<div class="top-banner">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="font-size: 2.2rem; filter: drop-shadow(0 2px 8px rgba(39, 132, 216, 0.4));">🛡️</div>
+            <div>
+                <div style="font-size: 1.55rem; font-weight: 900; color: #20364D; letter-spacing: -0.02em; line-height: 1.2;">
+                    CLIMATE GUARD AI
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: #5B7188; letter-spacing: 0.02em;">
+                    Multi-Hazard Environmental Intelligence Platform • Maharashtra, India
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="status-pill"><span class="pulse-dot-green"></span> 5 AI ENGINES ACTIVE</span>
+            <span class="benchmark-pill">DATA-DRIVEN BENCHMARK DEMO</span>
+        </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-nav_options = [
+
+# =========================================================================
+# PRIMARY TOP HORIZONTAL NAVIGATION (ALL FIVE WORKING SECTIONS + LABS)
+# =========================================================================
+tab_flood, tab_heat, tab_fire, tab_crop, tab_drainage, tab_cmd, tab_arch = st.tabs([
     "🌊 1. Flood Guard AI",
     "🔥 2. Heat Guard AI",
     "🌲 3. Fire Guard AI",
@@ -247,21 +330,13 @@ nav_options = [
     "🚰 5. Drainage Network",
     "📊 Executive Command Center",
     "🧠 Validation Lab & Architecture"
-]
+])
 
-active_module = st.sidebar.radio(
-    "Select Active Module:",
-    nav_options,
-    index=0
-)
-
-st.sidebar.markdown("---")
-
-# Global Disclaimer Notice
+# Global Benchmark Notice
 st.markdown("""
 <div class="disclaimer-banner">
     <b>⚠️ DATA MODE NOTICE:</b> Operating on <b>DATA-DRIVEN BENCHMARK DEMO & SIMULATED SCENARIOS</b>.
-    Environmental metrics, wildfire ratings, crop water indices, and drainage models in this deployment are physics-grounded engineering benchmarks designed to showcase the full multi-hazard AI capabilities without presenting unverified transmissions as official live government directives.
+    Environmental metrics, wildfire ratings, crop water indices, and drainage models in this deployment are physics-grounded engineering benchmarks designed to showcase full multi-hazard AI capabilities without presenting unverified transmissions as official live government directives.
 </div>
 """, unsafe_allow_html=True)
 
@@ -269,208 +344,293 @@ st.markdown("""
 # =========================================================================
 # MODULE 1: 🌊 FLOOD GUARD AI
 # =========================================================================
-if active_module == "🌊 1. Flood Guard AI":
+with tab_flood:
     st.markdown('<div class="main-title">🌊 Flood Guard AI — Hydrological Early Warning System</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">Algorithmic River Inundation Prediction along the Godavari Basin | Nashik, Maharashtra</div>',
         unsafe_allow_html=True
     )
 
-    fg_tab1, fg_tab2, fg_tab3 = st.tabs([
-        "🎛️ AI Flood Simulator & Analytics",
-        "📈 Time-Series Hydrographs & Sensitivity Curves",
-        "🗺️ Godavari River Basin Flood Map"
-    ])
+    # State initialization for Flood Guard Presets
+    if "f_preset" not in st.session_state:
+        st.session_state["f_preset"] = "Normal Monsoon Flow (Routine July Day)"
+        st.session_state["f_station"] = "Ramkund (Panchavati)"
+        st.session_state["f_rain"] = 12.0
+        st.session_state["f_int"] = 3.0
+        st.session_state["f_gauge"] = 2.1
+        st.session_state["f_rate"] = 0.05
+        st.session_state["f_sm"] = 48.0
+        st.session_state["f_flow"] = 2800.0
 
-    with fg_tab1:
-        st.markdown("### 🎛️ Hydrological Telemetry Inputs & Presets")
-        preset = st.selectbox(
-            "Load Hydrological Scenario Preset:",
-            [
-                "Custom Parameters",
-                "Normal Monsoon Flow (Routine July Day)",
-                "Moderate River Surge (Blue Line Advisory)",
-                "Severe Dam Discharge (Red Line Flood Breach)",
-                "2019-Style Cloudburst & Reservoir Surge"
-            ]
+    def sync_flood_preset():
+        p = st.session_state["flood_preset_choice"]
+        if p == "Normal Monsoon Flow (Routine July Day)":
+            st.session_state["f_station"] = "Ramkund (Panchavati)"
+            st.session_state["f_rain"] = 12.0
+            st.session_state["f_int"] = 3.0
+            st.session_state["f_gauge"] = 2.1
+            st.session_state["f_rate"] = 0.05
+            st.session_state["f_sm"] = 48.0
+            st.session_state["f_flow"] = 2800.0
+        elif p == "Moderate River Surge (Blue Line Advisory)":
+            st.session_state["f_station"] = "Ramkund (Panchavati)"
+            st.session_state["f_rain"] = 65.0
+            st.session_state["f_int"] = 14.0
+            st.session_state["f_gauge"] = 6.6
+            st.session_state["f_rate"] = 0.7
+            st.session_state["f_sm"] = 78.0
+            st.session_state["f_flow"] = 21500.0
+        elif p == "Severe Dam Discharge (Red Line Flood Breach)":
+            st.session_state["f_station"] = "Ramkund (Panchavati)"
+            st.session_state["f_rain"] = 135.0
+            st.session_state["f_int"] = 32.0
+            st.session_state["f_gauge"] = 8.8
+            st.session_state["f_rate"] = 1.6
+            st.session_state["f_sm"] = 91.0
+            st.session_state["f_flow"] = 38000.0
+        elif p == "2019-Style Cloudburst & Reservoir Surge":
+            st.session_state["f_station"] = "Someshwar (Gangapur Rd)"
+            st.session_state["f_rain"] = 175.0
+            st.session_state["f_int"] = 45.0
+            st.session_state["f_gauge"] = 9.4
+            st.session_state["f_rate"] = 2.2
+            st.session_state["f_sm"] = 96.0
+            st.session_state["f_flow"] = 46000.0
+
+    st.markdown("### 🎛️ Hydrological Telemetry Inputs & Presets")
+    preset_options = [
+        "Normal Monsoon Flow (Routine July Day)",
+        "Moderate River Surge (Blue Line Advisory)",
+        "Severe Dam Discharge (Red Line Flood Breach)",
+        "2019-Style Cloudburst & Reservoir Surge",
+        "Custom Parameters"
+    ]
+    st.selectbox(
+        "Load Hydrological Scenario Preset:",
+        preset_options,
+        key="flood_preset_choice",
+        on_change=sync_flood_preset
+    )
+
+    c_st, c_sl1, c_sl2 = st.columns([1, 1.5, 1.5])
+    with c_st:
+        cur_st = st.session_state.get("f_station", "Ramkund (Panchavati)")
+        st_idx = nashik_station_names.index(cur_st) if cur_st in nashik_station_names else 0
+        sel_station = st.selectbox("Monitored River Station", nashik_station_names, index=st_idx, key="f_station")
+        st_info = NASHIK_STATIONS[sel_station]
+        st.caption(f"📍 Elev: {st_info['elevation_m']}m | Warn: {st_info['warning_gauge_m']}m | Danger: {st_info['danger_gauge_m']}m")
+
+    with c_sl1:
+        input_rain = st.slider("24h Rainfall (mm)", 0.0, 350.0, step=1.0, key="f_rain")
+        input_int = st.slider("Rainfall Intensity (mm/h)", 0.0, 120.0, step=0.5, key="f_int")
+        input_sm = st.slider("Soil Moisture (%)", 10.0, 100.0, step=1.0, key="f_sm")
+
+    with c_sl2:
+        input_gauge = st.slider("River Gauge Level (m)", 0.5, 14.0, step=0.1, key="f_gauge")
+        input_rate = st.slider("Rate of Change (m/h)", -3.0, 4.0, step=0.05, key="f_rate")
+        input_flow = st.slider("Dam Discharge (cusecs)", 500.0, 75000.0, step=500.0, key="f_flow")
+
+    pred_res = predictor.predict_scenario(
+        location=sel_station,
+        rainfall_mm=input_rain,
+        rainfall_intensity_mm_h=input_int,
+        river_water_level_m=input_gauge,
+        water_level_change_rate_m_h=input_rate,
+        soil_moisture_pct=input_sm,
+        flow_rate_cusecs=input_flow
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    m1, m2, m3, m4 = st.columns(4)
+    r_badge = pred_res["risk_badge"]
+    r_color = pred_res["risk_color"]
+    prob = pred_res["flood_probability_pct"]
+
+    badge_cls = "risk-badge-danger" if "RED" in r_badge or "CRITICAL" in r_badge else ("risk-badge-warning" if "BLUE" in r_badge or "WARNING" in r_badge else "risk-badge-normal")
+
+    with m1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">RISK CLASSIFICATION</span>
+            <div style="margin-top: 0.5rem;"><span class="{badge_cls}"><span class="pulse-dot"></span>{r_badge}</span></div>
+            <div class="card-subtext">Station: <b>{sel_station}</b></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with m2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">INUNDATION PROBABILITY</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: {r_color}; margin-top: 0.2rem;">{prob}%</div>
+            <div class="card-subtext">Calibrated Random Forest Confidence</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with m3:
+        d_line = st_info["danger_gauge_m"]
+        diff = d_line - input_gauge
+        status_txt = f"{abs(diff):.1f}m {'BELOW' if diff >= 0 else 'ABOVE'} RED LINE"
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">RIVER LEVEL</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #20364D; margin-top: 0.2rem;">{input_gauge:.1f} m</div>
+            <div class="card-subtext" style="color:{'#E45B62' if diff < 0 else '#2784D8'}; font-weight:700;">{status_txt}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with m4:
+        st.markdown(f"""
+        <div class="metric-card">
+            <span class="card-label">DAM SPILLWAY OUTFLOW</span>
+            <div style="font-size: 2.1rem; font-weight: 900; color: #20364D; margin-top: 0.2rem;">{input_flow:,.0f} cusecs</div>
+            <div class="card-subtext">Gangapur Reservoir Discharge</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Dynamic Sensitivity Graphs
+    st.subheader("📊 Real-Time Sensitivity Analysis Curves")
+    st.caption("Graphs dynamically re-compute through the Random Forest model as you adjust telemetry sliders above:")
+    sc1, sc2 = st.columns(2)
+    with sc1:
+        fig_sens_int = cu.build_flood_intensity_sensitivity_chart(
+            predictor, sel_station, input_rain, input_int, input_gauge, input_rate, input_sm, input_flow
         )
+        st.plotly_chart(fig_sens_int, use_container_width=True)
 
-        p_station = "Ramkund (Panchavati)"
-        p_rain, p_int, p_gauge, p_rate, p_sm, p_flow = 18.0, 4.0, 2.4, 0.1, 52.0, 3500.0
+    with sc2:
+        fig_sens_gauge = cu.build_flood_gauge_sensitivity_chart(
+            predictor, sel_station, input_rain, input_int, input_gauge, input_rate, input_sm, input_flow
+        )
+        st.plotly_chart(fig_sens_gauge, use_container_width=True)
 
-        if preset == "Normal Monsoon Flow (Routine July Day)":
-            p_rain, p_int, p_gauge, p_rate, p_sm, p_flow = 12.0, 3.0, 2.1, 0.05, 48.0, 2800.0
-        elif preset == "Moderate River Surge (Blue Line Advisory)":
-            p_rain, p_int, p_gauge, p_rate, p_sm, p_flow = 65.0, 14.0, 6.6, 0.7, 78.0, 21500.0
-        elif preset == "Severe Dam Discharge (Red Line Flood Breach)":
-            p_rain, p_int, p_gauge, p_rate, p_sm, p_flow = 135.0, 32.0, 8.8, 1.6, 91.0, 38000.0
-        elif preset == "2019-Style Cloudburst & Reservoir Surge":
-            p_station = "Someshwar (Gangapur Rd)"
-            p_rain, p_int, p_gauge, p_rate, p_sm, p_flow = 175.0, 45.0, 9.4, 2.2, 96.0, 46000.0
+    st.markdown("---")
+    st.subheader("📈 Multi-Year Monsoon Time-Series & Trends")
+    st.caption("Historical & benchmark sensor telemetry trends: Rainfall Intensity, Gauge Height, Discharge, and Soil Moisture:")
+    fig_ts = cu.build_flood_time_series_chart(hist_df, sel_station, window_records=168)
+    if fig_ts:
+        st.plotly_chart(fig_ts, use_container_width=True)
+    else:
+        st.info("Loading time-series records...")
 
-        c_st, c_sl1, c_sl2 = st.columns([1, 1.5, 1.5])
-        with c_st:
-            sel_station = st.selectbox("Monitored River Station", nashik_station_names, index=nashik_station_names.index(p_station) if p_station in nashik_station_names else 0)
-            st_info = NASHIK_STATIONS[sel_station]
-            st.caption(f"📍 Elev: {st_info['elevation_m']}m | Warn: {st_info['warning_gauge_m']}m | Danger: {st_info['danger_gauge_m']}m")
+    # Summary Statistics Table
+    if hist_df is not None:
+        st.markdown("#### Hydrological Baseline Statistics for Monitored Season")
+        st_slice = hist_df[hist_df["location"] == sel_station]
+        stats = st_slice[["rainfall_mm", "rainfall_intensity_mm_h", "river_water_level_m", "soil_moisture_pct", "flow_rate_cusecs"]].describe().T[["mean", "min", "50%", "max", "std"]]
+        stats.columns = ["Mean", "Min", "Median (50%)", "Max", "Std Dev"]
+        st.dataframe(stats.round(2), use_container_width=True)
 
-        with c_sl1:
-            input_rain = st.slider("24h Rainfall (mm)", 0.0, 350.0, float(p_rain), 1.0)
-            input_int = st.slider("Rainfall Intensity (mm/h)", 0.0, 120.0, float(p_int), 0.5)
-            input_sm = st.slider("Soil Moisture (%)", 10.0, 100.0, float(p_sm), 1.0)
+    st.markdown("---")
+    st.subheader("🗺️ Godavari River Basin Flood Vulnerability Map")
+    m_flood = folium.Map(location=[20.015, 73.800], zoom_start=11, tiles="OpenStreetMap", prefer_canvas=True)
+    river_coords = [
+        [19.9320, 73.5300], [20.0489, 73.6890], [20.0315, 73.7432],
+        [20.0077, 73.7915], [20.0125, 73.7980], [19.9982, 73.8156],
+        [19.9620, 73.8650], [20.0890, 74.0520]
+    ]
+    folium.PolyLine(river_coords, color="#2784D8", weight=4.5, opacity=0.9, tooltip="Godavari Flow Direction").add_to(m_flood)
 
-        with c_sl2:
-            input_gauge = st.slider("River Gauge Level (m)", 0.5, 14.0, float(p_gauge), 0.1)
-            input_rate = st.slider("Rate of Change (m/h)", -3.0, 4.0, float(p_rate), 0.05)
-            input_flow = st.slider("Dam Discharge (cusecs)", 500.0, 75000.0, float(p_flow), 500.0)
-
-        pred_res = predictor.predict_scenario(
-            location=sel_station,
+    for s_name, meta in NASHIK_STATIONS.items():
+        sp = predictor.predict_scenario(
+            location=s_name,
             rainfall_mm=input_rain,
             rainfall_intensity_mm_h=input_int,
-            river_water_level_m=input_gauge,
+            river_water_level_m=meta["warning_gauge_m"] * (input_gauge / st_info["warning_gauge_m"]),
             water_level_change_rate_m_h=input_rate,
             soil_moisture_pct=input_sm,
             flow_rate_cusecs=input_flow
         )
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        m1, m2, m3, m4 = st.columns(4)
-        r_badge = pred_res["risk_badge"]
-        r_color = pred_res["risk_color"]
-        prob = pred_res["flood_probability_pct"]
-
-        badge_cls = "risk-badge-danger" if "RED" in r_badge or "CRITICAL" in r_badge else ("risk-badge-warning" if "BLUE" in r_badge or "WARNING" in r_badge else "risk-badge-normal")
-
-        with m1:
-            st.markdown(f"""
-            <div class="metric-card">
-                <span class="card-label">RISK CLASSIFICATION</span>
-                <div style="margin-top: 0.5rem;"><span class="{badge_cls}"><span class="pulse-dot"></span>{r_badge}</span></div>
-                <div class="card-subtext">Station: <b>{sel_station}</b></div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with m2:
-            st.markdown(f"""
-            <div class="metric-card">
-                <span class="card-label">INUNDATION PROBABILITY</span>
-                <div style="font-size: 2.1rem; font-weight: 900; color: {r_color}; margin-top: 0.2rem;">{prob}%</div>
-                <div class="card-subtext">Calibrated Random Forest Confidence</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with m3:
-            d_line = st_info["danger_gauge_m"]
-            diff = d_line - input_gauge
-            status_txt = f"{abs(diff):.1f}m {'BELOW' if diff >= 0 else 'ABOVE'} RED LINE"
-            st.markdown(f"""
-            <div class="metric-card">
-                <span class="card-label">RIVER LEVEL</span>
-                <div style="font-size: 2.1rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem;">{input_gauge:.1f} m</div>
-                <div class="card-subtext" style="color:{'#ef4444' if diff < 0 else '#38bdf8'}; font-weight:700;">{status_txt}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with m4:
-            st.markdown(f"""
-            <div class="metric-card">
-                <span class="card-label">DAM SPILLWAY OUTFLOW</span>
-                <div style="font-size: 2.1rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem;">{input_flow:,.0f} cusecs</div>
-                <div class="card-subtext">Gangapur Reservoir Discharge</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Dynamic Sensitivity Graphs (Requirements 1.4 & 1.5)
-        st.subheader("📊 Real-Time Sensitivity Analysis Curves")
-        st.caption("Graphs dynamically re-compute through the Random Forest model as you adjust telemetry sliders above:")
-        sc1, sc2 = st.columns(2)
-        with sc1:
-            fig_sens_int = cu.build_flood_intensity_sensitivity_chart(
-                predictor, sel_station, input_rain, input_int, input_gauge, input_rate, input_sm, input_flow
-            )
-            st.plotly_chart(fig_sens_int, use_container_width=True)
-
-        with sc2:
-            fig_sens_gauge = cu.build_flood_gauge_sensitivity_chart(
-                predictor, sel_station, input_rain, input_int, input_gauge, input_rate, input_sm, input_flow
-            )
-            st.plotly_chart(fig_sens_gauge, use_container_width=True)
-
-    with fg_tab2:
-        st.subheader("📈 Multi-Year Monsoon Time-Series & Trends")
-        st.caption("Historical & benchmark sensor telemetry trends: Rainfall Intensity, Gauge Height, Discharge, and Soil Moisture:")
-        fig_ts = cu.build_flood_time_series_chart(hist_df, sel_station, window_records=168)
-        if fig_ts:
-            st.plotly_chart(fig_ts, use_container_width=True)
-        else:
-            st.info("Loading time-series records...")
-
-        # Summary Statistics Table
-        if hist_df is not None:
-            st.markdown("#### Hydrological Baseline Statistics for Monitored Season")
-            st_slice = hist_df[hist_df["location"] == sel_station]
-            stats = st_slice[["rainfall_mm", "rainfall_intensity_mm_h", "river_water_level_m", "soil_moisture_pct", "flow_rate_cusecs"]].describe().T[["mean", "min", "50%", "max", "std"]]
-            stats.columns = ["Mean", "Min", "Median (50%)", "Max", "Std Dev"]
-            st.dataframe(stats.round(2), use_container_width=True)
-
-    with fg_tab3:
-        st.subheader("🗺️ Godavari River Basin Flood Vulnerability Map")
-        m_flood = folium.Map(location=[20.015, 73.800], zoom_start=11, tiles="CartoDB dark_matter", prefer_canvas=True)
-        river_coords = [
-            [19.9320, 73.5300], [20.0489, 73.6890], [20.0315, 73.7432],
-            [20.0077, 73.7915], [20.0125, 73.7980], [19.9982, 73.8156],
-            [19.9620, 73.8650], [20.0890, 74.0520]
-        ]
-        folium.PolyLine(river_coords, color="#00f0ff", weight=4.5, opacity=0.9, tooltip="Godavari Flow Direction").add_to(m_flood)
-
-        for s_name, meta in NASHIK_STATIONS.items():
-            sp = predictor.predict_scenario(
-                location=s_name,
-                rainfall_mm=input_rain,
-                rainfall_intensity_mm_h=input_int,
-                river_water_level_m=meta["warning_gauge_m"] * (input_gauge / st_info["warning_gauge_m"]),
-                water_level_change_rate_m_h=input_rate,
-                soil_moisture_pct=input_sm,
-                flow_rate_cusecs=input_flow
-            )
-            col = sp["risk_color"]
-            folium.CircleMarker(
-                location=[meta["lat"], meta["lon"]],
-                radius=10 if s_name == sel_station else 7,
-                color="#ffffff" if s_name == sel_station else col,
-                weight=3 if s_name == sel_station else 2,
-                fill=True,
-                fill_color=col,
-                fill_opacity=0.9,
-                tooltip=f"{s_name}: {sp['risk_badge']} ({sp['flood_probability_pct']}%)"
-            ).add_to(m_flood)
-        st_folium(m_flood, height=450, use_container_width=True)
+        col = sp["risk_color"]
+        folium.CircleMarker(
+            location=[meta["lat"], meta["lon"]],
+            radius=11 if s_name == sel_station else 7,
+            color="#20364D" if s_name == sel_station else col,
+            weight=3 if s_name == sel_station else 2,
+            fill=True,
+            fill_color=col,
+            fill_opacity=0.9,
+            tooltip=f"{s_name}: {sp['risk_badge']} ({sp['flood_probability_pct']}%)"
+        ).add_to(m_flood)
+    st_folium(m_flood, height=450, use_container_width=True)
 
 
 # =========================================================================
 # MODULE 2: 🔥 HEAT GUARD AI
 # =========================================================================
-elif active_module == "🔥 2. Heat Guard AI":
+with tab_heat:
     st.markdown('<div class="main-title">🔥 Heat Guard AI — Thermal & Heatwave Intelligence</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">NWS Heat Index, Stull Wet-Bulb & IMD Plains Heatwave Monitoring | Maharashtra State</div>',
         unsafe_allow_html=True
     )
 
+    # State initialization for Heat Guard Presets
+    if "h_preset" not in st.session_state:
+        st.session_state["h_preset"] = "Vidarbha Severe Heatwave (Nagpur 45.5°C)"
+        st.session_state["h_city"] = "Nagpur (Vidarbha)"
+        st.session_state["h_temp"] = 45.5
+        st.session_state["h_rh"] = 34.0
+        st.session_state["h_wind"] = 14.0
+        st.session_state["h_days"] = 4
+
+    def sync_heat_preset():
+        p = st.session_state["heat_preset_choice"]
+        if p == "Vidarbha Severe Heatwave (Nagpur 45.5°C)":
+            st.session_state["h_city"] = "Nagpur (Vidarbha)"
+            st.session_state["h_temp"] = 45.5
+            st.session_state["h_rh"] = 34.0
+            st.session_state["h_wind"] = 14.0
+            st.session_state["h_days"] = 4
+        elif p == "Coastal Mumbai Humid Heat (36°C / 82% RH)":
+            st.session_state["h_city"] = "Mumbai (Coastal)"
+            st.session_state["h_temp"] = 36.0
+            st.session_state["h_rh"] = 82.0
+            st.session_state["h_wind"] = 18.0
+            st.session_state["h_days"] = 2
+        elif p == "Routine Summer Afternoon (Pune 38°C)":
+            st.session_state["h_city"] = "Pune (Western Maharashtra)"
+            st.session_state["h_temp"] = 38.0
+            st.session_state["h_rh"] = 36.0
+            st.session_state["h_wind"] = 12.0
+            st.session_state["h_days"] = 1
+        elif p == "Plateau Dry Heat (Nashik 40°C)":
+            st.session_state["h_city"] = "Nashik (North Maharashtra)"
+            st.session_state["h_temp"] = 40.0
+            st.session_state["h_rh"] = 28.0
+            st.session_state["h_wind"] = 15.0
+            st.session_state["h_days"] = 2
+
+    st.markdown("### 🎛️ Thermal Scenario Presets & Meteorological Inputs")
+    heat_presets = [
+        "Vidarbha Severe Heatwave (Nagpur 45.5°C)",
+        "Coastal Mumbai Humid Heat (36°C / 82% RH)",
+        "Routine Summer Afternoon (Pune 38°C)",
+        "Plateau Dry Heat (Nashik 40°C)",
+        "Custom Parameters"
+    ]
+    st.selectbox(
+        "Load Thermal Scenario Preset:",
+        heat_presets,
+        key="heat_preset_choice",
+        on_change=sync_heat_preset
+    )
+
     h_col1, h_col2 = st.columns([1, 2])
     with h_col1:
         st.subheader("📍 City & Weather Parameters")
-        heat_city = st.selectbox("Select Maharashtra City:", list(MAHARASHTRA_HEAT_CITIES.keys()), index=0)
+        heat_cities = list(MAHARASHTRA_HEAT_CITIES.keys())
+        cur_city = st.session_state.get("h_city", heat_cities[0])
+        city_idx = heat_cities.index(cur_city) if cur_city in heat_cities else 0
+        heat_city = st.selectbox("Select Maharashtra City:", heat_cities, index=city_idx, key="h_city")
         c_meta = MAHARASHTRA_HEAT_CITIES[heat_city]
         st.caption(f"📍 {c_meta['region']} | Normal Tmax: **{c_meta['tmax_normal']}°C** | {c_meta['risk_profile']}")
 
-        heat_temp = st.slider("Ambient Temperature (°C)", 25.0, 50.0, 42.5, 0.5)
-        heat_rh = st.slider("Relative Humidity (%)", 10.0, 95.0, 38.0, 1.0)
-        heat_wind = st.slider("10m Wind Velocity (km/h)", 2.0, 45.0, 14.0, 1.0)
-        heat_days = st.slider("Consecutive Days > 40°C", 1, 10, 3)
+        heat_temp = st.slider("Ambient Temperature (°C)", 25.0, 50.0, step=0.5, key="h_temp")
+        heat_rh = st.slider("Relative Humidity (%)", 10.0, 95.0, step=1.0, key="h_rh")
+        heat_wind = st.slider("10m Wind Velocity (km/h)", 2.0, 45.0, step=1.0, key="h_wind")
+        heat_days = st.slider("Consecutive Days > 40°C", 1, 10, step=1, key="h_days")
 
     heat_eval = evaluate_heat_risk(heat_city, heat_temp, heat_rh, heat_wind, heat_days)
 
@@ -481,7 +641,7 @@ elif active_module == "🔥 2. Heat Guard AI":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">NWS HEAT INDEX</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #f59e0b; margin-top: 0.2rem;">{heat_eval['heat_index_c']}°C</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #F2B544; margin-top: 0.2rem;">{heat_eval['heat_index_c']}°C</div>
                 <div class="card-subtext">Rothfusz Apparent Heat</div>
             </div>
             """, unsafe_allow_html=True)
@@ -489,13 +649,13 @@ elif active_module == "🔥 2. Heat Guard AI":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">WET-BULB TEMP</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #38bdf8; margin-top: 0.2rem;">{heat_eval['wet_bulb_c']}°C</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #2784D8; margin-top: 0.2rem;">{heat_eval['wet_bulb_c']}°C</div>
                 <div class="card-subtext">Stull Thermal Equation</div>
             </div>
             """, unsafe_allow_html=True)
         with hc3:
             dep = heat_eval['departure_c']
-            dep_color = "#ef4444" if dep >= 4.5 else ("#f59e0b" if dep > 0 else "#10b981")
+            dep_color = "#E45B62" if dep >= 4.5 else ("#F2B544" if dep > 0 else "#299765")
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">IMD DEPARTURE</span>
@@ -518,7 +678,7 @@ elif active_module == "🔥 2. Heat Guard AI":
             st.warning(f"• {p}")
 
     st.markdown("---")
-    # Interactive Heat Graphs (Requirements 2.1 - 2.4)
+    # Interactive Heat Graphs
     st.subheader("📊 Interactive Heat Risk Dynamics & Sensitivity Curves")
     hg_c1, hg_c2 = st.columns(2)
     with hg_c1:
@@ -531,7 +691,7 @@ elif active_module == "🔥 2. Heat Guard AI":
 
     st.markdown("---")
     st.subheader("🗺️ Maharashtra State Thermal Vulnerability Map")
-    m_heat = folium.Map(location=[19.5, 76.0], zoom_start=6, tiles="CartoDB dark_matter", prefer_canvas=True)
+    m_heat = folium.Map(location=[19.5, 76.0], zoom_start=6, tiles="OpenStreetMap", prefer_canvas=True)
     for c_name, c_data in MAHARASHTRA_HEAT_CITIES.items():
         c_eval = evaluate_heat_risk(c_name, heat_temp, heat_rh)
         folium.CircleMarker(
@@ -549,24 +709,78 @@ elif active_module == "🔥 2. Heat Guard AI":
 # =========================================================================
 # MODULE 3: 🌲 FIRE GUARD AI
 # =========================================================================
-elif active_module == "🌲 3. Fire Guard AI":
+with tab_fire:
     st.markdown('<div class="main-title">🌲 Fire Guard AI — Wildfire Weather Index & Risk Scoring</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">Canadian Forest Fire Weather Index (FWI) System | Maharashtra Tiger Reserves & Western Ghats</div>',
         unsafe_allow_html=True
     )
 
+    # State initialization for Fire Guard Presets
+    if "fr_preset" not in st.session_state:
+        st.session_state["fr_preset"] = "Tadoba Dry Season Extreme (FWI High)"
+        st.session_state["fr_region"] = "Tadoba-Andhari Tiger Reserve (Chandrapur)"
+        st.session_state["fr_temp"] = 41.5
+        st.session_state["fr_rh"] = 18.0
+        st.session_state["fr_wind"] = 28.0
+        st.session_state["fr_dry_days"] = 18
+
+    def sync_fire_preset():
+        p = st.session_state["fire_preset_choice"]
+        if p == "Tadoba Dry Season Extreme (FWI High)":
+            st.session_state["fr_region"] = "Tadoba-Andhari Tiger Reserve (Chandrapur)"
+            st.session_state["fr_temp"] = 41.5
+            st.session_state["fr_rh"] = 18.0
+            st.session_state["fr_wind"] = 28.0
+            st.session_state["fr_dry_days"] = 18
+        elif p == "Melghat Deciduous Summer Heat":
+            st.session_state["fr_region"] = "Melghat Tiger Reserve (Amravati)"
+            st.session_state["fr_temp"] = 39.0
+            st.session_state["fr_rh"] = 22.0
+            st.session_state["fr_wind"] = 22.0
+            st.session_state["fr_dry_days"] = 12
+        elif p == "Western Ghats Pre-Monsoon Moisture (Low Fire Risk)":
+            st.session_state["fr_region"] = "Sahyadri Tiger Reserve (Koyna / Chandoli)"
+            st.session_state["fr_temp"] = 31.0
+            st.session_state["fr_rh"] = 65.0
+            st.session_state["fr_wind"] = 14.0
+            st.session_state["fr_dry_days"] = 3
+        elif p == "Sanjay Gandhi NP Urban Border Dry Spell":
+            st.session_state["fr_region"] = "Sanjay Gandhi National Park (Borivali)"
+            st.session_state["fr_temp"] = 35.5
+            st.session_state["fr_rh"] = 38.0
+            st.session_state["fr_wind"] = 19.0
+            st.session_state["fr_dry_days"] = 9
+
+    st.markdown("### 🎛️ Forest Wildfire Scenario Presets & Atmospheric Inputs")
+    fire_presets = [
+        "Tadoba Dry Season Extreme (FWI High)",
+        "Melghat Deciduous Summer Heat",
+        "Western Ghats Pre-Monsoon Moisture (Low Fire Risk)",
+        "Sanjay Gandhi NP Urban Border Dry Spell",
+        "Custom Parameters"
+    ]
+    st.selectbox(
+        "Load Wildfire Scenario Preset:",
+        fire_presets,
+        key="fire_preset_choice",
+        on_change=sync_fire_preset
+    )
+
     f_col1, f_col2 = st.columns([1, 2])
     with f_col1:
         st.subheader("🌲 Forest Reserve & Atmospheric Inputs")
-        fire_region = st.selectbox("Select Forest Reserve:", list(MAHARASHTRA_FIRE_REGIONS.keys()), index=0)
+        fire_regions = list(MAHARASHTRA_FIRE_REGIONS.keys())
+        cur_reg = st.session_state.get("fr_region", fire_regions[0])
+        reg_idx = fire_regions.index(cur_reg) if cur_reg in fire_regions else 0
+        fire_region = st.selectbox("Select Forest Reserve:", fire_regions, index=reg_idx, key="fr_region")
         f_meta = MAHARASHTRA_FIRE_REGIONS[fire_region]
         st.caption(f"📍 District: **{f_meta['district']}** | Elev: {f_meta['elevation']}m | Fuel: **{f_meta['fuel_type']}**")
 
-        f_temp = st.slider("Dry-Bulb Temperature (°C)", 15.0, 48.0, 39.5, 0.5)
-        f_rh = st.slider("Relative Humidity (%)", 5.0, 90.0, 22.0, 1.0)
-        f_wind = st.slider("10m Wind Velocity (km/h)", 2.0, 60.0, 24.0, 1.0)
-        f_dry_days = st.slider("Days Since Last Rain", 0, 30, 12)
+        f_temp = st.slider("Dry-Bulb Temperature (°C)", 15.0, 48.0, step=0.5, key="fr_temp")
+        f_rh = st.slider("Relative Humidity (%)", 5.0, 90.0, step=1.0, key="fr_rh")
+        f_wind = st.slider("10m Wind Velocity (km/h)", 2.0, 60.0, step=1.0, key="fr_wind")
+        f_dry_days = st.slider("Days Since Last Rain", 0, 30, step=1, key="fr_dry_days")
 
     fwi_eval = calculate_fwi_system(f_temp, f_rh, f_wind, f_dry_days)
 
@@ -577,7 +791,7 @@ elif active_module == "🌲 3. Fire Guard AI":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">FINE FUEL (FFMC)</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #f59e0b; margin-top: 0.2rem;">{fwi_eval['ffmc']}</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #F2B544; margin-top: 0.2rem;">{fwi_eval['ffmc']}</div>
                 <div class="card-subtext">Litter Layer Moisture</div>
             </div>
             """, unsafe_allow_html=True)
@@ -585,7 +799,7 @@ elif active_module == "🌲 3. Fire Guard AI":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">SPREAD INDEX (ISI)</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #38bdf8; margin-top: 0.2rem;">{fwi_eval['isi']}</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #2784D8; margin-top: 0.2rem;">{fwi_eval['isi']}</div>
                 <div class="card-subtext">Rate of Fire Spread</div>
             </div>
             """, unsafe_allow_html=True)
@@ -593,7 +807,7 @@ elif active_module == "🌲 3. Fire Guard AI":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">BUILDUP INDEX (BUI)</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #f87171; margin-top: 0.2rem;">{fwi_eval['bui']}</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #E45B62; margin-top: 0.2rem;">{fwi_eval['bui']}</div>
                 <div class="card-subtext">Combustible Fuel Mass</div>
             </div>
             """, unsafe_allow_html=True)
@@ -612,7 +826,7 @@ elif active_module == "🌲 3. Fire Guard AI":
             st.error(f"• {adv}")
 
     st.markdown("---")
-    # Interactive Fire Graphs (Requirements 3.1 - 3.4)
+    # Interactive Fire Graphs
     st.subheader("📊 Interactive Fire Risk Trends & Meteorological Sensitivity")
     fg_c1, fg_c2 = st.columns(2)
     with fg_c1:
@@ -625,7 +839,7 @@ elif active_module == "🌲 3. Fire Guard AI":
 
     st.markdown("---")
     st.subheader("🗺️ Maharashtra Protected Reserves Fire Danger Map")
-    m_fire = folium.Map(location=[19.5, 76.5], zoom_start=6, tiles="CartoDB dark_matter", prefer_canvas=True)
+    m_fire = folium.Map(location=[19.5, 76.5], zoom_start=6, tiles="OpenStreetMap", prefer_canvas=True)
     for f_name, f_data in MAHARASHTRA_FIRE_REGIONS.items():
         folium.CircleMarker(
             location=[f_data["lat"], f_data["lon"]],
@@ -642,25 +856,86 @@ elif active_module == "🌲 3. Fire Guard AI":
 # =========================================================================
 # MODULE 4: 🌾 CROP SHIELD AI
 # =========================================================================
-elif active_module == "🌾 4. Crop Shield AI":
+with tab_crop:
     st.markdown('<div class="main-title">🌾 Crop Shield AI — Agricultural Weather-Risk & Crop Water Stress</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">FAO-56 Evapotranspiration, Phenological Stress & Waterlogging Defense | Maharashtra Cropping Systems</div>',
         unsafe_allow_html=True
     )
 
+    # State initialization for Crop Shield Presets
+    if "cr_preset" not in st.session_state:
+        st.session_state["cr_preset"] = "Nashik Onion — Bulbing Moisture Deficit"
+        st.session_state["cr_crop"] = "Onion (Nashik Red)"
+        st.session_state["cr_stage_idx"] = 2
+        st.session_state["cr_temp"] = 33.0
+        st.session_state["cr_sm"] = 42.0
+        st.session_state["cr_rain"] = 4.0
+        st.session_state["cr_eto"] = 5.6
+
+    def sync_crop_preset():
+        p = st.session_state["crop_preset_choice"]
+        if p == "Nashik Onion — Bulbing Moisture Deficit":
+            st.session_state["cr_crop"] = "Onion (Nashik Red)"
+            st.session_state["cr_stage_idx"] = 2
+            st.session_state["cr_temp"] = 33.0
+            st.session_state["cr_sm"] = 42.0
+            st.session_state["cr_rain"] = 4.0
+            st.session_state["cr_eto"] = 5.6
+        elif p == "Vidarbha Cotton — Peak Boll Flowering Heat Stress":
+            st.session_state["cr_crop"] = "Cotton (Vidarbha Hybrid)"
+            st.session_state["cr_stage_idx"] = 2
+            st.session_state["cr_temp"] = 38.5
+            st.session_state["cr_sm"] = 38.0
+            st.session_state["cr_rain"] = 0.0
+            st.session_state["cr_eto"] = 6.4
+        elif p == "Marathwada Soybean — Pod Development Optimal":
+            st.session_state["cr_crop"] = "Soybean (Marathwada)"
+            st.session_state["cr_stage_idx"] = 2
+            st.session_state["cr_temp"] = 29.0
+            st.session_state["cr_sm"] = 68.0
+            st.session_state["cr_rain"] = 25.0
+            st.session_state["cr_eto"] = 4.8
+        elif p == "Western Maharashtra Sugarcane — Canopy Waterlogging":
+            st.session_state["cr_crop"] = "Sugarcane (Western Maha)"
+            st.session_state["cr_stage_idx"] = 2
+            st.session_state["cr_temp"] = 27.0
+            st.session_state["cr_sm"] = 92.0
+            st.session_state["cr_rain"] = 85.0
+            st.session_state["cr_eto"] = 4.0
+
+    st.markdown("### 🎛️ Agronomic Scenario Presets & Crop Telemetry")
+    crop_presets = [
+        "Nashik Onion — Bulbing Moisture Deficit",
+        "Vidarbha Cotton — Peak Boll Flowering Heat Stress",
+        "Marathwada Soybean — Pod Development Optimal",
+        "Western Maharashtra Sugarcane — Canopy Waterlogging",
+        "Custom Parameters"
+    ]
+    st.selectbox(
+        "Load Agronomic Scenario Preset:",
+        crop_presets,
+        key="crop_preset_choice",
+        on_change=sync_crop_preset
+    )
+
     cr_col1, cr_col2 = st.columns([1, 2])
     with cr_col1:
         st.subheader("🌱 Agronomic Configuration")
-        sel_crop = st.selectbox("Select Maharashtra Crop:", list(CROP_PROFILES.keys()), index=0)
+        crops_list = list(CROP_PROFILES.keys())
+        cur_crop = st.session_state.get("cr_crop", crops_list[0])
+        crop_idx = crops_list.index(cur_crop) if cur_crop in crops_list else 0
+        sel_crop = st.selectbox("Select Maharashtra Crop:", crops_list, index=crop_idx, key="cr_crop")
         c_prof = CROP_PROFILES[sel_crop]
-        sel_stage = st.selectbox("Current Phenological Stage:", c_prof["stages"], index=2)
+
+        cur_stg_idx = min(st.session_state.get("cr_stage_idx", 2), len(c_prof["stages"]) - 1)
+        sel_stage = st.selectbox("Current Phenological Stage:", c_prof["stages"], index=cur_stg_idx)
         stage_idx = c_prof["stages"].index(sel_stage)
 
-        cr_temp = st.slider("Mean Daily Temperature (°C)", 10.0, 46.0, 32.0, 0.5)
-        cr_sm = st.slider("Root-Zone Soil Moisture (%)", 10.0, 95.0, 62.0, 1.0)
-        cr_rain = st.slider("24h Rain Precipitation (mm)", 0.0, 180.0, 15.0, 1.0)
-        cr_eto = st.slider("Reference Evapotranspiration ETo (mm/day)", 2.0, 9.0, 5.2, 0.1)
+        cr_temp = st.slider("Mean Daily Temperature (°C)", 10.0, 46.0, step=0.5, key="cr_temp")
+        cr_sm = st.slider("Root-Zone Soil Moisture (%)", 10.0, 95.0, step=1.0, key="cr_sm")
+        cr_rain = st.slider("24h Rain Precipitation (mm)", 0.0, 180.0, step=1.0, key="cr_rain")
+        cr_eto = st.slider("Reference Evapotranspiration ETo (mm/day)", 2.0, 9.0, step=0.1, key="cr_eto")
 
     crop_eval = assess_crop_health(sel_crop, stage_idx, cr_temp, cr_sm, cr_rain, cr_eto)
 
@@ -671,7 +946,7 @@ elif active_module == "🌾 4. Crop Shield AI":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">CROP COEFF (Kc)</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #38bdf8; margin-top: 0.2rem;">{crop_eval['kc']}</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #2784D8; margin-top: 0.2rem;">{crop_eval['kc']}</div>
                 <div class="card-subtext">FAO-56 Stage Multiplier</div>
             </div>
             """, unsafe_allow_html=True)
@@ -679,7 +954,7 @@ elif active_module == "🌾 4. Crop Shield AI":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">WATER DEMAND (ETc)</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #f59e0b; margin-top: 0.2rem;">{crop_eval['etc_mm_day']} mm</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #F2B544; margin-top: 0.2rem;">{crop_eval['etc_mm_day']} mm</div>
                 <div class="card-subtext">Daily Transpiration Need</div>
             </div>
             """, unsafe_allow_html=True)
@@ -707,7 +982,7 @@ elif active_module == "🌾 4. Crop Shield AI":
             st.info(f"• {rec}")
 
     st.markdown("---")
-    # Interactive Crop Graphs (Requirements 4.1 - 4.4)
+    # Interactive Crop Graphs
     st.subheader("📊 Interactive Agronomic Water Demand & Soil Stress Curves")
     cg_c1, cg_c2 = st.columns(2)
     with cg_c1:
@@ -727,23 +1002,72 @@ elif active_module == "🌾 4. Crop Shield AI":
 # =========================================================================
 # MODULE 5: 🚰 DRAINAGE NETWORK
 # =========================================================================
-elif active_module == "🚰 5. Drainage Network":
+with tab_drainage:
     st.markdown('<div class="main-title">🚰 Drainage Network — Stormwater Culvert & Blockage Detection</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">Hydraulic Balancing, Sedimentation Choke Diagnostics & Municipal Sump Dispatch | Urban Nashik</div>',
         unsafe_allow_html=True
     )
 
+    # State initialization for Drainage Presets
+    if "dr_preset" not in st.session_state:
+        st.session_state["dr_preset"] = "Saraf Bazar — Severe Silt Choke (Flash Storm 60mm/h)"
+        st.session_state["dr_node"] = "Saraf Bazar Storm Culvert"
+        st.session_state["dr_depth"] = 82.0
+        st.session_state["dr_flow"] = 1200.0
+        st.session_state["dr_rain"] = 55.0
+
+    def sync_drainage_preset():
+        p = st.session_state["drainage_preset_choice"]
+        if p == "Saraf Bazar — Severe Silt Choke (Flash Storm 60mm/h)":
+            st.session_state["dr_node"] = "Saraf Bazar Storm Culvert"
+            st.session_state["dr_depth"] = 82.0
+            st.session_state["dr_flow"] = 1200.0
+            st.session_state["dr_rain"] = 55.0
+        elif p == "CBS Junction Underpass — Critical Submergence":
+            st.session_state["dr_node"] = "CBS Junction Underpass Drain"
+            st.session_state["dr_depth"] = 115.0
+            st.session_state["dr_flow"] = 2100.0
+            st.session_state["dr_rain"] = 68.0
+        elif p == "Trimbak Naka — Routine Drainage Discharge":
+            st.session_state["dr_node"] = "Trimbak Naka Natural Channel"
+            st.session_state["dr_depth"] = 35.0
+            st.session_state["dr_flow"] = 2900.0
+            st.session_state["dr_rain"] = 15.0
+        elif p == "Dwarka Circle — Moderate Inundation Warning":
+            st.session_state["dr_node"] = "Dwarka Circle Sump Network"
+            st.session_state["dr_depth"] = 65.0
+            st.session_state["dr_flow"] = 1800.0
+            st.session_state["dr_rain"] = 35.0
+
+    st.markdown("### 🎛️ Urban Drainage Scenario Presets & Hydraulic Inputs")
+    drainage_presets = [
+        "Saraf Bazar — Severe Silt Choke (Flash Storm 60mm/h)",
+        "CBS Junction Underpass — Critical Submergence",
+        "Trimbak Naka — Routine Drainage Discharge",
+        "Dwarka Circle — Moderate Inundation Warning",
+        "Custom Parameters"
+    ]
+    st.selectbox(
+        "Load Drainage Scenario Preset:",
+        drainage_presets,
+        key="drainage_preset_choice",
+        on_change=sync_drainage_preset
+    )
+
     d_col1, d_col2 = st.columns([1, 2])
     with d_col1:
         st.subheader("🚰 Culvert Junction & Telemetry")
-        sel_drain = st.selectbox("Monitored Culvert / Underpass:", list(NASHIK_DRAINAGE_NODES.keys()), index=0)
+        nodes_list = list(NASHIK_DRAINAGE_NODES.keys())
+        cur_node = st.session_state.get("dr_node", nodes_list[0])
+        node_idx = nodes_list.index(cur_node) if cur_node in nodes_list else 0
+        sel_drain = st.selectbox("Monitored Culvert / Underpass:", nodes_list, index=node_idx, key="dr_node")
         d_meta = NASHIK_DRAINAGE_NODES[sel_drain]
         st.caption(f"📍 Type: **{d_meta['type']}** | Design Discharge: **{d_meta['capacity_lpm']:,} LPM** | Critical Depth: **{d_meta['critical_depth_cm']} cm**")
 
-        d_depth = st.slider("Culvert Water Depth (cm)", 5.0, 140.0, 55.0, 1.0)
-        d_flow = st.slider("Measured Outflow Discharge (LPM)", 100.0, 6000.0, 1800.0, 50.0)
-        d_rain = st.slider("Local Storm Rainfall (mm/h)", 0.0, 80.0, 25.0, 1.0)
+        d_depth = st.slider("Culvert Water Depth (cm)", 5.0, 140.0, step=1.0, key="dr_depth")
+        d_flow = st.slider("Measured Outflow Discharge (LPM)", 100.0, 6000.0, step=50.0, key="dr_flow")
+        d_rain = st.slider("Local Storm Rainfall (mm/h)", 0.0, 80.0, step=1.0, key="dr_rain")
 
     drain_eval = evaluate_drainage_health(sel_drain, d_depth, d_flow, d_rain)
 
@@ -754,7 +1078,7 @@ elif active_module == "🚰 5. Drainage Network":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">MEASURED FLOW</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #38bdf8; margin-top: 0.2rem;">{d_flow:,.0f} LPM</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #2784D8; margin-top: 0.2rem;">{d_flow:,.0f} LPM</div>
                 <div class="card-subtext">Telemetry Outflow Sensor</div>
             </div>
             """, unsafe_allow_html=True)
@@ -762,12 +1086,12 @@ elif active_module == "🚰 5. Drainage Network":
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">EXPECTED FLOW</span>
-                <div style="font-size: 1.9rem; font-weight: 900; color: #f8fafc; margin-top: 0.2rem;">{drain_eval['expected_flow_lpm']:,.0f} LPM</div>
+                <div style="font-size: 1.9rem; font-weight: 900; color: #20364D; margin-top: 0.2rem;">{drain_eval['expected_flow_lpm']:,.0f} LPM</div>
                 <div class="card-subtext">Hydraulic Model Baseline</div>
             </div>
             """, unsafe_allow_html=True)
         with dc3:
-            blk_col = "#ef4444" if drain_eval['blockage_pct'] > 40 else ("#f59e0b" if drain_eval['blockage_pct'] > 0 else "#10b981")
+            blk_col = "#E45B62" if drain_eval['blockage_pct'] > 40 else ("#F2B544" if drain_eval['blockage_pct'] > 0 else "#299765")
             st.markdown(f"""
             <div class="metric-card">
                 <span class="card-label">BLOCKAGE INDEX</span>
@@ -790,7 +1114,7 @@ elif active_module == "🚰 5. Drainage Network":
             st.warning(f"• {act}")
 
     st.markdown("---")
-    # Interactive Drainage Graphs (Requirements 5.1 - 5.4)
+    # Interactive Drainage Graphs
     st.subheader("📊 Interactive Hydraulic Balancing & Blockage Curves")
     dg_c1, dg_c2 = st.columns(2)
     with dg_c1:
@@ -807,14 +1131,14 @@ elif active_module == "🚰 5. Drainage Network":
 
     st.markdown("---")
     st.subheader("🗺️ Nashik Urban Stormwater & Drainage Nodes Map")
-    m_drain = folium.Map(location=[19.998, 73.788], zoom_start=13, tiles="CartoDB dark_matter", prefer_canvas=True)
+    m_drain = folium.Map(location=[19.998, 73.788], zoom_start=13, tiles="OpenStreetMap", prefer_canvas=True)
     for n_name, n_data in NASHIK_DRAINAGE_NODES.items():
         folium.CircleMarker(
             location=[n_data["lat"], n_data["lon"]],
             radius=11 if n_name == sel_drain else 8,
-            color=drain_eval["color"] if n_name == sel_drain else "#38bdf8",
+            color=drain_eval["color"] if n_name == sel_drain else "#2784D8",
             fill=True,
-            fill_color=drain_eval["color"] if n_name == sel_drain else "#38bdf8",
+            fill_color=drain_eval["color"] if n_name == sel_drain else "#2784D8",
             fill_opacity=0.85,
             tooltip=f"{n_name}: {n_data['type']} (Max: {n_data['capacity_lpm']} LPM)"
         ).add_to(m_drain)
@@ -824,7 +1148,7 @@ elif active_module == "🚰 5. Drainage Network":
 # =========================================================================
 # MODULE 6: 📊 EXECUTIVE CLIMATE COMMAND CENTER
 # =========================================================================
-elif active_module == "📊 Executive Command Center":
+with tab_cmd:
     st.markdown('<div class="main-title">📊 Executive Climate Command Center — Statewide Situational Matrix</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">Unified Multi-Hazard Operational Matrix Across All Five Climate Guard AI Risk Engines</div>',
@@ -886,11 +1210,9 @@ elif active_module == "📊 Executive Command Center":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Multi-Hazard Integrated Plotly Visualizations (Requirement 9)
     cmd_col1, cmd_col2 = st.columns([1.1, 1])
     with cmd_col1:
         st.subheader("🌐 Multi-Hazard Threat Profile Comparison")
-        # Approximate crop stress percentage: 100 if waterlogged/drought, 20 if optimum
         crop_stress = 85.0 if "Waterlogged" in cr_eval["water_status"] or "Deficit" in cr_eval["water_status"] else 25.0
         fig_radar = cu.build_multi_hazard_radar_chart(
             fg_eval["flood_probability_pct"],
@@ -905,11 +1227,11 @@ elif active_module == "📊 Executive Command Center":
         st.subheader("🚨 Emergency Helpline & Operational Command Directory")
         st.markdown("""
         <div class="glass-card" style="margin-bottom: 0.8rem;">
-            <b>🏛️ Nashik Municipal Corporation Disaster Cell:</b> <code style="color:#38bdf8;">0253-2578500</code><br>
-            <b>🚨 District Disaster Control Room:</b> <code style="color:#38bdf8;">1077</code><br>
-            <b>🚒 Fire Brigade Emergency:</b> <code style="color:#ef4444;">101</code><br>
-            <b>🚓 Maharashtra Police Emergency:</b> <code style="color:#34d399;">112</code><br>
-            <b>🌾 Krishi Vigyan Kendra (KVK) Agronomy Advisory:</b> <code style="color:#fbbf24;">1800-180-1551</code>
+            <b>🏛️ Nashik Municipal Corporation Disaster Cell:</b> <code style="color:#2784D8;">0253-2578500</code><br>
+            <b>🚨 District Disaster Control Room:</b> <code style="color:#2784D8;">1077</code><br>
+            <b>🚒 Fire Brigade Emergency:</b> <code style="color:#E45B62;">101</code><br>
+            <b>🚓 Maharashtra Police Emergency:</b> <code style="color:#299765;">112</code><br>
+            <b>🌾 Krishi Vigyan Kendra (KVK) Agronomy Advisory:</b> <code style="color:#F2B544;">1800-180-1551</code>
         </div>
         """, unsafe_allow_html=True)
 
@@ -919,7 +1241,7 @@ elif active_module == "📊 Executive Command Center":
 # =========================================================================
 # MODULE 7: 🧠 VALIDATION LAB & ARCHITECTURE
 # =========================================================================
-elif active_module == "🧠 Validation Lab & Architecture":
+with tab_arch:
     st.markdown('<div class="main-title">🧠 Validation Lab & Technical Architecture</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="sub-title">Rigorous Machine Learning Validation, Zero-Leakage Chronological Split & 13-Feature Schema</div>',
@@ -949,10 +1271,12 @@ elif active_module == "🧠 Validation Lab & Architecture":
             st.markdown(f"**Coverage:** {src['coverage']} | **URL:** [{src['access_url']}]({src['access_url']})")
 
 
+# =========================================================================
 # Footer
+# =========================================================================
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: #64748b; font-size: 0.82rem;'>"
+    "<div style='text-align: center; color: #5B7188; font-size: 0.82rem; padding-bottom: 2rem;'>"
     "Climate Guard AI — Multi-Hazard Environmental Intelligence Platform | "
     "Flood Guard • Heat Guard • Fire Guard • Crop Shield • Drainage Network | "
     "Python, Streamlit, Scikit-learn, Plotly, Folium"
