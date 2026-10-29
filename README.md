@@ -1,12 +1,25 @@
-# 🌊 Climate Guard AI — Flood Prediction for Nashik, Maharashtra
+# 🛡️ Climate Guard AI — Multi-Hazard Environmental Intelligence Platform
+Serving Maharashtra, India
 
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![Machine Learning](https://img.shields.io/badge/ML-Scikit--Learn%20%7C%20Random%20Forest-orange.svg)](https://scikit-learn.org/)
-[![Dashboard](https://img.shields.io/badge/UI-Streamlit-red.svg)](https://streamlit.io/)
-[![Zero Data Leakage](https://img.shields.io/badge/Evaluation-Chronological%20Time--Series-emerald.svg)]()
-[![Region](https://img.shields.io/badge/Basin-Godavari%20River%20%7C%20Nashik-blueviolet.svg)]()
+[![Streamlit Studio](https://img.shields.io/badge/Streamlit%20Studio-Live%20Demo-2784D8.svg?logo=streamlit)](https://climate-guard-ai-64sdy88finxufxdk8snnjk.streamlit.app/)
+[![React 18 + Vite](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite%20%2B%20TS-61DAFB.svg?logo=react)](frontend/)
+[![FastAPI Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.11-009688.svg?logo=fastapi)](backend/)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAlishamirza144%2Fclimate-guard-ai&root-directory=frontend)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Alishamirza144/climate-guard-ai)
 
-> **Hackathon Edition**: An end-to-end Machine Learning Early Warning System (EWS) designed to predict flash floods and urban inundations along the Godavari River basin in **Nashik, Maharashtra**.
+> **Multi-Hazard Environmental Intelligence Platform**: An end-to-end Machine Learning Early Warning System (EWS) designed to predict flash floods, extreme heatwaves, wildfires, agricultural crop water stress, and urban stormwater drain blockages across Maharashtra, India.
+
+---
+
+## 🌐 Public Live Applications
+
+1. **⚡ Primary Full-Stack React Demo**:
+   - **Frontend**: React 18 + Vite + TypeScript (Dark Command Center, Glassmorphism, Hexagon Motifs)
+   - **Backend**: FastAPI Python REST API (XGBoost, Random Forest, FAO-56, Canadian FWI)
+   - **Deploy on Vercel**: 1-click deploy from `frontend/` directory
+2. **📊 Streamlit Decision Support Studio**:
+   - **Public Deployed URL**: [https://climate-guard-ai-64sdy88finxufxdk8snnjk.streamlit.app/](https://climate-guard-ai-64sdy88finxufxdk8snnjk.streamlit.app/)
+   - Fully interactive multi-module dashboard with real-time sensitivity curves, OpenStreetMap layers, and scenario presets.
 
 ---
 
