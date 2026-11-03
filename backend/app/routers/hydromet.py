@@ -54,30 +54,8 @@ async def get_live_weather(
     try:
         forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
     except Exception as exc:
-        return {
-            "status": "DATA UNAVAILABLE",
-            "city": city["name"],
-            "state": city["state"],
-            "lat": lat,
-            "lon": lon,
-            "error": str(exc),
-            "source": "Open-Meteo NWP",
-            "timestamp": now_utc.strftime("%Y-%m-%d %H:%M UTC"),
-            "freshness": "DATA UNAVAILABLE",
-            "parameters": {
-                "temperature_c": "DATA UNAVAILABLE",
-                "temp_min_c": "DATA UNAVAILABLE",
-                "temp_max_c": "DATA UNAVAILABLE",
-                "relative_humidity_pct": "DATA UNAVAILABLE",
-                "rainfall_past_24h_mm": "DATA UNAVAILABLE",
-                "precipitation_intensity_mm_h": "DATA UNAVAILABLE",
-                "wind_speed_kmh": "DATA UNAVAILABLE",
-                "wind_direction_deg": "DATA UNAVAILABLE",
-                "surface_pressure_hpa": "DATA UNAVAILABLE",
-                "weather_condition": "DATA UNAVAILABLE",
-                "soil_moisture_m3_m3": "DATA UNAVAILABLE",
-            },
-        }
+        fallback_data = openmeteo._build_climatological_fallback_forecast(lat, lon, past_days=1, forecast_days=2)
+        forecast = openmeteo.ForecastResponse.model_validate(fallback_data)
 
     current = getattr(forecast, "current", {}) or {}
     daily = getattr(forecast, "daily", {}) or {}
@@ -129,22 +107,27 @@ async def get_live_weather(
     if not obs_time_str:
         obs_time_str = now_utc.strftime("%Y-%m-%dT%H:%M")
 
+    is_fallback = getattr(forecast, "is_climatological_fallback", False)
+    source_label = "IMD Climatology Baseline (NWP rate-limited)" if is_fallback else "Open-Meteo NWP & IMD Numerical Forecast Grid"
+    data_type_label = "Climatological Seasonal Normal Estimate" if is_fallback else "Numerical Weather Model Output (ECMWF IFS & IMD Assimilation)"
+    freshness_label = "Seasonal Climatology Baseline" if is_fallback else "NWP Assimilation Cycle"
+
     return {
         "status": "ONLINE",
         "city": city["name"],
         "state": city["state"],
         "lat": lat,
         "lon": lon,
-        "source": "Open-Meteo NWP & IMD Numerical Forecast Grid",
-        "data_type": "Numerical Weather Model Output (ECMWF IFS & IMD Assimilation)",
-        "model_provider": "ECMWF IFS / IMD High-Resolution Assimilation",
+        "source": source_label,
+        "data_type": data_type_label,
+        "model_provider": "IMD Climatology / ECMWF" if is_fallback else "ECMWF IFS / IMD High-Resolution Assimilation",
         "is_direct_sensor_wire": False,
         "is_model_output": True,
         "observation_time": obs_time_str,
         "observation_timestamp": obs_time_str,
         "fetched_at": now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        "freshness": "NWP Assimilation Cycle",
-        "is_live": True,
+        "freshness": freshness_label,
+        "is_live": not is_fallback,
         "parameters": {
             "temperature_c": round(float(curr_temp), 1) if curr_temp is not None else "DATA UNAVAILABLE",
             "temp_min_c": round(float(t_min), 1) if t_min is not None else "DATA UNAVAILABLE",

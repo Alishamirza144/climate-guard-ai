@@ -6,7 +6,14 @@
 
 import { notifyFetchStart, recordLatency } from './latency'
 
-export const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' &&
+  (window.location.hostname.includes('onrender.com') ||
+    window.location.hostname.includes('vercel.app'))
+    ? 'https://climateguard-demo-api.onrender.com'
+    : '')
+).replace(/\/$/, '')
 
 export interface HealthResponse {
   status: string

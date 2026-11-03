@@ -15,3 +15,20 @@ services:
         value: "http://localhost:5173,https://*.vercel.app,https://*.onrender.com"
       - key: LOG_LEVEL
         value: INFO
+
+  - type: static
+    name: climateguard-skyblue-frontend
+    region: oregon
+    plan: free
+    branch: demo-sky-blue
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://climateguard-demo-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
