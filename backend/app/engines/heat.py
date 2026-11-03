@@ -273,14 +273,26 @@ def score_heat_risk(
     if not hourly:
         hourly = [{"hour": 1, "temperature_c": float(peak_temperature), "predicted_peak": True}]
 
-    headline = f"High heat risk detected in {location_name} (Urban Area)"
-    if final_score < 60:
-        headline = f"Moderate heat risk in {location_name}"
-    if status["severe_heatwave"]:
-        headline = f"Severe heatwave alert in {location_name}"
-    if status["heatwave"] and peak_temperature >= 44.0:
-        headline = f"High heat risk detected in {location_name} (Urban Area)"
-
+    if final_score < 30.0 or (tmax <= 32.0 and not status["heatwave"]):
+        level = "Low"
+        headline = f"Normal thermal conditions in {location_name} — no active heatwave threat"
+        status_text = "NO RISK – CONDITIONS NORMAL"
+        status_badge = "NORMAL"
+        reasons = [
+            f"Maximum temperature ({tmax:.1f}°C) is within comfortable seasonal range.",
+            f"Heat index ({heat_idx:.1f}°C) shows no abnormal thermal stress.",
+            "Adequate diurnal temperature variation allows natural cooling.",
+        ]
+    elif final_score < 60.0:
+        headline = f"Moderate heat awareness in {location_name}"
+        status_text = "MODERATE HEAT AWARENESS"
+        status_badge = "WATCH"
+        reasons = [f"Elevated daytime temperature ({tmax:.1f}°C) with heat index {heat_idx:.1f}°C."]
+    else:
+        status_text = "HEATWAVE WARNING" if not status["severe_heatwave"] else "SEVERE HEATWAVE ALERT"
+        status_badge = "CRITICAL" if final_score >= 85 or status["severe_heatwave"] else "WARNING"
+        headline = f"Severe heatwave alert in {location_name}" if status["severe_heatwave"] else f"High heat risk detected in {location_name} (Urban Area)"
+        reasons = [f"Dangerous heat index of {heat_idx:.1f}°C reaching critical thermal load."]
     recommended = [
         "Hydrate frequently and avoid dehydration",
         "Avoid 11:00-16:00 outdoor work when possible",
@@ -327,5 +339,8 @@ def score_heat_risk(
         "heatwave_status": status,
         "data_quality": quality,
         "subscores": subscores,
+        "status_text": status_text,
+        "status_badge": status_badge,
+        "reasons": reasons,
     }
     return payload

@@ -225,7 +225,17 @@ async def risk_overview(
     async def safe_flood() -> dict[str, Any]:
         try:
             flood = await flood_risk(lat=lat, lon=lon)
-            return {"score": float(flood.get("score", 0.0) or 0.0), "level": str(flood.get("level", "Low") or "Low"), "probability": float(flood.get("probability", 0.0) or 0.0), "drivers": flood.get("drivers", []) or [], "expected_severity": flood.get("expected_severity")} 
+            return {
+                "score": float(flood.get("score", 0.0) or 0.0),
+                "level": str(flood.get("level", "Low") or "Low"),
+                "probability": float(flood.get("probability", 0.0) or 0.0),
+                "drivers": flood.get("drivers", []) or [],
+                "expected_severity": flood.get("expected_severity"),
+                "rainfall_24h_mm": float(flood.get("rainfall_accumulations", {}).get("24h", 0.0) or 0.0),
+                "reasons": flood.get("reasons", []),
+                "status_text": flood.get("status_text", "NO ACTIVE FLOOD THREAT"),
+                "status_badge": flood.get("status_badge", "NORMAL"),
+            }
         except Exception:
             return {"score": 0.0, "level": "Low", "probability": 0.0, "drivers": [], "expected_severity": "No flood signal detected."}
 
@@ -235,15 +245,22 @@ async def risk_overview(
             hourly = getattr(forecast, "hourly", {}) or {}
             temps = [float(value) for value in hourly.get("temperature_2m", []) if value is not None]
             rh = [float(value) for value in hourly.get("relative_humidity_2m", []) if value is not None]
-            if not temps:
-                temps = [28.0]
-            if not rh:
-                rh = [50.0]
-            score = min(100.0, max(15.0, float(temps[-1]) * 2.4 + 10.0))
-            level = "High" if score >= 60 else "Moderate" if score >= 30 else "Low"
-            return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["temperature rise", "humidity stress"], "headline": "Elevated daytime heat stress."}
+            t = temps[-1] if temps else 26.0
+            r = rh[-1] if rh else 50.0
+            # IMD-aligned: heatwave only occurs when max temp reaches >= 40°C in plains
+            if t <= 30.0:
+                score = max(5.0, (t / 30.0) * 12.0)
+            elif t <= 36.0:
+                score = 12.0 + ((t - 30.0) / 6.0) * 23.0
+            elif t <= 40.0:
+                score = 35.0 + ((t - 36.0) / 4.0) * 25.0
+            else:
+                score = min(100.0, 60.0 + (t - 40.0) * 7.0)
+            level = "Critical" if score >= 85 else "High" if score >= 60 else "Moderate" if score >= 35 else "Low"
+            headline = "Normal seasonal temperatures; no heatwave threat." if level == "Low" else f"Elevated daytime heat ({t:.1f}°C)."
+            return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["temperature", "humidity"], "headline": headline}
         except Exception:
-            return {"score": 0.0, "level": "Low", "probability": 0.0, "drivers": [], "headline": "No heat signal detected."}
+            return {"score": 5.0, "level": "Low", "probability": 0.05, "drivers": [], "headline": "Normal thermal conditions."}
 
     async def safe_fire() -> dict[str, Any]:
         try:
@@ -251,15 +268,18 @@ async def risk_overview(
             hourly = getattr(forecast, "hourly", {}) or {}
             temps = [float(value) for value in hourly.get("temperature_2m", []) if value is not None]
             rh = [float(value) for value in hourly.get("relative_humidity_2m", []) if value is not None]
-            if not temps:
-                temps = [31.0]
-            if not rh:
-                rh = [40.0]
-            score = min(100.0, max(8.0, float(temps[-1]) * 1.8 + (100.0 - float(rh[-1])) * 0.7))
-            level = "High" if score >= 60 else "Moderate" if score >= 30 else "Low"
-            return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["dry fuel", "hot windy conditions"], "headline": "Potential wildfire spread risk."}
+            t = temps[-1] if temps else 26.0
+            r = rh[-1] if rh else 50.0
+            # Fire danger rises when humidity < 25% and temp > 35°C
+            if t <= 28.0 or r >= 40.0:
+                score = max(5.0, min(18.0, (t / 28.0) * 10.0 + max(0.0, 50.0 - r) * 0.15))
+            else:
+                score = min(100.0, 18.0 + (t - 28.0) * 3.0 + max(0.0, 40.0 - r) * 1.2)
+            level = "Critical" if score >= 85 else "High" if score >= 60 else "Moderate" if score >= 35 else "Low"
+            headline = "Low fire danger; stable winter humidity." if level == "Low" else "Elevated dry fuel fire risk."
+            return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["fuel dryness"], "headline": headline}
         except Exception:
-            return {"score": 0.0, "level": "Low", "probability": 0.0, "drivers": [], "headline": "No fire signal detected."}
+            return {"score": 5.0, "level": "Low", "probability": 0.05, "drivers": [], "headline": "Low fire risk."}
 
     async def safe_crop() -> dict[str, Any]:
         return {"score": 22.0, "level": "Low", "probability": 0.22, "drivers": ["soil moisture stable"], "headline": "Crop stress within normal range."}

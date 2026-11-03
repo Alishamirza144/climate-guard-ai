@@ -15,6 +15,8 @@ from typing import Any, Sequence
 
 from pydantic import BaseModel, Field
 
+from app.engines.seasonal import apply_hysteresis, evaluate_winter_conditions, get_current_season
+
 SOIL_WILTING_POINT = 0.12
 SOIL_SATURATION = 0.45
 SOIL_LAYER_WEIGHTS = (0.30, 0.25, 0.20, 0.15, 0.10)
@@ -266,6 +268,12 @@ class FloodRisk(BaseModel):
     drivers: list[dict[str, Any]] = Field(default_factory=list)
     data_quality: dict[str, Any] = Field(default_factory=dict)
     model_mode: str
+    status_text: str = "NO ACTIVE FLOOD THREAT"
+    status_badge: str = "NORMAL"
+    alert_category: str = "NORMAL"
+    reasons: list[str] = Field(default_factory=list)
+    recommended_action: str = "Routine civic monitoring. No emergency action required."
+    season_context: str = "Winter / Rabi Season"
 
 
 def _score_to_level(score: float) -> str:
@@ -314,11 +322,21 @@ def score_flood_risk(
     terrain = clamp(_clean_float(terrain_exposure) * 100.0, 0.0, 100.0)
     rainfall_score = clamp((rain / 200.0) * 100.0, 0.0, 100.0)
     runoff_score = clamp((runoff / 60.0) * 100.0, 0.0, 100.0)
-    river_score = clamp((river / 1.5) if river else 0.0, 0.0, 100.0)
+    # Physical river rating: 1.0 ratio is 100% mean baseflow; only surge > 1.25 increases hazard
+    if river <= 100.0:
+        river_score = (river / 100.0) * 10.0
+    elif river <= 160.0:
+        river_score = 10.0 + ((river - 100.0) / 60.0) * 45.0
+    else:
+        river_score = clamp(55.0 + ((river - 160.0) / 100.0) * 45.0, 55.0, 100.0)
     terrain_score = clamp(terrain, 0.0, 100.0)
 
     combined = weighted_physics_score(rainfall_score, runoff_score, soil, river_score, terrain_score)
     physics_score = combined["physics_score"]
+
+    # Active hazard gating: if there is no rain (<5mm), no runoff (<1mm), and river is at baseflow
+    if rain < 5.0 and runoff < 1.0 and river <= 120.0:
+        physics_score = min(physics_score, 8.5)
 
     model_mode = "physics"
     final_score = physics_score
@@ -326,19 +344,47 @@ def score_flood_risk(
         ml_probability_value = _clean_float(ml_probability)
         ml_auc = _clean_float(ml_validation_auc)
         if 0.0 <= ml_probability_value <= 1.0 and ml_auc > 0.65:
-            final_score = (0.6 * ml_probability_value * 100.0) + (0.4 * physics_score)
+            if rain < 5.0 and runoff < 1.0 and river <= 120.0:
+                final_score = min(10.0, (0.5 * ml_probability_value * 12.0) + (0.5 * physics_score))
+            else:
+                final_score = (0.6 * ml_probability_value * 100.0) + (0.4 * physics_score)
             model_mode = "hybrid"
 
     final_score = clamp(final_score, 0.0, 100.0)
-    score_level = _score_to_level(final_score)
+
+    # Seasonal and winter-aware logic evaluation
+    seasonal_eval = evaluate_winter_conditions(
+        rainfall_24h_mm=rain,
+        river_water_level_m=1.8 + (river / 100.0) * 0.8,
+        river_rate_of_rise_m_h=0.0,
+        dam_discharge_cusecs=650.0 if river <= 120 else 15000.0,
+        drainage_blockage_pct=10.0,
+    )
+
+    if seasonal_eval["is_normal"] and rain < 10.0 and river <= 120.0:
+        final_score = min(final_score, 8.0)
+        score_level = "Low"
+        status_text = "NO RISK – CONDITIONS NORMAL"
+        status_badge = "NORMAL"
+        alert_category = "NORMAL"
+        reasons = seasonal_eval["reasons"]
+        recommended_action = seasonal_eval["recommended_action"]
+        severity = "Normal seasonal baseflow"
+    else:
+        score_level, final_score = apply_hysteresis(final_score)
+        status_text = seasonal_eval["status_text"]
+        status_badge = seasonal_eval["status_badge"]
+        alert_category = seasonal_eval["alert_category"]
+        reasons = seasonal_eval["anomalies"] if seasonal_eval["anomalies"] else seasonal_eval["reasons"]
+        recommended_action = seasonal_eval["recommended_action"]
+        severity = "Minor drainage stress"
+        if final_score >= 85:
+            severity = "Severe urban flooding risk"
+        elif final_score >= 60:
+            severity = "Flooding likely in low-lying areas"
+        elif final_score >= 30:
+            severity = "Elevated runoff and pooling risk"
     probability = clamp(final_score / 100.0, 0.0, 1.0)
-    severity = "Minor drainage stress"
-    if final_score >= 85:
-        severity = "Severe urban flooding risk"
-    elif final_score >= 60:
-        severity = "Flooding likely in low-lying areas"
-    elif final_score >= 30:
-        severity = "Elevated runoff and pooling risk"
     expected_severity = f"{severity} — peak runoff approx. {runoff:.1f} mm"
     peak_hour = max(1, min(len(_build_hourly_trend(1, hourly_trend or [0.0] * 24)) or [1], int(lead_time_hours / 2)))
     hourly = _build_hourly_trend(peak_hour, hourly_trend)
@@ -362,6 +408,12 @@ def score_flood_risk(
         drivers=drivers,
         data_quality=quality,
         model_mode=model_mode,
+        status_text=status_text,
+        status_badge=status_badge,
+        alert_category=alert_category,
+        reasons=reasons,
+        recommended_action=recommended_action,
+        season_context=seasonal_eval["season_display"],
     )
 
 

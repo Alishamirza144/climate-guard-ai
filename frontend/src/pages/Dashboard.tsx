@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Area,
   AreaChart,
   CartesianGrid,
   Line,
@@ -17,7 +16,6 @@ import {
   BellRing,
   ChevronRight,
   Clock3,
-  CloudRain,
   Droplets,
   Flame,
   Gauge,
@@ -33,46 +31,44 @@ import {
 import { Link, NavLink } from 'react-router-dom'
 import { useLocationContext } from '../components/LocationProvider'
 import { useTheme } from '../lib/theme'
-import { api, type AlertRecord, type RiskGridResponse, type RiskOverviewResponse } from '../lib/api'
+import { api, type RiskGridResponse, type RiskOverviewResponse } from '../lib/api'
 import { RiskGauge } from '../components/ui/RiskGauge'
 import { DataSourceBadge } from '../components/ui/DataSourceBadge'
+import EmergencyAlertBanner from '../components/EmergencyAlertBanner'
+import DamMonitoringWidget from '../components/DamMonitoringWidget'
 
 const HAZARD_META = {
   flood: {
     title: 'Flood Risk',
     icon: Droplets,
     route: '/flood',
-    accent: 'from-cyan-500/30 to-cyan-500/5 text-cyan-300',
-    border: 'border-cyan-400/30',
-    pill: 'bg-cyan-500/15 text-cyan-200 border-cyan-400/20',
-    color: '#67e8f9',
+    accent: 'from-[#2784D8]/20 via-[#CDE8FF] to-[#DFF1FF]',
+    border: 'border-[#2784D8]/40',
+    color: '#2784D8',
   },
   heat: {
     title: 'Heat Risk',
     icon: Thermometer,
     route: '/heat',
-    accent: 'from-orange-500/30 to-orange-500/5 text-orange-300',
-    border: 'border-orange-400/30',
-    pill: 'bg-orange-500/15 text-orange-200 border-orange-400/20',
-    color: '#fbbf24',
+    accent: 'from-[#F2B544]/20 via-[#CDE8FF] to-[#DFF1FF]',
+    border: 'border-[#F2B544]/40',
+    color: '#B47510',
   },
   fire: {
     title: 'Wildfire Risk',
     icon: Flame,
     route: '/fire',
-    accent: 'from-red-500/30 to-red-500/5 text-red-300',
-    border: 'border-red-400/30',
-    pill: 'bg-red-500/15 text-red-200 border-red-400/20',
-    color: '#f87171',
+    accent: 'from-[#E45B62]/20 via-[#CDE8FF] to-[#DFF1FF]',
+    border: 'border-[#E45B62]/40',
+    color: '#E45B62',
   },
   crop: {
     title: 'Crop Risk',
     icon: Sprout,
     route: '/crop',
-    accent: 'from-lime-500/30 to-lime-500/5 text-lime-300',
-    border: 'border-lime-400/30',
-    pill: 'bg-lime-500/15 text-lime-200 border-lime-400/20',
-    color: '#bef264',
+    accent: 'from-[#299765]/20 via-[#D9F5E8] to-[#DFF1FF]',
+    border: 'border-[#299765]/40',
+    color: '#299765',
   },
 } as const
 
@@ -99,21 +95,21 @@ function getTextLevel(score: number) {
 function getLevelStyles(level: string) {
   const normalized = level.toLowerCase()
   if (normalized === 'critical') {
-    return 'border-red-500/30 bg-red-500/15 text-red-200'
+    return 'border-[#E45B62] bg-[#E45B62] text-white'
   }
   if (normalized === 'high') {
-    return 'border-red-400/30 bg-red-500/15 text-red-200'
+    return 'border-[#F2B544] bg-[#F2B544] text-[#20364D]'
   }
   if (normalized === 'moderate') {
-    return 'border-orange-400/30 bg-orange-500/15 text-orange-200'
+    return 'border-[#B9D9F5] bg-[#CDE8FF] text-[#20364D]'
   }
-  return 'border-emerald-500/30 bg-emerald-500/15 text-emerald-200'
+  return 'border-[#299765]/30 bg-[#D9F5E8] text-[#299765]'
 }
 
 function makeSparkline(score: number) {
   const points = Array.from({ length: 8 }, (_, index) => {
-    const disturbance = index % 2 === 0 ? 8 : -6
-    const wave = Math.sin(index * 1.6) * 14
+    const disturbance = index % 2 === 0 ? 6 : -4
+    const wave = Math.sin(index * 1.5) * 8
     return Math.max(5, Math.min(100, score + wave + disturbance))
   })
 
@@ -147,7 +143,7 @@ function toFallbackGrid(hazards: RiskOverviewResponse['hazards'] | undefined): R
   }
 }
 
-function Dashboard() {
+export default function Dashboard() {
   const { location, setLocation, presets } = useLocationContext()
   const { theme, toggleTheme } = useTheme()
   const queryClient = useQueryClient()
@@ -248,9 +244,9 @@ function Dashboard() {
     const hazards = overviewQuery.data?.hazards ?? {}
     return [
       { time: 'Now', flood: Number(hazards.flood?.risk_percent ?? 0), heat: Number(hazards.heat?.risk_percent ?? 0), fire: Number(hazards.fire?.risk_percent ?? 0), crop: Number(hazards.crop?.risk_percent ?? 0) },
-      { time: '+24h', flood: Number(hazards.flood?.risk_percent ?? 0) + 6, heat: Number(hazards.heat?.risk_percent ?? 0) + 8, fire: Number(hazards.fire?.risk_percent ?? 0) + 5, crop: Number(hazards.crop?.risk_percent ?? 0) + 2 },
-      { time: '+48h', flood: Number(hazards.flood?.risk_percent ?? 0) + 10, heat: Number(hazards.heat?.risk_percent ?? 0) + 12, fire: Number(hazards.fire?.risk_percent ?? 0) + 8, crop: Number(hazards.crop?.risk_percent ?? 0) + 4 },
-      { time: '+72h', flood: Number(hazards.flood?.risk_percent ?? 0) + 14, heat: Number(hazards.heat?.risk_percent ?? 0) + 15, fire: Number(hazards.fire?.risk_percent ?? 0) + 11, crop: Number(hazards.crop?.risk_percent ?? 0) + 5 },
+      { time: '+24h', flood: Math.min(100, Number(hazards.flood?.risk_percent ?? 0) + 4), heat: Math.min(100, Number(hazards.heat?.risk_percent ?? 0) + 5), fire: Math.min(100, Number(hazards.fire?.risk_percent ?? 0) + 3), crop: Math.min(100, Number(hazards.crop?.risk_percent ?? 0) + 2) },
+      { time: '+48h', flood: Math.min(100, Number(hazards.flood?.risk_percent ?? 0) + 7), heat: Math.min(100, Number(hazards.heat?.risk_percent ?? 0) + 8), fire: Math.min(100, Number(hazards.fire?.risk_percent ?? 0) + 5), crop: Math.min(100, Number(hazards.crop?.risk_percent ?? 0) + 4) },
+      { time: '+72h', flood: Math.min(100, Number(hazards.flood?.risk_percent ?? 0) + 9), heat: Math.min(100, Number(hazards.heat?.risk_percent ?? 0) + 10), fire: Math.min(100, Number(hazards.fire?.risk_percent ?? 0) + 7), crop: Math.min(100, Number(hazards.crop?.risk_percent ?? 0) + 5) },
     ]
   }, [overviewQuery.data])
 
@@ -268,7 +264,7 @@ function Dashboard() {
       score: Number(metric?.risk_percent ?? detail?.score ?? 0),
       level: (metric?.level ?? detail?.level ?? 'Low') as string,
       drivers: Array.isArray(detail?.drivers) ? detail.drivers : [
-        `${hazard === 'flood' ? 'Rainfall accumulation' : hazard === 'heat' ? 'Heat index' : hazard === 'fire' ? 'Dry fuel load' : 'Soil moisture stress'}`,
+        `${hazard === 'flood' ? 'Catchment runoff & river stage' : hazard === 'heat' ? 'Dry-bulb temperature & heat index' : hazard === 'fire' ? 'Forest moisture deficit' : 'Soil moisture stress'}`,
       ],
       sources: sourceList,
       modelMode: detail?.model_mode ?? 'hybrid',
@@ -292,14 +288,14 @@ function Dashboard() {
 
   if (overviewQuery.isLoading || alertsQuery.isLoading) {
     return (
-      <main className="min-h-screen bg-navy px-4 py-6 text-white sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-[#DFF1FF] px-4 py-6 text-[#20364D] sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
-          <div className="glass-panel rounded-3xl p-4 animate-pulse">
-            <div className="h-12 w-40 rounded-xl bg-white/10" />
+          <div className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-6 animate-pulse">
+            <div className="h-10 w-48 rounded-xl bg-[#CDE8FF]" />
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="glass-card h-48 rounded-3xl p-4 animate-pulse bg-white/5" />
+              <div key={index} className="h-44 rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-4 animate-pulse" />
             ))}
           </div>
         </div>
@@ -309,20 +305,20 @@ function Dashboard() {
 
   if (overviewQuery.isError || alertsQuery.isError) {
     return (
-      <main className="min-h-screen bg-navy px-4 py-6 text-white sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-[#DFF1FF] px-4 py-6 text-[#20364D] sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
-          <div className="glass-card rounded-3xl border border-red-400/30 bg-red-500/10 p-6">
-            <div className="flex items-center gap-3 text-red-200">
+          <div className="rounded-3xl border border-[#E45B62]/40 bg-[#F0F8FF] p-6 shadow-sm">
+            <div className="flex items-center gap-3 text-[#E45B62]">
               <AlertTriangle className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Risk feed unavailable</h2>
+              <h2 className="text-xl font-bold">Risk feed synchronising</h2>
             </div>
-            <p className="mt-3 text-sm text-white/70">
-              We could not refresh the climate dashboard. Please retry in a moment.
+            <p className="mt-2 text-sm text-[#5B7188]">
+              Upstream telemetry is refreshing. Please retry in a moment.
             </p>
             <button
               type="button"
               onClick={() => void refreshDashboard()}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#2784D8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1c6bb5]"
             >
               <RefreshCcw className="h-4 w-4" />
               Retry refresh
@@ -333,40 +329,31 @@ function Dashboard() {
     )
   }
 
-  const hazardEntries = Object.entries(overviewQuery.data?.hazards ?? {})
-  if (!hazardEntries.length) {
-    return (
-      <main className="min-h-screen bg-navy px-4 py-6 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="glass-card rounded-3xl border border-white/10 p-8 text-center">
-            <Gauge className="mx-auto h-10 w-10 text-lime" />
-            <h2 className="mt-4 text-2xl font-semibold">No risk data available</h2>
-            <p className="mt-2 text-sm text-white/60">Check the selected location or refresh the feed.</p>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
   return (
-    <main className="min-h-screen bg-navy px-4 pb-24 pt-4 text-white sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#DFF1FF] px-4 pb-24 pt-4 text-[#20364D] sm:px-6 lg:px-8">
       {offline && (
-        <div className="mx-auto mb-4 flex max-w-7xl items-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          <WifiOff className="h-4 w-4" />
-          Offline mode: using the last refreshed dashboard snapshot.
+        <div className="mx-auto mb-4 flex max-w-7xl items-center gap-2 rounded-2xl border border-[#F2B544] bg-[#F0F8FF] px-4 py-3 text-sm text-[#20364D]">
+          <WifiOff className="h-4 w-4 text-[#F2B544]" />
+          Offline mode: using the last refreshed dashboard telemetry snapshot.
         </div>
       )}
 
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="glass-panel rounded-3xl p-4 md:p-5">
+        {/* Flash-Flood Emergency Weather Alert Banner */}
+        {overviewQuery.data?.emergency_alert && (
+          <EmergencyAlertBanner alert={overviewQuery.data.emergency_alert} />
+        )}
+
+        {/* Dashboard Header Bar */}
+        <header className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-4 md:p-5 shadow-sm">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime/15 ring-1 ring-lime/30">
-                <Gauge className="h-6 w-6 text-lime" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#CDE8FF] border border-[#B9D9F5] shadow-sm">
+                <Gauge className="h-6 w-6 text-[#2784D8]" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold uppercase tracking-[0.22em] text-lime/80">ClimateGuard</span>
+                  <span className="text-xs font-black uppercase tracking-[0.24em] text-[#2784D8]">Live Command Hub</span>
                 </div>
                 <label className="mt-1 block min-w-0">
                   <span className="sr-only">Select location</span>
@@ -386,9 +373,9 @@ function Dashboard() {
                         })
                       }
                     }}
-                    className="w-full rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm text-white outline-none ring-0"
+                    className="w-full rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-2 text-sm font-bold text-[#20364D] outline-none shadow-sm"
                   >
-                    <option value={`${location.lat},${location.lon}`}>{location.label || 'Pune, Maharashtra'}</option>
+                    <option value={`${location.lat},${location.lon}`}>{location.label || 'Nashik, Maharashtra'}</option>
                     {presets.map((preset) => (
                       <option key={preset.label} value={`${preset.lat},${preset.lon}`}>
                         {preset.label}
@@ -400,40 +387,27 @@ function Dashboard() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 xl:justify-end">
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-white/70">
-                <Clock3 className="h-4 w-4 text-lime" />
+              <div className="flex items-center gap-2 rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3 py-2 text-xs font-bold text-[#20364D] shadow-sm">
+                <Clock3 className="h-4 w-4 text-[#2784D8]" />
                 <span>{formatClock(now)}</span>
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-white/70">
-                <span>Last updated</span>
-                <span className="font-medium text-white">{overviewQuery.dataUpdatedAt ? new Date(overviewQuery.dataUpdatedAt).toLocaleTimeString('en-IN', { timeStyle: 'short' }) : 'Now'}</span>
+              <div className="flex items-center gap-2 rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3 py-2 text-xs font-bold text-[#5B7188] shadow-sm">
+                <span>Last telemetry</span>
+                <span className="font-extrabold text-[#20364D]">{overviewQuery.dataUpdatedAt ? new Date(overviewQuery.dataUpdatedAt).toLocaleTimeString('en-IN', { timeStyle: 'short' }) : 'Now'}</span>
               </div>
               <button
                 type="button"
                 onClick={() => void refreshDashboard()}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-2 text-xs font-bold text-[#20364D] transition hover:bg-[#CDE8FF] shadow-sm"
               >
-                <RefreshCcw className="h-4 w-4" />
+                <RefreshCcw className="h-4 w-4 text-[#2784D8]" />
                 Refresh
-              </button>
-              <button
-                type="button"
-                aria-label="Toggle theme"
-                onClick={toggleTheme}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-sm text-white transition hover:bg-white/10"
-              >
-                {theme === 'dark' ? '☀' : '☾'}
               </button>
             </div>
           </div>
         </header>
 
-        <section className="space-y-4">
-          <p className="text-lg text-white/80 md:text-xl">
-            Hello, here is the current climate risk status for your area.
-          </p>
-        </section>
-
+        {/* 4 Multi-Hazard Risk Overview Cards */}
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {metrics.map(({ key, score, label, level }) => {
             const meta = HAZARD_META[key]
@@ -443,29 +417,32 @@ function Dashboard() {
               <Link
                 key={key}
                 to={meta.route}
-                className={`glass-card group relative overflow-hidden rounded-[28px] border p-4 transition hover:-translate-y-0.5 ${meta.border}`}
+                className={`group relative overflow-hidden rounded-[26px] border border-[#B9D9F5] bg-[#F0F8FF] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${meta.border}`}
               >
-                <div className={`absolute inset-x-0 top-0 h-20 bg-gradient-to-r ${meta.accent}`} />
+                <div className={`absolute inset-x-0 top-0 h-16 bg-gradient-to-r ${meta.accent}`} />
                 <div className="relative z-10">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-white/80">
+                    <div className="flex items-center gap-2 font-bold text-[#20364D]">
                       <meta.icon className="h-4 w-4" style={{ color: meta.color }} />
-                      <span className="text-sm font-medium">{label}</span>
+                      <span className="text-sm font-extrabold">{label}</span>
                     </div>
-                    <span className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${getLevelStyles(levelName)}`}>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${getLevelStyles(levelName)}`}>
                       {levelName}
                     </span>
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between gap-2">
-                    <div className="text-3xl font-semibold text-white">{score}%</div>
-                    <div className="flex-1 max-w-[90px]">
-                      <RiskGauge score={score} size={82} strokeWidth={6} showScore={false} showLevel={false} className="mx-auto" />
+                  <div className="mt-4 flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-3xl font-black text-[#20364D]">{score}%</div>
+                      <span className="text-[10px] font-bold text-[#5B7188] uppercase tracking-wider">Computed Risk</span>
+                    </div>
+                    <div className="flex-1 max-w-[80px]">
+                      <RiskGauge score={score} size={76} strokeWidth={6} showScore={false} showLevel={false} className="mx-auto" />
                     </div>
                   </div>
 
-                  <svg viewBox="0 0 100 100" className="mt-4 h-10 w-full overflow-visible">
-                    <path d={spark.path} fill="none" stroke={meta.color} strokeWidth="4" strokeLinecap="round" />
+                  <svg viewBox="0 0 100 100" className="mt-3 h-8 w-full overflow-visible">
+                    <path d={spark.path} fill="none" stroke={meta.color} strokeWidth="3.5" strokeLinecap="round" />
                   </svg>
                 </div>
               </Link>
@@ -473,11 +450,16 @@ function Dashboard() {
           })}
         </section>
 
+        {/* Dam & Reservoir Capacity Monitoring Component */}
+        <DamMonitoringWidget />
+
+        {/* Geospatial Risk Map & Live Alert */}
         <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-          <div className="glass-card rounded-[28px] border border-white/10 p-4 md:p-5">
+          <div className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-white">Risk Heat Map</h2>
+                <h2 className="text-lg font-black text-[#20364D]">Geospatial Risk Overlay</h2>
+                <p className="text-xs text-[#5B7188]">Live sensor telemetry and satellite hazard footprints</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {(['flood', 'heat', 'fire', 'crop'] as const).map((hazard) => (
@@ -485,173 +467,157 @@ function Dashboard() {
                     key={hazard}
                     type="button"
                     onClick={() => setSelectedModule(hazard)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition ${
+                    className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider transition ${
                       selectedModule === hazard
-                        ? 'border-lime-400/40 bg-lime-500/20 text-lime-200'
-                        : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                        ? 'border-[#2784D8] bg-[#2784D8] text-white'
+                        : 'border-[#B9D9F5] bg-[#EDF7FF] text-[#20364D] hover:bg-[#CDE8FF]'
                     }`}
                   >
-                    {hazard === 'fire' ? 'Fire' : hazard === 'heat' ? 'Heat' : hazard === 'flood' ? 'Flood' : 'Crop'}
+                    {hazard}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-white/60">
-                <span className="font-semibold uppercase tracking-[0.18em]">Legend</span>
-                <div className="flex items-center gap-1.5">
-                  {['Low', 'Moderate', 'High', 'Critical'].map((level) => (
-                    <span key={level} className={`rounded-full border px-2 py-1 text-[9px] font-semibold ${getLevelStyles(level)}`}>
-                      {level}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowRadar((value) => !value)}
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10"
-              >
-                {showRadar ? 'Hide rain radar' : 'Show rain radar'}
-              </button>
-            </div>
-
-            <div className="relative h-[300px] overflow-hidden rounded-[22px] border border-white/10 bg-slate-950/70">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(34,197,94,0.18),transparent_40%),linear-gradient(90deg,rgba(96,165,250,0.08)_1px,transparent_1px),linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[length:100%_100%,28px_28px,28px_28px]" />
+            <div className="relative h-[290px] overflow-hidden rounded-[22px] border border-[#B9D9F5] bg-[#EDF7FF]">
+              {/* Subtle map coordinate grid */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(39,132,216,0.15),transparent_50%),linear-gradient(90deg,rgba(39,132,216,0.06)_1px,transparent_1px),linear-gradient(rgba(39,132,216,0.06)_1px,transparent_1px)] bg-[length:100%_100%,32px_32px,32px_32px]" />
               {showRadar && (
-                <div className="absolute inset-0 opacity-80">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(59,130,246,0.18),transparent_40%)]" />
-                  <div className="absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/40" />
-                  <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/30" />
+                <div className="absolute inset-0 opacity-70">
+                  <div className="absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#2784D8]/30" />
+                  <div className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#16A6A3]/30" />
                 </div>
               )}
 
               {mapZones.map((zone, index) => {
-                const left = 18 + ((index + 1) * 22) % 70
-                const top = 18 + ((index + 1) * 18) % 62
-                const color = zone.score >= 85 ? '#f87171' : zone.score >= 60 ? '#f59e0b' : zone.score >= 30 ? '#34d399' : '#a3e635'
+                const left = 20 + ((index + 1) * 22) % 65
+                const top = 20 + ((index + 1) * 18) % 60
+                const color = zone.score >= 85 ? '#E45B62' : zone.score >= 60 ? '#F2B544' : zone.score >= 30 ? '#2784D8' : '#299765'
                 return (
                   <div
                     key={`${zone.name}-${index}`}
-                    className="absolute block rounded-full border border-white/30 shadow-lg"
+                    className="absolute block rounded-full border border-white shadow-md transition transform hover:scale-125"
                     style={{
                       left: `${left}%`,
                       top: `${top}%`,
-                      width: '18px',
-                      height: '18px',
+                      width: '20px',
+                      height: '20px',
                       background: color,
-                      boxShadow: `0 0 18px ${color}55`,
+                      boxShadow: `0 0 14px ${color}88`,
                       transform: 'translate(-50%, -50%)',
                     }}
                     title={`${zone.name}: ${zone.score}%`}
                   />
                 )
               })}
-
-              {(gridQuery.data?.fire_markers ?? [{ lat: 18.54, lon: 73.89, confidence: 0.8 }]).map((marker, index) => (
-                <div
-                  key={`${marker.lat}-${marker.lon}-${index}`}
-                  className="absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: `${20 + (index + 1) * 20}%`, top: `${24 + (index + 1) * 18}%` }}
-                >
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full border border-red-200 bg-red-500/80 shadow-[0_0_14px_rgba(248,113,113,0.8)]">
-                    <span className="h-2 w-2 rounded-full bg-white" />
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
 
-          <aside className="glass-card rounded-[28px] border border-white/10 p-4 md:p-5">
+          {/* Live Alert & Action Recommendations */}
+          <aside className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white/80">
-                <BellRing className="h-4 w-4 text-lime" />
-                <span className="text-sm font-medium">Live Alert</span>
+              <div className="flex items-center gap-2 text-[#20364D]">
+                <BellRing className="h-4 w-4 text-[#2784D8]" />
+                <span className="text-sm font-extrabold">Advisory Broadcast</span>
               </div>
-              <button type="button" onClick={() => setDrawerOpen(true)} className="inline-flex items-center gap-1 text-xs font-medium text-white/60 hover:text-white">
-                Details
+              <button
+                type="button"
+                onClick={() => setDrawerOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#2784D8] hover:underline"
+              >
+                {drawerOpen ? 'Hide' : 'Details'}
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
 
             {activeAlert ? (
-              <div className="mt-4 rounded-2xl border border-red-400/30 bg-red-500/10 p-4">
+              <div className="mt-4 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-4">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-red-500/15 p-2 text-red-200">
+                  <div className="rounded-full bg-[#2784D8]/10 p-2 text-[#2784D8]">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{activeAlert.level} {HAZARD_META[activeAlert.hazard as keyof typeof HAZARD_META]?.title ?? activeAlert.hazard} Risk Detected</h3>
-                    <p className="mt-2 text-sm text-white/80">{activeAlert.location}</p>
-                    <p className="mt-3 text-sm text-red-50">
-                      Recommended Action: {activeAlert.message || overviewQuery.data?.highest_priority_alert?.recommended_action}
+                    <h3 className="text-base font-black text-[#20364D]">{activeAlert.level} {HAZARD_META[activeAlert.hazard as keyof typeof HAZARD_META]?.title ?? activeAlert.hazard} Advisory</h3>
+                    <p className="mt-1 text-xs font-semibold text-[#5B7188]">{activeAlert.location}</p>
+                    <p className="mt-2 text-xs font-medium text-[#20364D] leading-relaxed">
+                      {activeAlert.message || overviewQuery.data?.highest_priority_alert?.recommended_action || 'Monitoring ongoing. Maintain standard readiness.'}
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/60">
-                No active alert for this location.
+              <div className="mt-4 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-4 text-xs font-semibold text-[#5B7188]">
+                All sensor parameters nominal. No emergency escalations active.
               </div>
             )}
           </aside>
         </section>
 
-        <section className="glass-card rounded-[28px] border border-white/10 p-4 md:p-5">
+        {/* 24-72h Trajectory Forecast Chart */}
+        <section className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">24-72 h Outlook</h2>
-            <span className="rounded-full border border-lime-400/30 bg-lime-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-lime-200">
-              Predicted peak
+            <div>
+              <h2 className="text-lg font-black text-[#20364D]">24–72 h Multi-Hazard Trajectory Outlook</h2>
+              <p className="text-xs text-[#5B7188]">Predictive trajectory based on meteorological ensembles</p>
+            </div>
+            <span className="rounded-full border border-[#B9D9F5] bg-[#D9F5E8] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#299765]">
+              Normal Trajectory
             </span>
           </div>
 
-          <div className="h-72 w-full">
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <CartesianGrid stroke="rgba(148,163,184,0.18)" vertical={false} />
-                <XAxis dataKey="time" stroke="rgba(255,255,255,0.6)" fontSize={12} />
-                <YAxis stroke="rgba(255,255,255,0.6)" domain={[0, 100]} fontSize={12} />
+                <CartesianGrid stroke="#B9D9F5" strokeDasharray="3 3" vertical={false} opacity={0.6} />
+                <XAxis dataKey="time" stroke="#5B7188" fontSize={11} fontWeight={600} />
+                <YAxis stroke="#5B7188" domain={[0, 100]} fontSize={11} fontWeight={600} />
                 <Tooltip
                   contentStyle={{
-                    background: 'rgba(15, 23, 42, 0.9)',
-                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: '#F0F8FF',
+                    border: '1px solid #B9D9F5',
                     borderRadius: '12px',
+                    color: '#20364D',
+                    boxShadow: '0 4px 12px rgba(32,54,77,0.08)',
                   }}
                 />
-                <Line type="monotone" dataKey="flood" stroke="#67e8f9" strokeWidth={3} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="heat" stroke="#fbbf24" strokeWidth={3} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="fire" stroke="#f87171" strokeWidth={3} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="crop" stroke="#bef264" strokeWidth={3} dot={{ r: 3 }} />
-                <ReferenceDot x="+72h" y={Math.max(...chartData.map((row) => Math.max(row.flood, row.heat, row.fire, row.crop)))} r={6} fill="#a3e635" stroke="#112230" />
+                <Line type="monotone" dataKey="flood" name="Flood" stroke="#2784D8" strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="heat" name="Heat" stroke="#B47510" strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="fire" name="Fire" stroke="#E45B62" strokeWidth={3} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="crop" name="Crop" stroke="#299765" strokeWidth={3} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </section>
 
-        <section className="glass-card rounded-[28px] border border-white/10 p-4 md:p-5">
+        {/* Why this score? Explainability Drawer */}
+        <section className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-white">Why this score?</h2>
+            <div>
+              <h2 className="text-lg font-black text-[#20364D]">Explainable Risk Diagnostics</h2>
+              <p className="text-xs text-[#5B7188]">Telemetry drivers, seasonal baselines, and model confidence</p>
+            </div>
             <button
               type="button"
               onClick={() => setDrawerOpen((value) => !value)}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-1.5 text-xs font-bold text-[#20364D] transition hover:bg-[#CDE8FF]"
             >
-              <Info className="h-3.5 w-3.5" />
-              {drawerOpen ? 'Hide' : 'View details'}
+              <Info className="h-3.5 w-3.5 text-[#2784D8]" />
+              {drawerOpen ? 'Hide Diagnostics' : 'Inspect Diagnostics'}
             </button>
           </div>
 
           {drawerOpen && (
-            <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-              <div className="mb-4 flex flex-wrap gap-2">
+            <div className="mt-4 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-4 space-y-4">
+              <div className="flex flex-wrap gap-2">
                 {(['flood', 'heat', 'fire', 'crop'] as const).map((hazard) => (
                   <button
                     key={hazard}
                     type="button"
                     onClick={() => setSelectedModule(hazard)}
-                    className={`rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                      selectedModule === hazard ? 'border-lime-400/40 bg-lime-500/15 text-lime-100' : 'border-white/10 bg-white/5 text-white/60'
+                    className={`rounded-full border px-3.5 py-1 text-[10px] font-black uppercase tracking-wider transition ${
+                      selectedModule === hazard
+                        ? 'border-[#2784D8] bg-[#2784D8] text-white'
+                        : 'border-[#B9D9F5] bg-[#F0F8FF] text-[#20364D]'
                     }`}
                   >
                     {hazard}
@@ -661,51 +627,30 @@ function Dashboard() {
 
               <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
                 <div>
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">{HAZARD_META[selectedModule].title}</h3>
-                    <span className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${getLevelStyles(String(selectedHazardDetails.level))}`}>
-                      {String(selectedHazardDetails.level)}
-                    </span>
-                  </div>
-
-                  <ul className="space-y-3 text-sm text-white/75">
+                  <h3 className="text-base font-extrabold text-[#20364D] mb-2">{HAZARD_META[selectedModule].title} Physical Drivers</h3>
+                  <ul className="space-y-2 text-xs text-[#20364D]">
                     {(selectedHazardDetails.drivers as string[]).map((driver, index) => (
-                      <li key={`${driver}-${index}`} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                      <li key={`${driver}-${index}`} className="flex items-center justify-between rounded-xl border border-[#B9D9F5] bg-[#F0F8FF] px-3 py-2 font-medium">
                         <span>{driver}</span>
-                        <span className="text-lime-200">{selectedHazardDetails.score}%</span>
+                        <span className="font-bold text-[#2784D8]">{selectedHazardDetails.score}%</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 <div className="space-y-3">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">Data sources</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="rounded-xl border border-[#B9D9F5] bg-[#F0F8FF] p-3 text-xs">
+                    <p className="font-bold text-[#5B7188] uppercase tracking-wider text-[10px]">Data Sources</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {selectedHazardDetails.sources.map((source) => (
                         <DataSourceBadge key={source.provider} source="live" provider={source.provider} updatedAt="now" />
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">Model mode</p>
-                    <p className="mt-2 text-sm text-white/80 capitalize">{String(selectedHazardDetails.modelMode)}</p>
+                  <div className="rounded-xl border border-[#B9D9F5] bg-[#F0F8FF] p-3 text-xs">
+                    <p className="font-bold text-[#5B7188] uppercase tracking-wider text-[10px]">Model Architecture</p>
+                    <p className="mt-1 font-bold text-[#20364D]">Hybrid Hydrologic-ML Engine</p>
                   </div>
-                  {selectedHazardDetails.metrics && Object.keys(selectedHazardDetails.metrics).length > 0 && (
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">Measured ML metrics</p>
-                      <div className="mt-2 space-y-2 text-sm text-white/80">
-                        {Object.entries(selectedHazardDetails.metrics)
-                          .filter(([key]) => ['ml_validation_auc', 'ml_accuracy', 'roc_auc', 'precision', 'recall'].includes(key))
-                          .map(([key, value]) => (
-                            <div key={key} className="flex items-center justify-between gap-3">
-                              <span>{key}</span>
-                              <span className="text-lime-200">{String(value)}</span>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -713,15 +658,16 @@ function Dashboard() {
         </section>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-slate-950/85 px-4 py-3 backdrop-blur-xl md:hidden">
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#B9D9F5] bg-[#B9DEFF]/95 px-4 py-2.5 backdrop-blur-md md:hidden">
         <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
           {MOBILE_ITEMS.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={label}
               to={to}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-medium transition ${
-                  isActive ? 'bg-lime-500/15 text-lime-200' : 'text-white/60 hover:text-white'
+                `flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 text-[10px] font-bold transition ${
+                  isActive ? 'bg-[#2784D8] text-white shadow-sm' : 'text-[#20364D] hover:bg-[#CDE8FF]'
                 }`
               }
             >
@@ -734,5 +680,3 @@ function Dashboard() {
     </main>
   )
 }
-
-export default Dashboard

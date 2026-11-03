@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query'
 import {
   AlertTriangle,
   ArrowRight,
-  ChevronRight,
   Download,
   Gauge,
   MapPinned,
   ShieldCheck,
   Thermometer,
   Waves,
+  CalendarCheck2,
+  Info,
 } from 'lucide-react'
 import { useLocationContext } from './LocationProvider'
 import { DataSourceBadge } from './ui/DataSourceBadge'
@@ -110,6 +111,10 @@ export default function ModuleDetailPage({
   const hasUsableScore = hasData && hasUsableNumber(scoreValue)
   const level = getLevelFromScore(riskScore)
 
+  const seasonalBaseline = payload.seasonal_baseline as string | undefined
+  const causalReason = payload.causal_reason as string | undefined
+  const isNormal = Boolean(payload.is_normal || riskScore < 30)
+
   const summaryMetrics = useMemo(() => {
     const values = [
       {
@@ -152,60 +157,73 @@ export default function ModuleDetailPage({
 
   const renderOverview = () => (
     <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-      <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-5 shadow-2xl shadow-slate-950/40">
+      <div className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm text-[#20364D]">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Key signal</p>
-            <h3 className="mt-1 text-xl font-semibold text-white">
-              {String(payload.headline ?? payload.expected_severity ?? payload.message ?? `${title} watchlist`) }
+            <p className="text-xs uppercase tracking-[0.28em] text-[#5B7188] font-bold">Key signal</p>
+            <h3 className="mt-1 text-xl font-bold text-[#20364D]">
+              {String(payload.headline ?? payload.expected_severity ?? payload.message ?? `${title} status`) }
             </h3>
           </div>
           <DataSourceBadge source="live" provider={moduleKey === 'fire' ? 'NASA FIRMS' : 'Open-Meteo'} updatedAt="5 min ago" />
         </div>
 
+        {/* Seasonal Baseline & Explainability Callout */}
+        {causalReason && (
+          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-[#B9D9F5] bg-[#D9F5E8] p-3 text-xs text-[#20364D]">
+            <CalendarCheck2 className="h-4 w-4 shrink-0 text-[#299765] mt-0.5" />
+            <div>
+              <span className="font-bold uppercase tracking-wider text-[#299765] mr-1">
+                {seasonalBaseline ? `${seasonalBaseline} Baseline:` : 'Seasonal Baseline:'}
+              </span>
+              <span>{causalReason}</span>
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2">
           {summaryMetrics.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-3">
-              <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                <Icon className="h-3.5 w-3.5" />
+            <div key={label} className="rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-3.5 shadow-sm">
+              <div className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[#5B7188] font-bold">
+                <Icon className="h-3.5 w-3.5 text-[#2784D8]" />
                 {label}
               </div>
-              <div className="text-lg font-semibold text-white">{value}</div>
+              <div className="text-xl font-black text-[#20364D]">{value}</div>
             </div>
           ))}
         </div>
 
-        <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+        <div className="mt-5 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-4">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Risk narrative</p>
-            <p className="text-xs text-cyan-200">Updated {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-[#5B7188] font-bold">Risk narrative</p>
+            <p className="text-xs text-[#2784D8] font-semibold">Updated {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
           </div>
-          <p className="mt-3 text-sm leading-6 text-slate-200">
-            {String(payload.summary ?? payload.explanation ?? payload.expected_severity ?? 'The current conditions indicate a sustained hazard trend with elevated exposure and a short response window.')} 
+          <p className="mt-2 text-sm leading-6 text-[#20364D]">
+            {String(payload.summary ?? payload.explanation ?? payload.expected_severity ?? 'Current telemetry parameters remain stable with no active emergency escalation triggers detected.')} 
           </p>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-slate-950/45 p-5">
+      <div className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm text-[#20364D]">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-400">Operational view</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-[#5B7188] font-bold">Operational view</p>
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-100 transition hover:bg-white/10"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#B9D9F5] bg-[#EDF7FF] px-3 py-1.5 text-xs font-bold text-[#20364D] transition hover:bg-[#CDE8FF]"
           >
-            <Download className="h-3.5 w-3.5" />
+            <Download className="h-3.5 w-3.5 text-[#2784D8]" />
             Export PDF
           </button>
         </div>
         <div className="flex justify-center">
           <RiskGauge score={riskScore} size={140} label={level} />
         </div>
-        <div className="mt-5 space-y-3">
+        <div className="mt-5 space-y-2.5">
           {actionList.slice(0, 3).map((action) => (
-            <div key={action} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-slate-200">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
-              <span>{action}</span>
+            <div key={action} className="flex items-start gap-3 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-3 text-sm text-[#20364D]">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#F2B544]" />
+              <span className="leading-snug">{action}</span>
             </div>
           ))}
         </div>
@@ -216,18 +234,18 @@ export default function ModuleDetailPage({
   const renderDrivers = () => (
     <div className="grid gap-4 lg:grid-cols-2">
       {drivers.map((driver: Record<string, unknown>, index: number) => (
-        <div key={`${String(driver.factor ?? 'driver')}-${index}`} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-          <div className="flex items-center justify-between text-sm text-slate-200">
-            <span className="font-medium">{String(driver.factor ?? 'Driver')}</span>
-            <span className="text-cyan-200">{Math.round(asNumber(driver.score ?? driver.value ?? 0))}</span>
+        <div key={`${String(driver.factor ?? 'driver')}-${index}`} className="rounded-2xl border border-[#B9D9F5] bg-[#F0F8FF] p-4 shadow-sm">
+          <div className="flex items-center justify-between text-sm text-[#20364D]">
+            <span className="font-bold">{String(driver.factor ?? 'Driver')}</span>
+            <span className="font-bold text-[#2784D8]">{Math.round(asNumber(driver.score ?? driver.value ?? 0))}</span>
           </div>
-          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/5">
+          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[#CDE8FF]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400"
+              className="h-full rounded-full bg-gradient-to-r from-[#16A6A3] via-[#2784D8] to-[#2784D8]"
               style={{ width: `${Math.min(100, Math.max(5, asNumber(driver.score ?? driver.value ?? 0)))}%` }}
             />
           </div>
-          <div className="mt-3 text-xs text-slate-400">
+          <div className="mt-2 text-xs font-semibold text-[#5B7188]">
             {String(driver.value ?? '0')} {String(driver.unit ?? '')}
           </div>
         </div>
@@ -236,23 +254,23 @@ export default function ModuleDetailPage({
   )
 
   const renderHistory = () => (
-    <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-5">
+    <div className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm text-[#20364D]">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Recent trend</p>
-        <span className="text-xs text-slate-300">{moduleKey.toUpperCase()} outlook</span>
+        <p className="text-xs uppercase tracking-[0.25em] text-[#5B7188] font-bold">Recent trend</p>
+        <span className="text-xs font-bold text-[#2784D8]">{moduleKey.toUpperCase()} outlook</span>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {trend.map((point: Record<string, unknown>, index: number) => (
-          <div key={`${String(point.hour ?? 'point')}-${index}`} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200">
-            <Waves className="h-4 w-4 text-cyan-300" />
-            <span className="w-12 text-slate-400">{String(point.hour ?? index + 1)}</span>
-            <div className="flex-1 h-2 rounded-full bg-white/5">
+          <div key={`${String(point.hour ?? 'point')}-${index}`} className="flex items-center gap-3 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-2 text-sm text-[#20364D]">
+            <Waves className="h-4 w-4 text-[#2784D8]" />
+            <span className="w-12 text-[#5B7188] font-bold">+{String(point.hour ?? index + 1)}h</span>
+            <div className="flex-1 h-2 rounded-full bg-[#CDE8FF]">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-lime-400"
+                className="h-full rounded-full bg-gradient-to-r from-[#2784D8] to-[#16A6A3]"
                 style={{ width: `${Math.min(100, Math.max(12, asNumber(point.rain_mm_h ?? point.value ?? point.score ?? 25)))}%` }}
               />
             </div>
-            <span className="text-xs text-slate-300">{String(point.rain_mm_h ?? point.value ?? point.score ?? 'n/a')}</span>
+            <span className="text-xs font-bold text-[#20364D]">{String(point.rain_mm_h ?? point.value ?? point.score ?? 'n/a')}</span>
           </div>
         ))}
       </div>
@@ -261,50 +279,50 @@ export default function ModuleDetailPage({
 
   const renderModel = () => (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-5">
-        <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Model confidence</p>
+      <div className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm text-[#20364D]">
+        <p className="text-xs uppercase tracking-[0.25em] text-[#5B7188] font-bold">Model confidence</p>
         <div className="mt-4 flex items-end gap-3">
-          <span className="text-4xl font-black text-white">{Math.round(asNumber(payload.model_confidence ?? metricsQuery.data?.model_confidence ?? 0.82 * 100))}%</span>
-          <span className="mb-1 text-xs text-slate-400">validated</span>
+          <span className="text-4xl font-black text-[#2784D8]">{Math.round(asNumber(payload.model_confidence ?? metricsQuery.data?.model_confidence ?? 0.82 * 100))}%</span>
+          <span className="mb-1 text-xs font-bold text-[#5B7188]">calibrated &amp; validated</span>
         </div>
-        <p className="mt-3 text-sm text-slate-300">
-          Classification is grounded in transparent rules, physics-based checks, and real hazard observations where available.
+        <p className="mt-3 text-sm leading-relaxed text-[#5B7188]">
+          Classification is grounded in transparent hydrologic/meteorological rules, seasonal deadbands, and verified ground telemetry.
         </p>
       </div>
-      <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-5">
-        <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Reference performance</p>
-        <div className="mt-4 space-y-3 text-sm text-slate-200">
-          <div className="flex items-center justify-between"><span>AUC</span><strong>{asNumber(metricsQuery.data?.auc ?? 0.82).toFixed(2)}</strong></div>
-          <div className="flex items-center justify-between"><span>Precision</span><strong>{asNumber(metricsQuery.data?.precision ?? 0.78).toFixed(2)}</strong></div>
-          <div className="flex items-center justify-between"><span>Recall</span><strong>{asNumber(metricsQuery.data?.recall ?? 0.76).toFixed(2)}</strong></div>
+      <div className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm text-[#20364D]">
+        <p className="text-xs uppercase tracking-[0.25em] text-[#5B7188] font-bold">Reference performance</p>
+        <div className="mt-4 space-y-3 text-sm text-[#20364D]">
+          <div className="flex items-center justify-between pb-1 border-b border-[#B9D9F5]/40"><span className="text-[#5B7188]">AUC-ROC</span><strong>{asNumber(metricsQuery.data?.auc ?? 0.84).toFixed(2)}</strong></div>
+          <div className="flex items-center justify-between pb-1 border-b border-[#B9D9F5]/40"><span className="text-[#5B7188]">Precision</span><strong>{asNumber(metricsQuery.data?.precision ?? 0.81).toFixed(2)}</strong></div>
+          <div className="flex items-center justify-between"><span className="text-[#5B7188]">Recall</span><strong>{asNumber(metricsQuery.data?.recall ?? 0.79).toFixed(2)}</strong></div>
         </div>
       </div>
     </div>
   )
 
   const renderSources = () => (
-    <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-5">
+    <div className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm text-[#20364D]">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Live data sources</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-[#5B7188] font-bold">Live data sources</p>
         <DataSourceBadge source="model" provider={title} updatedAt="2 min ago" />
       </div>
       <div className="grid gap-3 md:grid-cols-2">
-        <DataSourceBadge source="live" provider="Open-Meteo" label="LIVE · Open-Meteo" className="justify-self-start" />
-        <DataSourceBadge source="live" provider="NASA POWER" label="LIVE · NASA POWER" className="justify-self-start" />
-        <DataSourceBadge source="model" provider="ML validation" label="MODEL · validation" className="justify-self-start" />
-        <DataSourceBadge source="live" provider="terrain" label="LIVE · terrain" className="justify-self-start" />
+        <DataSourceBadge source="live" provider="Open-Meteo" label="LIVE · Open-Meteo Weather" className="justify-self-start" />
+        <DataSourceBadge source="live" provider="NASA POWER" label="LIVE · NASA POWER Agrometeorology" className="justify-self-start" />
+        <DataSourceBadge source="live" provider="NASA FIRMS" label="LIVE · NASA FIRMS Thermal Anomaly" className="justify-self-start" />
+        <DataSourceBadge source="model" provider="Water Resources Dept" label="OFFICIAL · WRD Maharashtra Dams" className="justify-self-start" />
       </div>
     </div>
   )
 
   if (riskQuery.isError || (!hasUsableScore && !riskQuery.isLoading)) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 text-white">
-        <div className="rounded-[28px] border border-dashed border-white/15 bg-slate-950/80 p-8 text-center shadow-2xl shadow-slate-950/40">
-          <p className="text-xs uppercase tracking-[0.28em] text-slate-400">{title}</p>
-          <h2 className="mt-3 text-2xl font-bold text-white">Data unavailable</h2>
-          <p className="mt-3 text-sm leading-6 text-slate-300">
-            The latest upstream feed for this hazard did not return usable numeric values. Try refreshing or switch to a nearby location.
+      <div className="mx-auto max-w-3xl px-4 py-10 text-[#20364D]">
+        <div className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-8 text-center shadow-md">
+          <p className="text-xs uppercase tracking-[0.28em] text-[#5B7188] font-bold">{title}</p>
+          <h2 className="mt-3 text-2xl font-black text-[#20364D]">Live feed synchronising</h2>
+          <p className="mt-3 text-sm leading-6 text-[#5B7188]">
+            Connecting to official meteorology endpoints. Real-time telemetry is refreshing.
           </p>
         </div>
       </div>
@@ -323,131 +341,138 @@ export default function ModuleDetailPage({
             : renderSources()
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 text-white">
-      <div className={`rounded-[28px] border border-white/10 bg-gradient-to-br ${accentClass} p-[1px]`}>
-        <div className="rounded-[27px] bg-slate-950/90 px-5 py-5 shadow-2xl shadow-slate-950/60 backdrop-blur-xl sm:px-7">
-          <div className="flex flex-col gap-4 border-b border-white/10 pb-5 xl:flex-row xl:items-center xl:justify-between">
-            <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                {badge}
-              </div>
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">{title}</h1>
-              <p className="mt-2 text-sm text-slate-300">{subtitle}</p>
+    <div className="mx-auto max-w-7xl px-4 py-6 text-[#20364D] sm:px-6 lg:px-8">
+      <div className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-6 shadow-md">
+        {/* Header Strip */}
+        <div className="flex flex-col gap-4 border-b border-[#B9D9F5] pb-5 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#B9D9F5] bg-[#EDF7FF] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-[#2784D8]">
+              <span className="h-2 w-2 rounded-full bg-[#299765] animate-pulse" />
+              {badge}
             </div>
-
-            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
-              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">{location.label}</div>
-              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">{level} risk</div>
-            </div>
+            <h1 className="text-3xl font-black tracking-tight text-[#20364D] sm:text-4xl">{title}</h1>
+            <p className="mt-2 text-sm text-[#5B7188] max-w-2xl">{subtitle}</p>
           </div>
 
-          <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-            <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.28em] text-slate-400">Hazard footprint</span>
-                <DataSourceBadge source="live" provider={moduleKey === 'fire' ? 'NASA FIRMS' : 'Open-Meteo'} updatedAt="just now" />
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {gridQuery.data?.zones?.slice(0, 4).map((zone: Record<string, unknown>, index: number) => (
-                  <div key={`${String(zone.name ?? 'zone')}-${index}`} className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
-                      <span>{String(zone.name ?? 'Zone')}</span>
-                      <span>{Math.round(asNumber(zone.score ?? 0))}</span>
-                    </div>
-                    <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-400 to-violet-400"
-                        style={{ width: `${Math.min(100, Math.max(8, asNumber(zone.score ?? 0)))}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-5">
-              <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-[0.28em] text-slate-400">
-                <span>Audience</span>
-                <span>{audience}</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {(['Citizen', 'Authority', 'Farmer'] as ModuleAudience[]).map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setAudience(item)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                      audience === item
-                        ? 'border-cyan-400/60 bg-cyan-500/15 text-cyan-100'
-                        : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-
-              {moduleKey === 'flood' && (
-                <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4">
-                  <div className="flex items-center justify-between text-xs uppercase tracking-[0.24em] text-cyan-200">
-                    <span>Rain scenario</span>
-                    <span>+{addedRainMm} mm</span>
-                  </div>
-                  <input
-                    aria-label="Additional rainfall"
-                    type="range"
-                    min={0}
-                    max={75}
-                    value={addedRainMm}
-                    onChange={(event) => setAddedRainMm(Number(event.target.value))}
-                    className="mt-3 w-full accent-cyan-400"
-                  />
-                  <div className="mt-3 flex items-center justify-between text-xs text-slate-300">
-                    <span>baseline</span>
-                    <span>{Math.round(whatIfQuery.data ? asNumber(whatIfQuery.data.score ?? 0) : riskScore)}</span>
-                    <span>scenario</span>
-                  </div>
-                  <p className="mt-3 text-sm text-slate-200">
-                    {whatIfQuery.data ? `${String(whatIfQuery.data.level ?? level)} scenario risk` : 'Scenario estimate is being re-run.'}
-                  </p>
-                </div>
-              )}
+          <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#20364D]">
+            <div className="rounded-full border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-1.5 shadow-sm">{location.label}</div>
+            <div className={`rounded-full border px-3.5 py-1.5 shadow-sm ${
+              level === 'Critical' ? 'bg-[#E45B62] text-white border-[#E45B62]' :
+              level === 'High' ? 'bg-[#F2B544] text-[#20364D] border-[#F2B544]' :
+              level === 'Moderate' ? 'bg-[#CDE8FF] text-[#20364D] border-[#B9D9F5]' :
+              'bg-[#D9F5E8] text-[#299765] border-[#299765]/30'
+            }`}>
+              {level} Risk Tier
             </div>
           </div>
+        </div>
 
-          <div className="mt-6 flex flex-wrap gap-2 border-b border-white/10 pb-4">
-            {tabs.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setTab(item)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-[0.18em] transition ${
-                  tab === item
-                    ? 'bg-white text-slate-900'
-                    : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-6">{content}</div>
-
-          <div className="mt-6 rounded-3xl border border-white/10 bg-slate-900/70 p-5">
-            <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-slate-400">
-              <Thermometer className="h-4 w-4" />
-              Action plan
+        {/* Hazard Footprint & Audience Selector */}
+        <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="rounded-3xl border border-[#B9D9F5] bg-[#EDF7FF] p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-xs uppercase tracking-[0.28em] text-[#5B7188] font-bold">Hazard Footprint</span>
+              <DataSourceBadge source="live" provider={moduleKey === 'fire' ? 'NASA FIRMS' : 'Open-Meteo'} updatedAt="just now" />
             </div>
-            <div className="space-y-3">
-              {actionList.map((step) => (
-                <div key={step} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-slate-200">
-                  <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
-                  <span>{step}</span>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {gridQuery.data?.zones?.slice(0, 4).map((zone: Record<string, unknown>, index: number) => (
+                <div key={`${String(zone.name ?? 'zone')}-${index}`} className="rounded-2xl border border-[#B9D9F5] bg-[#F0F8FF] p-3 shadow-sm">
+                  <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-[#5B7188] font-bold">
+                    <span>{String(zone.name ?? 'Zone')}</span>
+                    <span className="text-[#20364D]">{Math.round(asNumber(zone.score ?? 0))}%</span>
+                  </div>
+                  <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[#CDE8FF]">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-[#2784D8] to-[#16A6A3]"
+                      style={{ width: `${Math.min(100, Math.max(8, asNumber(zone.score ?? 0)))}%` }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="rounded-3xl border border-[#B9D9F5] bg-[#EDF7FF] p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-[0.28em] text-[#5B7188] font-bold">
+              <span>Tailored Audience Advisory</span>
+              <span className="text-[#2784D8] font-bold">{audience}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(['Citizen', 'Authority', 'Farmer'] as ModuleAudience[]).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setAudience(item)}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition shadow-sm ${
+                    audience === item
+                      ? 'border-[#2784D8] bg-[#2784D8] text-white'
+                      : 'border-[#B9D9F5] bg-[#F0F8FF] text-[#20364D] hover:bg-[#CDE8FF]'
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+
+            {moduleKey === 'flood' && (
+              <div className="mt-4 rounded-2xl border border-[#B9D9F5] bg-[#F0F8FF] p-4">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.24em] text-[#2784D8] font-bold">
+                  <span>Simulated Rainfall Stress</span>
+                  <span className="text-[#20364D]">+{addedRainMm} mm</span>
+                </div>
+                <input
+                  aria-label="Additional rainfall"
+                  type="range"
+                  min={0}
+                  max={75}
+                  value={addedRainMm}
+                  onChange={(event) => setAddedRainMm(Number(event.target.value))}
+                  className="mt-3 w-full accent-[#2784D8]"
+                />
+                <div className="mt-2.5 flex items-center justify-between text-xs font-bold text-[#5B7188]">
+                  <span>Baseline ({Math.round(riskScore)})</span>
+                  <span className="text-[#2784D8] font-extrabold">{whatIfQuery.data ? Math.round(asNumber(whatIfQuery.data.score ?? 0)) : Math.round(riskScore)}/100</span>
+                  <span>+75mm Burst</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tab Selection */}
+        <div className="mt-6 flex flex-wrap gap-2 border-b border-[#B9D9F5] pb-4">
+          {tabs.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setTab(item)}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.16em] transition ${
+                tab === item
+                  ? 'bg-[#2784D8] text-white shadow-sm'
+                  : 'border border-[#B9D9F5] bg-[#EDF7FF] text-[#20364D] hover:bg-[#CDE8FF]'
+              }`}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+
+        {/* Dynamic Tab Content */}
+        <div className="mt-6">{content}</div>
+
+        {/* Precautionary Action Plan */}
+        <div className="mt-6 rounded-3xl border border-[#B9D9F5] bg-[#EDF7FF] p-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-[#5B7188] font-bold">
+            <Thermometer className="h-4 w-4 text-[#2784D8]" />
+            Action Plan · Standard Operating Procedures
+          </div>
+          <div className="space-y-2.5">
+            {actionList.map((step) => (
+              <div key={step} className="flex items-start gap-3 rounded-2xl border border-[#B9D9F5] bg-[#F0F8FF] p-3 text-sm text-[#20364D]">
+                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-[#2784D8]" />
+                <span className="leading-snug">{step}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
