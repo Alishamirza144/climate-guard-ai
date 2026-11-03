@@ -1,5 +1,5 @@
 import math
-
+import pytest
 from app.engines.fire import calculate_fwi_from_observation, ffmc, fwi_class_from_value, score_fire_risk
 
 
@@ -8,15 +8,17 @@ def test_ffmc_reference_range() -> None:
     assert 80.0 <= value <= 98.0
 
 
-def test_fwi_reference_values() -> None:
-    result = calculate_fwi_from_observation(30.0, 25.0, 15.0, 0.0)
+@pytest.mark.asyncio
+async def test_fwi_reference_values() -> None:
+    result = await calculate_fwi_from_observation(30.0, 25.0, 15.0, 0.0)
     assert result["ffmc"] > 80.0
     assert result["fwi"] >= 0.0
     assert result["fwi_class"] in {"Low", "Moderate", "High", "Very High", "Extreme"}
 
 
-def test_fire_risk_scores_and_state() -> None:
-    result = score_fire_risk(
+@pytest.mark.asyncio
+async def test_fire_risk_scores_and_state() -> None:
+    result = await score_fire_risk(
         lat=29.0,
         lon=79.0,
         temp_c=35.0,
@@ -34,8 +36,9 @@ def test_fire_risk_scores_and_state() -> None:
     assert result["recommendations"]
 
 
-def test_fire_risk_without_firms_key() -> None:
-    result = score_fire_risk(
+@pytest.mark.asyncio
+async def test_fire_risk_without_firms_key() -> None:
+    result = await score_fire_risk(
         lat=18.5,
         lon=73.8,
         temp_c=26.0,

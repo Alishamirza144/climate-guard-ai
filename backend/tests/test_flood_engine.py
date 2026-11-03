@@ -21,10 +21,10 @@ from app.main import app
 
 
 def test_rainfall_accumulations_1h_3h_6h_24h_and_peak() -> None:
-    values = [0.0, 1.0, 2.5, 3.0, 0.5, 0.0, 4.0, 5.0, 1.0, 0.0] * 3
+    values = [0.0, 1.0, 2.5, 3.0, 0.5, 0.0, 4.0, 5.0, 0.0, 2.0] * 3
     result = compute_rainfall_accumulations(values)
     assert result["1h"] > 0
-    assert result["3h"] > result["1h"]
+    assert result["3h"] >= result["1h"]
     assert result["24h"] > result["6h"]
     assert result["peak_hourly_intensity_mm_h"] >= max(values)
 

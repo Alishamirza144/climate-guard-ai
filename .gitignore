@@ -20,6 +20,11 @@ __pycache__/
 *.sqlite3
 *.log
 
+# Node Dependencies
+node_modules/
+frontend/node_modules/
+.npm/
+
 # OS & Editor Artifacts
 .DS_Store
 Thumbs.db

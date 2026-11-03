@@ -34,7 +34,7 @@ def test_missing_data_defaults() -> None:
 
 
 def test_consecutive_hot_days_counts_run() -> None:
-    assert consecutive_hot_days([38.0, 39.2, 40.1, 41.0, 42.0, 43.0], threshold=40.0) == 5
+    assert consecutive_hot_days([38.0, 39.2, 40.1, 41.0, 42.0, 43.0], threshold=40.0) == 4
     assert consecutive_hot_days([40.0, 39.0, 41.0], threshold=40.0) == 1
 
 

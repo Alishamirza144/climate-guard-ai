@@ -105,3 +105,42 @@ app.include_router(simulation.router, prefix="/api")
 app.include_router(demo.router, prefix="/api")
 app.include_router(validation.router, prefix="/api")
 app.include_router(ml.router, prefix="/api")
+
+
+# ---------------------------------------------------------------------------
+# Frontend Single-Page Application (SPA) Serving
+# ---------------------------------------------------------------------------
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, RedirectResponse
+
+@app.get("/docs", include_in_schema=False)
+async def redirect_docs():
+    return RedirectResponse(url="/api/docs")
+
+@app.get("/redoc", include_in_schema=False)
+async def redirect_redoc():
+    return RedirectResponse(url="/api/redoc")
+
+candidate_dists = [
+    Path(__file__).resolve().parents[1] / "dist",
+    Path(__file__).resolve().parents[2] / "frontend" / "dist",
+    Path(__file__).resolve().parents[3] / "frontend" / "dist",
+    Path.cwd() / "frontend" / "dist",
+    Path.cwd() / "dist",
+]
+frontend_dist = next((p for p in candidate_dists if p.exists() and (p / "index.html").exists()), None)
+
+if frontend_dist is not None:
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        file_candidate = frontend_dist / full_path
+        if file_candidate.is_file():
+            return FileResponse(file_candidate)
+        return FileResponse(frontend_dist / "index.html")

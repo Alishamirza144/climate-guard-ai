@@ -5,6 +5,7 @@ import asyncio
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.config import get_settings
 from app.engines.drainage import analyze_drainage_series, detect_blockage_signature
 from app.main import app
 
@@ -89,7 +90,7 @@ async def test_iot_ingest_and_list_devices() -> None:
                 "battery_v": 12.8,
                 "rssi": -60,
             },
-            headers={"X-API-Key": "test-key"},
+            headers={"X-API-Key": get_settings().iot_api_key or "test-key"},
         )
         assert resp.status_code == 200, resp.text
         list_resp = await client.get("/api/iot/devices")

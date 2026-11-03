@@ -64,25 +64,24 @@ def get_fires(
     Returns an empty list plus available=False when the required FIRMS API key is not configured.
     """
     settings = get_settings()
-    api_key = settings.firms_map_key.strip()
-    if not api_key:
+    api_key = (settings.firms_map_key or "").strip()
+    if not api_key or "your_" in api_key.lower() or api_key == "demo":
         return FireQueryResult(available=False, detections=[], error="FIRMS_MAP_KEY is not configured")
 
     if not 1 <= days <= 5:
         raise ValueError("days must be between 1 and 5")
 
     bbox = f"{min_lat},{min_lon},{max_lat},{max_lon}"
-    url = "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{api_key}/VIIRS_SNPP_NRT/{bbox}/{days}".format(
-        api_key=api_key,
-        bbox=bbox,
-        days=days,
-    )
-    with httpx.Client(timeout=20.0) as client:
-        response = client.get(url)
-        response.raise_for_status()
-        raw = response.text
-    detections = parse_fire_csv(raw)
-    return FireQueryResult(available=True, detections=detections)
+    url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{api_key}/VIIRS_SNPP_NRT/{bbox}/{days}"
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            raw = response.text
+        detections = parse_fire_csv(raw)
+        return FireQueryResult(available=True, detections=detections)
+    except Exception as exc:
+        return FireQueryResult(available=False, detections=[], error=str(exc))
 
 
 async def get_fires_async(

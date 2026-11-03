@@ -3,7 +3,7 @@
  * Base URL is read from VITE_API_URL env var (never hard-coded).
  */
 
-export const API_BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
+export const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
 
 export interface HealthResponse {
   status: string

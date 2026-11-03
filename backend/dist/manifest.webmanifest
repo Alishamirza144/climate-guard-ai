@@ -1,0 +1,15 @@
+{
+  "name": "ClimateGuard AI",
+  "short_name": "ClimateGuard",
+  "description": "Climate risk prediction and early warning system for floods, heat, fire, and crop stress.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "utilities", "weather"]
+}
