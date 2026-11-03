@@ -13,8 +13,10 @@ import {
 } from 'recharts'
 import { Database, Waves, ArrowDownRight, ArrowUpRight, ShieldCheck, AlertTriangle, Layers, Info } from 'lucide-react'
 import { api, ReservoirData } from '../lib/api'
+import { useLocationContext } from './LocationProvider'
 
 export default function DamMonitoringWidget() {
+  const { location } = useLocationContext()
   const [dams, setDams] = useState<ReservoirData[]>([])
   const [selectedDamId, setSelectedDamId] = useState<string>('gangapur')
   const [dam, setDam] = useState<ReservoirData | null>(null)
@@ -22,12 +24,15 @@ export default function DamMonitoringWidget() {
 
   useEffect(() => {
     let mounted = true
-    api.listDams()
+    setLoading(true)
+    api.listDams(location.lat, location.lon)
       .then((data) => {
         if (mounted) {
           setDams(data)
           if (data.length > 0) {
-            setDam(data.find((d) => d.id === selectedDamId) || data[0])
+            const preferred = data.find((d) => d.id === selectedDamId) || data[0]
+            setSelectedDamId(preferred.id)
+            setDam(preferred)
           }
           setLoading(false)
         }
@@ -38,7 +43,7 @@ export default function DamMonitoringWidget() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [location.lat, location.lon])
 
   const handleSelectDam = (damId: string) => {
     setSelectedDamId(damId)
@@ -81,7 +86,7 @@ export default function DamMonitoringWidget() {
             </span>
           </div>
           <p className="text-xs text-[#5B7188] mt-0.5">
-            Upper Godavari catchment flood retention & controlled spillway discharge
+            {dam.location} • {dam.river} flood retention & controlled spillway discharge
           </p>
         </div>
 

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { api } from '../lib/api'
+import { INDIA_CITIES, findCityByCoords, findCityById, type CityData } from '../data/cities'
 
 export type LocationResult = {
   id: number
@@ -23,26 +24,35 @@ export type LocationValue = {
   lat: number
   lon: number
   label: string
-  source: 'browser' | 'preset' | 'search' | 'fallback'
+  source: 'browser' | 'preset' | 'search' | 'fallback' | 'city_select'
+  cityId?: string
+  state?: string
+  region?: string
 }
 
 export const presetLocations = [
-  { label: 'Pune', lat: 18.5204, lon: 73.8567 },
-  { label: 'Nashik', lat: 19.9975, lon: 73.7898 },
-  { label: 'Mumbai', lat: 19.076, lon: 72.8777 },
-  { label: 'Kolkata', lat: 22.5726, lon: 88.3639 },
-  { label: 'Chennai', lat: 13.0827, lon: 80.2707 },
-  { label: 'Guwahati', lat: 26.1445, lon: 91.7362 },
-  { label: 'Nagpur', lat: 21.1458, lon: 79.0882 },
-  { label: 'Ludhiana', lat: 30.901, lon: 75.8573 },
-  { label: 'Nainital', lat: 29.391, lon: 79.4542 },
+  { label: 'Mumbai, Maharashtra', lat: 19.076, lon: 72.8777, cityId: 'mumbai' },
+  { label: 'Pune, Maharashtra', lat: 18.5204, lon: 73.8567, cityId: 'pune' },
+  { label: 'Nashik, Maharashtra', lat: 19.9975, lon: 73.7898, cityId: 'nashik' },
+  { label: 'Delhi, NCT', lat: 28.6139, lon: 77.209, cityId: 'delhi' },
+  { label: 'Bengaluru, Karnataka', lat: 12.9716, lon: 77.5946, cityId: 'bengaluru' },
+  { label: 'Chennai, Tamil Nadu', lat: 13.0827, lon: 80.2707, cityId: 'chennai' },
+  { label: 'Kolkata, West Bengal', lat: 22.5726, lon: 88.3639, cityId: 'kolkata' },
+  { label: 'Hyderabad, Telangana', lat: 17.385, lon: 78.4867, cityId: 'hyderabad' },
+  { label: 'Ahmedabad, Gujarat', lat: 23.0225, lon: 72.5714, cityId: 'ahmedabad' },
+  { label: 'Guwahati, Assam', lat: 26.1445, lon: 91.7362, cityId: 'guwahati' },
+  { label: 'Bhopal, Madhya Pradesh', lat: 23.2599, lon: 77.4126, cityId: 'bhopal' },
+  { label: 'Nagpur, Maharashtra', lat: 21.1458, lon: 79.0882, cityId: 'nagpur' },
 ] as const
 
 const DEFAULT_LOCATION: LocationValue = {
-  lat: 18.5204,
-  lon: 73.8567,
-  label: 'Pune, Maharashtra',
-  source: 'fallback',
+  lat: 19.9975,
+  lon: 73.7898,
+  label: 'Nashik, Maharashtra',
+  source: 'preset',
+  cityId: 'nashik',
+  state: 'Maharashtra',
+  region: 'Maharashtra',
 }
 
 const STORAGE_KEY = 'climateguard-location'
@@ -50,6 +60,7 @@ const STORAGE_KEY = 'climateguard-location'
 interface LocationContextValue {
   location: LocationValue
   setLocation: (next: LocationValue) => void
+  selectCity: (cityId: string) => void
   searchQuery: string
   setSearchQuery: (query: string) => void
   searchResults: LocationResult[]
@@ -57,6 +68,8 @@ interface LocationContextValue {
   error: string | null
   locateMe: () => Promise<void>
   presets: typeof presetLocations
+  cities: CityData[]
+  currentCity: CityData
 }
 
 const LocationContext = createContext<LocationContextValue | undefined>(undefined)
@@ -73,6 +86,32 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   }, [])
 
+  const selectCity = useCallback(
+    (cityId: string) => {
+      const city = findCityById(cityId)
+      if (city) {
+        persistLocation({
+          lat: city.lat,
+          lon: city.lon,
+          label: `${city.name}, ${city.state}`,
+          source: 'city_select',
+          cityId: city.id,
+          state: city.state,
+          region: city.region,
+        })
+      }
+    },
+    [persistLocation],
+  )
+
+  const currentCity = useMemo(() => {
+    if (location.cityId) {
+      const byId = findCityById(location.cityId)
+      if (byId) return byId
+    }
+    return findCityByCoords(location.lat, location.lon)
+  }, [location.cityId, location.lat, location.lon])
+
   const locateMe = useCallback(async () => {
     if (!navigator.geolocation) {
       setError('Geolocation is not available in this browser.')
@@ -87,7 +126,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         maximumAge: 300000,
       })
     }).catch(() => {
-      setError('Location permission was denied, so the app is using Pune as the default location.')
+      setError('Location permission was denied, so the app is using default location.')
       persistLocation({
         ...DEFAULT_LOCATION,
         source: 'fallback',
@@ -99,11 +138,15 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    const closest = findCityByCoords(position.coords.latitude, position.coords.longitude)
     const next: LocationValue = {
       lat: position.coords.latitude,
       lon: position.coords.longitude,
-      label: 'Current location',
+      label: `${closest.name}, ${closest.state}`,
       source: 'browser',
+      cityId: closest.id,
+      state: closest.state,
+      region: closest.region,
     }
     persistLocation(next)
     setError(null)
@@ -122,8 +165,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(STORAGE_KEY)
       }
     }
-    void locateMe()
-  }, [locateMe])
+  }, [])
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -151,6 +193,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     () => ({
       location,
       setLocation: persistLocation,
+      selectCity,
       searchQuery,
       setSearchQuery,
       searchResults,
@@ -158,8 +201,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       error,
       locateMe,
       presets: presetLocations,
+      cities: INDIA_CITIES,
+      currentCity,
     }),
-    [error, isSearching, locateMe, location, persistLocation, searchQuery, searchResults],
+    [error, isSearching, locateMe, location, persistLocation, searchQuery, searchResults, selectCity, currentCity],
   )
 
   return <LocationContext.Provider value={contextValue}>{children}</LocationContext.Provider>

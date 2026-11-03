@@ -66,8 +66,8 @@ export interface RiskHazardSummary {
 
 export interface EmergencyAlert {
   title: string
-  status: 'NORMAL' | 'WATCH' | 'WARNING' | 'CRITICAL'
-  color_category: 'green' | 'blue' | 'amber' | 'coral'
+  status: 'NORMAL' | 'WATCH' | 'WARNING' | 'CRITICAL' | 'INSUFFICIENT_DATA' | string
+  color_category: 'green' | 'blue' | 'amber' | 'coral' | string
   rainfall_summary: string
   river_level_summary: string
   reservoir_summary: string
@@ -75,6 +75,8 @@ export interface EmergencyAlert {
   recommended_action: string
   timestamp: string
   is_normal?: boolean
+  city_name?: string
+  state_name?: string
 }
 
 export interface RiskOverviewResponse {
@@ -168,8 +170,80 @@ export interface RiskGridResponse {
   radar?: boolean
 }
 
+export interface LiveWeatherResponse {
+  status: string
+  city: string
+  state: string
+  lat: number
+  lon: number
+  source: string
+  observation_time: string
+  fetched_at: string
+  freshness: string
+  is_observation: boolean
+  parameters: {
+    temperature_c: number | string
+    temp_min_c: number | string
+    temp_max_c: number | string
+    relative_humidity_pct: number | string
+    rainfall_past_24h_mm: number | string
+    precipitation_intensity_mm_h: number | string
+    wind_speed_kmh: number | string
+    wind_direction_deg: number | string
+    surface_pressure_hpa: number | string
+    weather_condition: string
+    weather_code?: number
+    soil_moisture_m3_m3: number | string
+  }
+}
+
+export interface WaterStation {
+  station_name: string
+  river_name: string
+  city: string
+  state: string
+  current_water_level_m: number
+  unit: string
+  warning_threshold_m: number
+  danger_threshold_m: number
+  highest_flood_level_m?: number
+  water_level_change_3h_m: number
+  rate_of_change_m_per_hour: number
+  status: string
+  observation_timestamp: string
+  freshness: string
+  source: string
+  data_quality: string
+}
+
+export interface WaterLevelsResponse {
+  city: string
+  state: string
+  lat: number
+  lon: number
+  status: string
+  station_count: number
+  stations: WaterStation[]
+  source: string
+  timestamp: string
+}
+
 export const api = {
   health: () => request<HealthResponse>('/api/health'),
+  liveWeather: (lat: number, lon: number) =>
+    request<LiveWeatherResponse>(`/api/weather/live?lat=${lat}&lon=${lon}`),
+  waterLevels: (lat: number, lon: number, cityId?: string) => {
+    const q = cityId ? `&city_id=${encodeURIComponent(cityId)}` : ''
+    return request<WaterLevelsResponse>(`/api/water-levels?lat=${lat}&lon=${lon}${q}`)
+  },
+  indiaCities: (region?: string, state?: string, query?: string) => {
+    const params = new URLSearchParams()
+    if (region && region !== 'All') params.append('region', region)
+    if (state) params.append('state', state)
+    if (query) params.append('q', query)
+    const qs = params.toString() ? `?${params.toString()}` : ''
+    return request<{ total: number; cities: Array<Record<string, unknown>> }>(`/api/location/cities${qs}`)
+  },
   locationSearch: (query: string) =>
     request<LocationSearchResponse>(`/api/location/search?q=${encodeURIComponent(query)}`),
   locationReverse: (lat: number, lon: number) =>
@@ -193,7 +267,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ lat, lon, added_rain_mm: addedRainMm }),
     }),
-  listDams: () => request<ReservoirData[]>('/api/dams'),
+  listDams: (lat?: number, lon?: number) => {
+    const q = lat !== undefined && lon !== undefined ? `?lat=${lat}&lon=${lon}` : ''
+    return request<ReservoirData[]>(`/api/dams${q}`)
+  },
   getDam: (damId: string, params?: { storage_mcm?: number; inflow?: number; outflow?: number }) => {
     const q = new URLSearchParams()
     if (params?.storage_mcm) q.append('custom_storage_mcm', String(params.storage_mcm))

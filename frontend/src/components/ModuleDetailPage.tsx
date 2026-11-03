@@ -320,9 +320,9 @@ export default function ModuleDetailPage({
       <div className="mx-auto max-w-3xl px-4 py-10 text-[#20364D]">
         <div className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-8 text-center shadow-md">
           <p className="text-xs uppercase tracking-[0.28em] text-[#5B7188] font-bold">{title}</p>
-          <h2 className="mt-3 text-2xl font-black text-[#20364D]">Live feed synchronising</h2>
+          <h2 className="mt-3 text-2xl font-black text-[#20364D]">Data unavailable</h2>
           <p className="mt-3 text-sm leading-6 text-[#5B7188]">
-            Connecting to official meteorology endpoints. Real-time telemetry is refreshing.
+            The latest upstream feed for this hazard did not return usable numeric values. Try refreshing or switch to a nearby location.
           </p>
         </div>
       </div>

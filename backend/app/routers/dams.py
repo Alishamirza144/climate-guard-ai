@@ -10,9 +10,12 @@ router = APIRouter(prefix="/dams", tags=["dams"])
 
 
 @router.get("")
-async def get_all_dams() -> list[dict[str, Any]]:
-    """Return all monitored reservoirs in Maharashtra with storage capacity, percentages and release status."""
-    return list_all_reservoirs()
+async def get_all_dams(
+    lat: float | None = Query(None, description="Current latitude to prioritize nearest regional reservoirs"),
+    lon: float | None = Query(None, description="Current longitude to prioritize nearest regional reservoirs"),
+) -> list[dict[str, Any]]:
+    """Return monitored reservoirs with storage capacity, percentages, and release status."""
+    return list_all_reservoirs(lat=lat, lon=lon)
 
 
 @router.get("/{dam_id}")

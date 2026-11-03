@@ -1,0 +1,218 @@
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { MapPin, Search, ChevronDown, Check, Compass, X } from 'lucide-react'
+import { useLocationContext } from './LocationProvider'
+import type { CityRegion, CityData } from '../data/cities'
+
+const REGIONS: CityRegion[] = [
+  'All',
+  'Maharashtra',
+  'North India',
+  'South India',
+  'West India',
+  'East India',
+  'Central India',
+  'Union Territories',
+]
+
+export default function CitySelector() {
+  const { location, selectCity, setLocation, locateMe, cities, currentCity } = useLocationContext()
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedRegion, setSelectedRegion] = useState<CityRegion>('All')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      searchInputRef.current?.focus()
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+
+  const filteredCities = useMemo(() => {
+    return cities.filter((city) => {
+      const matchesRegion = selectedRegion === 'All' || city.region === selectedRegion
+      const query = searchTerm.toLowerCase().trim()
+      const matchesSearch =
+        !query ||
+        city.name.toLowerCase().includes(query) ||
+        city.state.toLowerCase().includes(query) ||
+        city.rivers.some((r) => r.river.toLowerCase().includes(query) || r.station.toLowerCase().includes(query))
+      return matchesRegion && matchesSearch
+    })
+  }, [cities, selectedRegion, searchTerm])
+
+  const handleSelect = (city: CityData) => {
+    selectCity(city.id)
+    setIsOpen(false)
+    setSearchTerm('')
+  }
+
+  return (
+    <div className="relative min-w-0" ref={dropdownRef}>
+      {/* City Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="group flex w-full items-center justify-between gap-2 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-2 text-left shadow-sm transition-all hover:border-[#2784D8] hover:bg-[#E3F2FD] focus:outline-none focus:ring-2 focus:ring-[#2784D8]"
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#2784D8]/15 text-[#2784D8] group-hover:bg-[#2784D8] group-hover:text-white transition-colors">
+            <MapPin className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="truncate text-sm font-extrabold text-[#20364D]">
+                {currentCity?.name || location.label.split(',')[0]}
+              </span>
+              <span className="rounded-full bg-[#B9DEFF] px-2 py-0.2 text-[10px] font-bold text-[#1c6bb5]">
+                {currentCity?.state || 'India'}
+              </span>
+            </div>
+            <p className="truncate text-[10px] font-semibold text-[#5B7188]">
+              {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E • {currentCity?.region || 'Monitored'}
+            </p>
+          </div>
+        </div>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-[#2784D8] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {/* Popover / Dropdown Menu */}
+      {isOpen && (
+        <div className="absolute left-0 top-full z-50 mt-2 w-full min-w-[340px] sm:min-w-[480px] max-w-[560px] rounded-3xl border-2 border-[#B9D9F5] bg-[#F0F8FF] p-4 shadow-2xl animate-fade-in backdrop-blur-md">
+          {/* Header & Search */}
+          <div className="space-y-3 pb-3 border-b border-[#B9D9F5]">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-black text-[#20364D] uppercase tracking-wide">Select Indian City</h4>
+                <p className="text-[11px] text-[#5B7188]">
+                  Covering 50+ municipal & river catchment centers across India
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => locateMe()}
+                className="inline-flex items-center gap-1 rounded-xl bg-[#2784D8]/10 px-2.5 py-1 text-xs font-bold text-[#2784D8] hover:bg-[#2784D8]/20 transition"
+                title="Use browser GPS geolocation"
+              >
+                <Compass className="h-3.5 w-3.5" />
+                <span>Locate Me</span>
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5B7188]" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search city, state, or river (e.g. Pune, Godavari, Yamuna)..."
+                className="w-full rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] py-2 pl-9 pr-8 text-xs font-bold text-[#20364D] placeholder:text-[#5B7188] focus:border-[#2784D8] focus:outline-none focus:ring-1 focus:ring-[#2784D8]"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5B7188] hover:text-[#20364D]"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Region Filter Chips */}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {REGIONS.map((region) => (
+                <button
+                  key={region}
+                  type="button"
+                  onClick={() => setSelectedRegion(region)}
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider transition ${
+                    selectedRegion === region
+                      ? 'bg-[#2784D8] text-white shadow-sm'
+                      : 'border border-[#B9D9F5] bg-[#EDF7FF] text-[#20364D] hover:bg-[#CDE8FF]'
+                  }`}
+                >
+                  {region}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cities List */}
+          <div className="mt-3 max-h-[320px] overflow-y-auto pr-1 space-y-1.5 custom-scrollbar">
+            {filteredCities.length === 0 ? (
+              <div className="py-8 text-center text-xs font-semibold text-[#5B7188]">
+                No cities found matching &ldquo;{searchTerm}&rdquo; in {selectedRegion}.
+              </div>
+            ) : (
+              filteredCities.map((city) => {
+                const isSelected = currentCity?.id === city.id
+                return (
+                  <button
+                    key={city.id}
+                    type="button"
+                    onClick={() => handleSelect(city)}
+                    className={`group flex w-full items-center justify-between rounded-2xl p-2.5 text-left transition ${
+                      isSelected
+                        ? 'bg-[#2784D8] text-white shadow-sm'
+                        : 'bg-[#EDF7FF] hover:bg-[#D9EFFF] text-[#20364D]'
+                    }`}
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-sm">{city.name}</span>
+                        <span
+                          className={`rounded-full px-2 py-0.2 text-[9px] font-bold ${
+                            isSelected
+                              ? 'bg-white/20 text-white'
+                              : 'bg-[#CDE8FF] text-[#1c6bb5]'
+                          }`}
+                        >
+                          {city.state}
+                        </span>
+                      </div>
+                      <div
+                        className={`mt-0.5 flex flex-wrap items-center gap-2 text-[10px] font-medium ${
+                          isSelected ? 'text-white/80' : 'text-[#5B7188]'
+                        }`}
+                      >
+                        {city.rivers.length > 0 && (
+                          <span>
+                            🌊 {city.rivers.map((r) => r.river.split(' ')[0]).join(', ')}
+                          </span>
+                        )}
+                        <span>
+                          📍 {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
+                        </span>
+                      </div>
+                    </div>
+                    {isSelected && <Check className="h-4 w-4 shrink-0 text-white" />}
+                  </button>
+                )
+              })
+            )}
+          </div>
+
+          {/* Footer stats */}
+          <div className="mt-3 pt-2.5 border-t border-[#B9D9F5] flex items-center justify-between text-[10px] font-bold text-[#5B7188]">
+            <span>Showing {filteredCities.length} of {cities.length} Indian cities</span>
+            <span className="text-[#2784D8]">Live Telemetry Driven</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

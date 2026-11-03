@@ -237,7 +237,14 @@ async def risk_overview(
                 "status_badge": flood.get("status_badge", "NORMAL"),
             }
         except Exception:
-            return {"score": 0.0, "level": "Low", "probability": 0.0, "drivers": [], "expected_severity": "No flood signal detected."}
+            return {
+                "score": 0.0,
+                "level": "Insufficient Data",
+                "probability": 0.0,
+                "drivers": ["Hydrological feed unavailable"],
+                "expected_severity": "Hydrological observation data temporarily unavailable.",
+                "data_quality": "insufficient_data",
+            }
 
     async def safe_heat() -> dict[str, Any]:
         try:
@@ -258,9 +265,16 @@ async def risk_overview(
                 score = min(100.0, 60.0 + (t - 40.0) * 7.0)
             level = "Critical" if score >= 85 else "High" if score >= 60 else "Moderate" if score >= 35 else "Low"
             headline = "Normal seasonal temperatures; no heatwave threat." if level == "Low" else f"Elevated daytime heat ({t:.1f}°C)."
-            return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["temperature", "humidity"], "headline": headline}
+            return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["temperature", "humidity"], "headline": headline, "data_quality": "live"}
         except Exception:
-            return {"score": 5.0, "level": "Low", "probability": 0.05, "drivers": [], "headline": "Normal thermal conditions."}
+            return {
+                "score": 0.0,
+                "level": "Insufficient Data",
+                "probability": 0.0,
+                "drivers": ["Temperature feed unavailable"],
+                "headline": "Thermal observation data temporarily unavailable.",
+                "data_quality": "insufficient_data",
+            }
 
     async def safe_fire() -> dict[str, Any]:
         try:
@@ -277,9 +291,16 @@ async def risk_overview(
                 score = min(100.0, 18.0 + (t - 28.0) * 3.0 + max(0.0, 40.0 - r) * 1.2)
             level = "Critical" if score >= 85 else "High" if score >= 60 else "Moderate" if score >= 35 else "Low"
             headline = "Low fire danger; stable winter humidity." if level == "Low" else "Elevated dry fuel fire risk."
-            return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["fuel dryness"], "headline": headline}
+            return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["fuel dryness"], "headline": headline, "data_quality": "live"}
         except Exception:
-            return {"score": 5.0, "level": "Low", "probability": 0.05, "drivers": [], "headline": "Low fire risk."}
+            return {
+                "score": 0.0,
+                "level": "Insufficient Data",
+                "probability": 0.0,
+                "drivers": ["Fire weather feed unavailable"],
+                "headline": "Fire weather observations temporarily unavailable.",
+                "data_quality": "insufficient_data",
+            }
 
     async def safe_crop() -> dict[str, Any]:
         return {"score": 22.0, "level": "Low", "probability": 0.22, "drivers": ["soil moisture stable"], "headline": "Crop stress within normal range."}

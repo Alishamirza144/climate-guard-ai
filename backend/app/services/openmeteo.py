@@ -153,7 +153,7 @@ async def get_forecast(
             "longitude": point.longitude,
             "hourly": ",".join(HOURLY_VARIABLES),
             "daily": ",".join(DAILY_VARIABLES),
-            "current": "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m",
+            "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m",
             "timezone": "auto",
             "past_days": past_days,
             "forecast_days": forecast_days,
@@ -174,7 +174,7 @@ async def get_forecast_multi(
             "longitude": longitudes,
             "hourly": ",".join(HOURLY_VARIABLES),
             "daily": ",".join(DAILY_VARIABLES),
-            "current": "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m",
+            "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m",
             "timezone": "auto",
         },
     )

@@ -9,13 +9,16 @@ import { DataSourceBadge } from '../components/ui/DataSourceBadge'
 import { Stat } from '../components/ui/Stat'
 import { getRiskLevelFromScore } from '../lib/risk'
 import { MotionProvider } from '../lib/MotionProvider'
+import { LocationProvider } from '../components/LocationProvider'
 import { api } from '../lib/api'
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return (
     <QueryClientProvider client={queryClient}>
-      <MotionProvider>{children}</MotionProvider>
+      <LocationProvider>
+        <MotionProvider>{children}</MotionProvider>
+      </LocationProvider>
     </QueryClientProvider>
   )
 }

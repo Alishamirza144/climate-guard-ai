@@ -36,6 +36,10 @@ import { RiskGauge } from '../components/ui/RiskGauge'
 import { DataSourceBadge } from '../components/ui/DataSourceBadge'
 import EmergencyAlertBanner from '../components/EmergencyAlertBanner'
 import DamMonitoringWidget from '../components/DamMonitoringWidget'
+import CitySelector from '../components/CitySelector'
+import LiveWeatherWidget from '../components/LiveWeatherWidget'
+import WaterLevelWidget from '../components/WaterLevelWidget'
+import IndiaRiskMap from '../components/IndiaRiskMap'
 
 const HAZARD_META = {
   flood: {
@@ -86,18 +90,19 @@ function formatClock(value: Date) {
 }
 
 function getTextLevel(score: number) {
-  if (score >= 85) return 'Critical'
-  if (score >= 60) return 'High'
-  if (score >= 30) return 'Moderate'
+  if (score >= 80) return 'Extreme'
+  if (score >= 60) return 'Very High'
+  if (score >= 40) return 'High'
+  if (score >= 20) return 'Moderate'
   return 'Low'
 }
 
 function getLevelStyles(level: string) {
   const normalized = level.toLowerCase()
-  if (normalized === 'critical') {
+  if (normalized === 'extreme' || normalized === 'critical') {
     return 'border-[#E45B62] bg-[#E45B62] text-white'
   }
-  if (normalized === 'high') {
+  if (normalized === 'very high' || normalized === 'high') {
     return 'border-[#F2B544] bg-[#F2B544] text-[#20364D]'
   }
   if (normalized === 'moderate') {
@@ -207,6 +212,22 @@ export default function Dashboard() {
     retry: 1,
   })
 
+  const weatherQuery = useQuery({
+    queryKey: ['dashboard-weather', location.lat, location.lon],
+    queryFn: () => api.liveWeather(location.lat, location.lon),
+    staleTime: 60_000,
+    refetchInterval: 5 * 60 * 1000,
+    retry: 1,
+  })
+
+  const waterLevelsQuery = useQuery({
+    queryKey: ['dashboard-water', location.lat, location.lon, location.cityId],
+    queryFn: () => api.waterLevels(location.lat, location.lon, location.cityId),
+    staleTime: 60_000,
+    refetchInterval: 5 * 60 * 1000,
+    retry: 1,
+  })
+
   const offline = typeof navigator !== 'undefined' && !navigator.onLine
 
   const metrics = useMemo(() => {
@@ -283,6 +304,8 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-alerts'] }),
       queryClient.invalidateQueries({ queryKey: ['dashboard-detail'] }),
       queryClient.invalidateQueries({ queryKey: ['dashboard-grid'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard-weather'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard-water'] }),
     ])
   }
 
@@ -355,34 +378,9 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black uppercase tracking-[0.24em] text-[#2784D8]">Live Command Hub</span>
                 </div>
-                <label className="mt-1 block min-w-0">
-                  <span className="sr-only">Select location</span>
-                  <select
-                    value={`${location.lat},${location.lon}`}
-                    onChange={(event) => {
-                      const [lat, lon] = event.target.value.split(',')
-                      const preset = presets.find((item) => item.label === event.target.selectedOptions[0].text)
-                      if (preset) {
-                        setLocation({ ...preset, label: preset.label, source: 'preset' })
-                      } else {
-                        setLocation({
-                          lat: Number(lat),
-                          lon: Number(lon),
-                          label: 'Custom location',
-                          source: 'fallback',
-                        })
-                      }
-                    }}
-                    className="w-full rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-2 text-sm font-bold text-[#20364D] outline-none shadow-sm"
-                  >
-                    <option value={`${location.lat},${location.lon}`}>{location.label || 'Nashik, Maharashtra'}</option>
-                    {presets.map((preset) => (
-                      <option key={preset.label} value={`${preset.lat},${preset.lon}`}>
-                        {preset.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="mt-1 w-full sm:w-80 min-w-0">
+                  <CitySelector />
+                </div>
               </div>
             </div>
 
@@ -406,6 +404,12 @@ export default function Dashboard() {
             </div>
           </div>
         </header>
+
+        {/* Accurate Live Atmospheric Telemetry */}
+        <LiveWeatherWidget weather={weatherQuery.data} isLoading={weatherQuery.isLoading} />
+
+        {/* Real Water-Level & River Gauge Monitoring */}
+        <WaterLevelWidget waterData={waterLevelsQuery.data} isLoading={waterLevelsQuery.isLoading} />
 
         {/* 4 Multi-Hazard Risk Overview Cards */}
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -433,8 +437,8 @@ export default function Dashboard() {
 
                   <div className="mt-4 flex items-center justify-between gap-2">
                     <div>
-                      <div className="text-3xl font-black text-[#20364D]">{score}%</div>
-                      <span className="text-[10px] font-bold text-[#5B7188] uppercase tracking-wider">Computed Risk</span>
+                      <div className="text-3xl font-black text-[#20364D]">{score}</div>
+                      <span className="text-[10px] font-bold text-[#5B7188] uppercase tracking-wider">Risk Index / 100</span>
                     </div>
                     <div className="flex-1 max-w-[80px]">
                       <RiskGauge score={score} size={76} strokeWidth={6} showScore={false} showLevel={false} className="mx-auto" />
@@ -479,38 +483,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="relative h-[290px] overflow-hidden rounded-[22px] border border-[#B9D9F5] bg-[#EDF7FF]">
-              {/* Subtle map coordinate grid */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(39,132,216,0.15),transparent_50%),linear-gradient(90deg,rgba(39,132,216,0.06)_1px,transparent_1px),linear-gradient(rgba(39,132,216,0.06)_1px,transparent_1px)] bg-[length:100%_100%,32px_32px,32px_32px]" />
-              {showRadar && (
-                <div className="absolute inset-0 opacity-70">
-                  <div className="absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#2784D8]/30" />
-                  <div className="absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#16A6A3]/30" />
-                </div>
-              )}
-
-              {mapZones.map((zone, index) => {
-                const left = 20 + ((index + 1) * 22) % 65
-                const top = 20 + ((index + 1) * 18) % 60
-                const color = zone.score >= 85 ? '#E45B62' : zone.score >= 60 ? '#F2B544' : zone.score >= 30 ? '#2784D8' : '#299765'
-                return (
-                  <div
-                    key={`${zone.name}-${index}`}
-                    className="absolute block rounded-full border border-white shadow-md transition transform hover:scale-125"
-                    style={{
-                      left: `${left}%`,
-                      top: `${top}%`,
-                      width: '20px',
-                      height: '20px',
-                      background: color,
-                      boxShadow: `0 0 14px ${color}88`,
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                    title={`${zone.name}: ${zone.score}%`}
-                  />
-                )
-              })}
-            </div>
+            {/* India-Wide Geospatial Risk Map */}
+            <IndiaRiskMap selectedHazard={selectedModule} />
           </div>
 
           {/* Live Alert & Action Recommendations */}

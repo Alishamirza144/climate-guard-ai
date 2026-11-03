@@ -19,7 +19,7 @@ from app.config import get_settings
 from app.engines.alerts import start_scheduler
 from app.middleware.security import SecurityHeadersMiddleware, limiter
 from app.ml import get_model_status
-from app.routers import alerts, crop, dams, data_sources, demo, fire, health, heat, iot, location, ml, notifications, raw, risk, simulation, validation
+from app.routers import alerts, crop, dams, data_sources, demo, fire, health, heat, hydromet, iot, location, ml, notifications, raw, risk, simulation, validation
 
 # ---------------------------------------------------------------------------
 # Structured logging
@@ -102,6 +102,7 @@ async def lifespan(app: FastAPI):
 app.router.lifespan_context = lifespan
 app.include_router(health.router, prefix="/api")
 app.include_router(location.router, prefix="/api")
+app.include_router(hydromet.router, prefix="/api")
 app.include_router(raw.router, prefix="/api")
 app.include_router(risk.router, prefix="/api")
 app.include_router(heat.router, prefix="/api")

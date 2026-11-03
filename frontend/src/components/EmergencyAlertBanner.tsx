@@ -9,13 +9,23 @@ interface EmergencyAlertBannerProps {
 export default function EmergencyAlertBanner({ alert, className = '' }: EmergencyAlertBannerProps) {
   if (!alert) return null
 
+  const isInsufficient = alert.status === 'INSUFFICIENT_DATA'
   const isNormal = alert.status === 'NORMAL' || alert.is_normal
   const isWatch = alert.status === 'WATCH'
   const isWarning = alert.status === 'WARNING'
   const isCritical = alert.status === 'CRITICAL'
 
   // Sky-blue theme aligned accent styles
-  const config = isCritical
+  const config = isInsufficient
+    ? {
+        border: 'border-[#2784D8]',
+        bg: 'bg-gradient-to-r from-[#2784D8]/15 via-[#F0F8FF] to-[#EDF7FF]',
+        badgeBg: 'bg-[#2784D8] text-white',
+        iconColor: 'text-[#2784D8]',
+        icon: AlertCircle,
+        headerText: 'text-[#2784D8]',
+      }
+    : isCritical
     ? {
         border: 'border-[#E45B62]',
         bg: 'bg-gradient-to-r from-[#E45B62]/15 via-[#F0F8FF] to-[#E45B62]/10',
@@ -75,7 +85,7 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
             </div>
             <p className="text-xs text-[#5B7188] font-medium mt-0.5 flex items-center gap-1.5">
               <Compass className="w-3.5 h-3.5 text-[#2784D8]" />
-              <span>Catchment: Upper Godavari Basin (Nashik District, Maharashtra)</span>
+              <span>Catchment: {alert.city_name ? `${alert.city_name} Region (${alert.state_name || 'India'})` : 'Regional Municipal Catchment'}</span>
             </p>
           </div>
         </div>
