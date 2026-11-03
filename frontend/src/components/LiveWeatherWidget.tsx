@@ -44,22 +44,16 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
           <div className="flex items-center gap-2">
             <Radio className="h-5 w-5 text-[#2784D8] animate-pulse" />
             <h3 className="font-display font-extrabold text-base sm:text-lg text-[#20364D]">
-              Live Atmospheric Telemetry
+              Atmospheric Telemetry & Model Assimilation
             </h3>
             <span
-              className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                weather?.freshness === 'LIVE'
-                  ? 'bg-[#299765]/20 text-[#299765] border border-[#299765]/30'
-                  : weather?.freshness === 'LAST OBSERVED'
-                  ? 'bg-[#F2B544]/20 text-[#b47510] border border-[#F2B544]/30'
-                  : 'bg-[#E45B62]/20 text-[#E45B62] border border-[#E45B62]/30'
-              }`}
+              className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-[#2784D8]/20 text-[#2784D8] border border-[#2784D8]/30"
             >
-              {weather?.freshness || 'LIVE'}
+              ECMWF IFS & IMD Assimilation
             </span>
           </div>
           <p className="text-xs text-[#5B7188] mt-0.5">
-            Real-time coordinates: {weather?.lat.toFixed(4)}°N, {weather?.lon.toFixed(4)}°E •{' '}
+            Coordinates: {weather?.lat.toFixed(4)}°N, {weather?.lon.toFixed(4)}°E •{' '}
             <span className="font-semibold text-[#20364D]">
               {weather?.city}, {weather?.state}
             </span>
@@ -69,7 +63,7 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
         <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[#5B7188]">
           <span className="flex items-center gap-1 rounded-xl bg-[#EDF7FF] px-2.5 py-1 border border-[#B9D9F5]">
             <Clock className="h-3.5 w-3.5 text-[#2784D8]" />
-            Observed: {weather?.observation_time ? weather.observation_time.replace('T', ' ') : 'Live'}
+            Model Cycle: {weather?.observation_time ? weather.observation_time.replace('T', ' ') : 'Current'}
           </span>
           <span className="rounded-xl bg-[#EDF7FF] px-2.5 py-1 border border-[#B9D9F5] text-[10px] text-[#16A6A3] font-bold">
             Open-Meteo & IMD Numerical Grid

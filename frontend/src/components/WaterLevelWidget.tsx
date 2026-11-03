@@ -30,10 +30,10 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
           <div className="flex items-center gap-2">
             <Waves className="h-5 w-5 text-[#2784D8]" />
             <h3 className="font-display font-extrabold text-base sm:text-lg text-[#20364D]">
-              Real Water-Level & River Gauge Monitoring
+              River Gauge Monitoring & Calibrated Water-Level
             </h3>
             <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#2784D8]/20 text-[#2784D8] border border-[#2784D8]/30">
-              CWC & WRD Hydro Gauges
+              CWC Benchmarks · GloFAS Coupling
             </span>
           </div>
           <p className="text-xs text-[#5B7188] mt-0.5">
@@ -45,7 +45,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
         </div>
 
         <div className="flex items-center gap-2 text-xs font-semibold text-[#5B7188]">
-          <span>Observation: {waterData?.timestamp || 'Live'}</span>
+          <span>Model Cycle: {waterData?.timestamp || 'Live'}</span>
         </div>
       </div>
 
@@ -103,7 +103,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
                         {st.current_water_level_m} {st.unit}
                       </span>
                       <span className="block text-[10px] font-bold text-[#5B7188] uppercase tracking-wider">
-                        Current Measured Gauge
+                        Calibrated River Stage
                       </span>
                     </div>
 
@@ -150,12 +150,21 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
 
                 {/* Station metadata footer */}
                 <div className="pt-2 border-t border-[#B9D9F5]/60 flex items-center justify-between text-[9px] font-semibold text-[#5B7188]">
-                  <span>Source: {st.source.split('/')[0]}</span>
-                  <span className="text-[#299765] font-bold">● {st.freshness}</span>
+                  <span>Thresholds: CWC Benchmark</span>
+                  <span className="text-[#2784D8] font-bold">● {st.freshness || 'Calibrated Model'}</span>
                 </div>
               </div>
             )
           })}
+        </div>
+      )}
+
+      {hasStations && (
+        <div className="rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-2 text-[11px] text-[#5B7188] flex items-center gap-2">
+          <Info className="h-4 w-4 shrink-0 text-[#2784D8]" />
+          <span>
+            <strong>Hydrological Note:</strong> Warning/danger thresholds represent official CWC / State WRD standards. Current river stages are calibrated hydrological estimates derived from Copernicus GloFAS river discharge and station cross-sections, not direct unclassified CWC SCADA sensor telemetry.
+          </span>
         </div>
       )}
     </section>

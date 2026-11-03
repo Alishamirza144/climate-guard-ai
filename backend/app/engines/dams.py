@@ -428,6 +428,9 @@ class ReservoirSummary(BaseModel):
     downstream_danger_discharge_cusecs: float
     primary_purpose: str
     data_source: str
+    data_type: str = "Hydrological Water-Balance Model Estimate"
+    is_verified_live_telemetry: bool = False
+    source_note: str = "Capacities per official WRD/CWC register. Current storage & flows are water-balance estimates, not live unclassified SCADA wires."
     is_demonstration: bool
     last_updated: str
     historical_trend: list[dict[str, Any]]

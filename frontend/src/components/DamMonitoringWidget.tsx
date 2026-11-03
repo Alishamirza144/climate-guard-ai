@@ -30,9 +30,9 @@ export default function DamMonitoringWidget() {
         if (mounted) {
           setDams(data)
           if (data.length > 0) {
-            const preferred = data.find((d) => d.id === selectedDamId) || data[0]
-            setSelectedDamId(preferred.id)
-            setDam(preferred)
+            const closest = data[0]
+            setSelectedDamId(closest.id)
+            setDam(closest)
           }
           setLoading(false)
         }
@@ -82,11 +82,11 @@ export default function DamMonitoringWidget() {
               Dam & Reservoir Capacity Monitoring
             </h3>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#16A6A3]/20 text-[#16A6A3] border border-[#16A6A3]/30">
-              WRD Telemetry
+              WRD Register · Water-Balance Model
             </span>
           </div>
           <p className="text-xs text-[#5B7188] mt-0.5">
-            {dam.location} • {dam.river} flood retention & controlled spillway discharge
+            {dam.location} • {dam.river} flood retention & controlled spillway discharge (Model Balance Estimate)
           </p>
         </div>
 
@@ -275,19 +275,24 @@ export default function DamMonitoringWidget() {
       </div>
 
       {/* Metadata and Data Attribution Footer */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[#B9D9F5] text-[11px] text-[#5B7188]">
-        <div className="flex items-center gap-1.5">
-          <Info className="w-3.5 h-3.5 text-[#2784D8] shrink-0" />
-          <span>
-            Data Source: <strong className="text-[#20364D]">{dam.data_source}</strong>
-          </span>
+      <div className="flex flex-col gap-1.5 pt-2 border-t border-[#B9D9F5] text-[11px] text-[#5B7188]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5 text-[#2784D8] shrink-0" />
+            <span>
+              Register Source: <strong className="text-[#20364D]">{dam.data_source}</strong>
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded bg-white border border-[#B9D9F5] font-semibold text-[#20364D]">
+              Hydrological Water-Balance Estimate
+            </span>
+            <span>Catchment Area: <strong>{dam.catchment_sq_km} km²</strong></span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-white border border-[#B9D9F5] font-semibold text-[#20364D]">
-            {dam.is_demonstration ? 'Demonstration Benchmark Telemetry' : 'Live Official Telemetry'}
-          </span>
-          <span>Catchment Area: <strong>{dam.catchment_sq_km} km²</strong></span>
-        </div>
+        <p className="text-[10px] text-[#5B7188] italic">
+          * Note: Dam capacities and FRL specifications are sourced from official WRD/CWC registers. Current storage percentage, inflow, and outflow are hydrological water-balance model estimates, not verified real-time SCADA telemetry.
+        </p>
       </div>
     </div>
   )

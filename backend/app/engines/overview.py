@@ -125,9 +125,19 @@ async def build_overview_snapshot(
         hazard_map["crop"] = crop
 
     # Check for INSUFFICIENT DATA condition
+    def _is_hazard_insufficient(h: dict[str, Any] | None) -> bool:
+        if not h or not isinstance(h, dict):
+            return True
+        if h.get("data_quality") in {"insufficient_data", "failed", "stale", "unavailable"}:
+            return True
+        if h.get("level") in {"Insufficient Data", "Data Unavailable", "Error"}:
+            return True
+        if h.get("data_unavailable") is True:
+            return True
+        return False
+
     has_insufficient_data = any(
-        h.get("data_quality") == "insufficient_data" or h.get("level") == "Insufficient Data"
-        for h in (flood, heat, fire)
+        _is_hazard_insufficient(h) for h in (flood, heat, fire)
     )
 
     priority_order = ["flood", "heat", "fire", "crop"]

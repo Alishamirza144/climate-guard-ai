@@ -81,6 +81,8 @@ async def test_live_weather_endpoint():
         data = response.json()
         assert data["status"] in ["ONLINE", "LIVE", "live"]
         assert "parameters" in data
+        assert data.get("is_direct_sensor_wire") is False
+        assert "Numerical Weather Model" in data.get("data_type", "")
         params = data["parameters"]
         assert params["temperature_c"] == 29.5
         assert params["temp_max_c"] == 34.0
@@ -99,6 +101,8 @@ async def test_water_levels_endpoint():
         data = response.json()
         assert "city" in data
         assert "stations" in data
+        assert data.get("is_direct_cwc_sensor") is False
+        assert data.get("is_calibrated_model") is True
         assert len(data["stations"]) > 0
         station = data["stations"][0]
         assert "station_name" in station
@@ -106,6 +110,7 @@ async def test_water_levels_endpoint():
         assert station["unit"] == "m"
         assert "warning_threshold_m" in station
         assert "danger_threshold_m" in station
+        assert station.get("is_direct_cwc_sensor") is False
 
 @pytest.mark.asyncio
 async def test_water_levels_unknown_location():
@@ -124,5 +129,8 @@ async def test_dams_endpoint_prioritization():
         data = response.json()
         assert isinstance(data, list)
         assert len(data) >= 5
+        top_dam = data[0]
+        assert top_dam.get("is_verified_live_telemetry") is False
+        assert "Estimate" in top_dam.get("data_type", "")
         top_dam_names = [d["name"] for d in data[:4]]
         assert any("Khadakwasla" in name or "Panshet" in name or "Pavana" in name for name in top_dam_names)
