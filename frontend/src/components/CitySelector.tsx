@@ -15,7 +15,7 @@ const REGIONS: CityRegion[] = [
 ]
 
 export default function CitySelector() {
-  const { location, selectCity, setLocation, locateMe, cities, currentCity } = useLocationContext()
+  const { location, selectCity, locateMe, cities, currentCity } = useLocationContext()
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedRegion, setSelectedRegion] = useState<CityRegion>('All')
@@ -55,54 +55,54 @@ export default function CitySelector() {
   }
 
   return (
-    <div className="relative min-w-0" ref={dropdownRef}>
+    <div className="relative min-w-0 w-full" ref={dropdownRef}>
       {/* City Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="group flex w-full items-center justify-between gap-2 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-2 text-left shadow-sm transition-all hover:border-[#2784D8] hover:bg-[#E3F2FD] focus:outline-none focus:ring-2 focus:ring-[#2784D8]"
+        className="group flex w-full items-center justify-between gap-2 rounded-2xl border border-[#285274] bg-[#12385C] px-3.5 py-2 text-left shadow-md transition-all hover:border-[#2389D7] hover:bg-[#0E2B49] focus:outline-none focus:ring-2 focus:ring-[#2389D7]"
         aria-expanded={isOpen}
         aria-haspopup="dialog"
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#2784D8]/15 text-[#2784D8] group-hover:bg-[#2784D8] group-hover:text-white transition-colors">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#2389D7]/20 text-[#25C5DC] group-hover:bg-[#2389D7] group-hover:text-white transition-colors">
             <MapPin className="h-4 w-4" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="truncate text-sm font-extrabold text-[#20364D]">
+              <span className="truncate text-sm font-extrabold text-[#F3F8FF]">
                 {currentCity?.name || location.label.split(',')[0]}
               </span>
-              <span className="rounded-full bg-[#B9DEFF] px-2 py-0.2 text-[10px] font-bold text-[#1c6bb5]">
+              <span className="rounded-full bg-[#102F50] border border-[#285274] px-2 py-0.2 text-[10px] font-bold text-[#8ED8F5]">
                 {currentCity?.state || 'India'}
               </span>
             </div>
-            <p className="truncate text-[10px] font-semibold text-[#5B7188]">
+            <p className="truncate text-[10px] font-semibold text-[#B6C9DC]">
               {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E • {currentCity?.region || 'Monitored'}
             </p>
           </div>
         </div>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-[#2784D8] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 shrink-0 text-[#25C5DC] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {/* Popover / Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-full min-w-[340px] sm:min-w-[480px] max-w-[560px] rounded-3xl border-2 border-[#B9D9F5] bg-[#F0F8FF] p-4 shadow-2xl animate-fade-in backdrop-blur-md">
+        <div className="absolute left-0 top-full z-50 mt-2 w-full min-w-[340px] sm:min-w-[480px] max-w-[560px] rounded-3xl border-2 border-[#285274] bg-[#0E2B49] p-4 shadow-2xl animate-fade-in backdrop-blur-xl">
           {/* Header & Search */}
-          <div className="space-y-3 pb-3 border-b border-[#B9D9F5]">
+          <div className="space-y-3 pb-3 border-b border-[#285274]">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-black text-[#20364D] uppercase tracking-wide">Select Indian City</h4>
-                <p className="text-[11px] text-[#5B7188]">
+                <h4 className="text-sm font-black text-[#F3F8FF] uppercase tracking-wide">Select Indian City</h4>
+                <p className="text-[11px] text-[#B6C9DC]">
                   Covering 50+ municipal & river catchment centers across India
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => locateMe()}
-                className="inline-flex items-center gap-1 rounded-xl bg-[#2784D8]/10 px-2.5 py-1 text-xs font-bold text-[#2784D8] hover:bg-[#2784D8]/20 transition"
+                className="inline-flex items-center gap-1 rounded-xl bg-[#2389D7]/20 border border-[#2389D7]/40 px-2.5 py-1 text-xs font-bold text-[#25C5DC] hover:bg-[#2389D7]/30 transition"
                 title="Use browser GPS geolocation"
               >
                 <Compass className="h-3.5 w-3.5" />
@@ -112,20 +112,20 @@ export default function CitySelector() {
 
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5B7188]" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#B6C9DC]" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search city, state, or river (e.g. Pune, Godavari, Yamuna)..."
-                className="w-full rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] py-2 pl-9 pr-8 text-xs font-bold text-[#20364D] placeholder:text-[#5B7188] focus:border-[#2784D8] focus:outline-none focus:ring-1 focus:ring-[#2784D8]"
+                placeholder="Search city, state, or river (e.g. Mumbai, Pune, Godavari, Yamuna)..."
+                className="w-full rounded-2xl border border-[#285274] bg-[#12385C] py-2 pl-9 pr-8 text-xs font-bold text-[#F3F8FF] placeholder:text-[#B6C9DC]/60 focus:border-[#2389D7] focus:outline-none focus:ring-1 focus:ring-[#2389D7]"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5B7188] hover:text-[#20364D]"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#B6C9DC] hover:text-[#F3F8FF]"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -141,8 +141,8 @@ export default function CitySelector() {
                   onClick={() => setSelectedRegion(region)}
                   className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider transition ${
                     selectedRegion === region
-                      ? 'bg-[#2784D8] text-white shadow-sm'
-                      : 'border border-[#B9D9F5] bg-[#EDF7FF] text-[#20364D] hover:bg-[#CDE8FF]'
+                      ? 'bg-[#2389D7] text-white shadow-glow border border-[#8ED8F5]/30'
+                      : 'border border-[#285274] bg-[#12385C] text-[#B6C9DC] hover:bg-[#102F50] hover:text-[#F3F8FF]'
                   }`}
                 >
                   {region}
@@ -152,9 +152,9 @@ export default function CitySelector() {
           </div>
 
           {/* Cities List */}
-          <div className="mt-3 max-h-[320px] overflow-y-auto pr-1 space-y-1.5 custom-scrollbar">
+          <div className="mt-3 max-h-[320px] overflow-y-auto pr-1 space-y-1.5">
             {filteredCities.length === 0 ? (
-              <div className="py-8 text-center text-xs font-semibold text-[#5B7188]">
+              <div className="py-8 text-center text-xs font-semibold text-[#B6C9DC]">
                 No cities found matching &ldquo;{searchTerm}&rdquo; in {selectedRegion}.
               </div>
             ) : (
@@ -167,8 +167,8 @@ export default function CitySelector() {
                     onClick={() => handleSelect(city)}
                     className={`group flex w-full items-center justify-between rounded-2xl p-2.5 text-left transition ${
                       isSelected
-                        ? 'bg-[#2784D8] text-white shadow-sm'
-                        : 'bg-[#EDF7FF] hover:bg-[#D9EFFF] text-[#20364D]'
+                        ? 'bg-[#2389D7] text-white shadow-glow border border-[#8ED8F5]/30'
+                        : 'bg-[#12385C] hover:bg-[#102F50] text-[#F3F8FF] border border-[#285274]/40'
                     }`}
                   >
                     <div className="min-w-0 pr-2">
@@ -178,7 +178,7 @@ export default function CitySelector() {
                           className={`rounded-full px-2 py-0.2 text-[9px] font-bold ${
                             isSelected
                               ? 'bg-white/20 text-white'
-                              : 'bg-[#CDE8FF] text-[#1c6bb5]'
+                              : 'bg-[#102F50] text-[#8ED8F5] border border-[#285274]'
                           }`}
                         >
                           {city.state}
@@ -186,7 +186,7 @@ export default function CitySelector() {
                       </div>
                       <div
                         className={`mt-0.5 flex flex-wrap items-center gap-2 text-[10px] font-medium ${
-                          isSelected ? 'text-white/80' : 'text-[#5B7188]'
+                          isSelected ? 'text-white/80' : 'text-[#B6C9DC]'
                         }`}
                       >
                         {city.rivers.length > 0 && (
@@ -207,9 +207,9 @@ export default function CitySelector() {
           </div>
 
           {/* Footer stats */}
-          <div className="mt-3 pt-2.5 border-t border-[#B9D9F5] flex items-center justify-between text-[10px] font-bold text-[#5B7188]">
+          <div className="mt-3 pt-2.5 border-t border-[#285274] flex items-center justify-between text-[10px] font-bold text-[#B6C9DC]">
             <span>Showing {filteredCities.length} of {cities.length} Indian cities</span>
-            <span className="text-[#2784D8]">Live Telemetry Driven</span>
+            <span className="text-[#25C5DC]">Live Telemetry Driven</span>
           </div>
         </div>
       )}

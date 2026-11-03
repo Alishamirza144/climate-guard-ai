@@ -10,68 +10,67 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
   if (!alert) return null
 
   const isInsufficient = alert.status === 'INSUFFICIENT_DATA'
-  const isNormal = alert.status === 'NORMAL' || alert.is_normal
-  const isWatch = alert.status === 'WATCH'
-  const isWarning = alert.status === 'WARNING'
   const isCritical = alert.status === 'CRITICAL'
+  const isWarning = alert.status === 'WARNING'
+  const isWatch = alert.status === 'WATCH'
 
-  // Sky-blue theme aligned accent styles
+  // Navy-blue theme aligned accent styles
   const config = isInsufficient
     ? {
-        border: 'border-[#2784D8]',
-        bg: 'bg-gradient-to-r from-[#2784D8]/15 via-[#F0F8FF] to-[#EDF7FF]',
-        badgeBg: 'bg-[#2784D8] text-white',
-        iconColor: 'text-[#2784D8]',
+        border: 'border-[#2389D7]',
+        bg: 'bg-gradient-to-r from-[#2389D7]/20 via-[#102F50] to-[#0E2B49]',
+        badgeBg: 'bg-[#2389D7] text-white',
+        iconColor: 'text-[#25C5DC]',
         icon: AlertCircle,
-        headerText: 'text-[#2784D8]',
+        headerText: 'text-[#8ED8F5]',
       }
     : isCritical
     ? {
-        border: 'border-[#E45B62]',
-        bg: 'bg-gradient-to-r from-[#E45B62]/15 via-[#F0F8FF] to-[#E45B62]/10',
-        badgeBg: 'bg-[#E45B62] text-white',
-        iconColor: 'text-[#E45B62]',
+        border: 'border-[#F06470]',
+        bg: 'bg-gradient-to-r from-[#F06470]/25 via-[#102F50] to-[#0E2B49]',
+        badgeBg: 'bg-[#F06470] text-white',
+        iconColor: 'text-[#F06470]',
         icon: AlertCircle,
-        headerText: 'text-[#E45B62]',
+        headerText: 'text-[#F06470]',
       }
     : isWarning
     ? {
-        border: 'border-[#F2B544]',
-        bg: 'bg-gradient-to-r from-[#F2B544]/15 via-[#F0F8FF] to-[#F2B544]/10',
-        badgeBg: 'bg-[#F2B544] text-[#20364D]',
-        iconColor: 'text-[#F2B544]',
+        border: 'border-[#F4BC4D]',
+        bg: 'bg-gradient-to-r from-[#F4BC4D]/25 via-[#102F50] to-[#0E2B49]',
+        badgeBg: 'bg-[#F4BC4D] text-[#071A33]',
+        iconColor: 'text-[#F4BC4D]',
         icon: AlertTriangle,
-        headerText: 'text-[#B47510]',
+        headerText: 'text-[#F4BC4D]',
       }
     : isWatch
     ? {
-        border: 'border-[#16A6A3]',
-        bg: 'bg-gradient-to-r from-[#16A6A3]/15 via-[#F0F8FF] to-[#2784D8]/10',
-        badgeBg: 'bg-[#16A6A3] text-white',
-        iconColor: 'text-[#16A6A3]',
+        border: 'border-[#25C5DC]',
+        bg: 'bg-gradient-to-r from-[#25C5DC]/20 via-[#102F50] to-[#0E2B49]',
+        badgeBg: 'bg-[#25C5DC] text-[#071A33]',
+        iconColor: 'text-[#25C5DC]',
         icon: ShieldAlert,
-        headerText: 'text-[#16A6A3]',
+        headerText: 'text-[#25C5DC]',
       }
     : {
-        border: 'border-[#299765]',
-        bg: 'bg-gradient-to-r from-[#299765]/15 via-[#F0F8FF] to-[#D9F5E8]/40',
-        badgeBg: 'bg-[#299765] text-white',
-        iconColor: 'text-[#299765]',
+        border: 'border-[#35C58B]',
+        bg: 'bg-gradient-to-r from-[#35C58B]/20 via-[#102F50] to-[#0E2B49]',
+        badgeBg: 'bg-[#35C58B] text-[#071A33]',
+        iconColor: 'text-[#35C58B]',
         icon: ShieldCheck,
-        headerText: 'text-[#299765]',
+        headerText: 'text-[#35C58B]',
       }
 
   const Icon = config.icon
 
   return (
     <div
-      className={`rounded-2xl border-2 ${config.border} ${config.bg} p-5 shadow-lg transition-all text-[#20364D] ${className}`}
+      className={`rounded-2xl border-2 ${config.border} ${config.bg} p-5 shadow-2xl transition-all text-[#F3F8FF] ${className}`}
       role="region"
       aria-label="Climate Early Warning Emergency Banner"
     >
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#B9D9F5]/70">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#285274]">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-white shadow-sm shrink-0 border border-[#B9D9F5]">
+          <div className="p-2.5 rounded-xl bg-[#071A33] shadow-sm shrink-0 border border-[#285274]">
             <Icon className={`w-7 h-7 ${config.iconColor}`} aria-hidden="true" />
           </div>
           <div>
@@ -83,66 +82,66 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
                 {alert.title}
               </h2>
             </div>
-            <p className="text-xs text-[#5B7188] font-medium mt-0.5 flex items-center gap-1.5">
-              <Compass className="w-3.5 h-3.5 text-[#2784D8]" />
+            <p className="text-xs text-[#B6C9DC] font-medium mt-0.5 flex items-center gap-1.5">
+              <Compass className="w-3.5 h-3.5 text-[#25C5DC]" />
               <span>Catchment: {alert.city_name ? `${alert.city_name} Region (${alert.state_name || 'India'})` : 'Regional Municipal Catchment'}</span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start lg:self-center text-xs font-semibold text-[#5B7188] bg-white/70 px-3 py-1.5 rounded-xl border border-[#B9D9F5]">
-          <Clock className="w-3.5 h-3.5 text-[#2784D8]" />
+        <div className="flex items-center gap-2 self-start lg:self-center text-xs font-semibold text-[#8ED8F5] bg-[#071A33]/80 px-3 py-1.5 rounded-xl border border-[#285274]">
+          <Clock className="w-3.5 h-3.5 text-[#25C5DC]" />
           <span>Issued: {alert.timestamp}</span>
         </div>
       </div>
 
       {/* Real-time telemetry indicators */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
-        <div className="bg-[#EDF7FF] rounded-xl p-2.5 border border-[#B9D9F5]">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#5B7188] uppercase tracking-wider">
-            <Droplets className="w-3.5 h-3.5 text-[#2784D8]" />
+        <div className="bg-[#12385C] rounded-xl p-3 border border-[#285274]">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#B6C9DC] uppercase tracking-wider">
+            <Droplets className="w-3.5 h-3.5 text-[#25C5DC]" />
             Rainfall (24h)
           </div>
-          <div className="text-sm sm:text-base font-extrabold text-[#20364D] mt-1 font-mono">
+          <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono">
             {alert.rainfall_summary || '0.0 mm'}
           </div>
         </div>
 
-        <div className="bg-[#EDF7FF] rounded-xl p-2.5 border border-[#B9D9F5]">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#5B7188] uppercase tracking-wider">
-            <Waves className="w-3.5 h-3.5 text-[#16A6A3]" />
+        <div className="bg-[#12385C] rounded-xl p-3 border border-[#285274]">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#B6C9DC] uppercase tracking-wider">
+            <Waves className="w-3.5 h-3.5 text-[#25C5DC]" />
             River Stage
           </div>
-          <div className="text-sm sm:text-base font-extrabold text-[#20364D] mt-1 font-mono">
+          <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono">
             {alert.river_level_summary || 'Stable (1.8m)'}
           </div>
         </div>
 
-        <div className="bg-[#EDF7FF] rounded-xl p-2.5 border border-[#B9D9F5] col-span-2 sm:col-span-2">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#5B7188] uppercase tracking-wider">
-            <Database className="w-3.5 h-3.5 text-[#2784D8]" />
+        <div className="bg-[#12385C] rounded-xl p-3 border border-[#285274] col-span-2 sm:col-span-2">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#B6C9DC] uppercase tracking-wider">
+            <Database className="w-3.5 h-3.5 text-[#25C5DC]" />
             Reservoir Status
           </div>
-          <div className="text-sm sm:text-base font-extrabold text-[#20364D] mt-1 font-mono truncate">
-            {alert.reservoir_summary || 'Gangapur Dam: 72% Storage'}
+          <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono truncate">
+            {alert.reservoir_summary || 'Catchment Reservoir System: Nominal'}
           </div>
         </div>
       </div>
 
       {/* Causal Reason & Recommended Actions */}
       <div className="space-y-2 pt-2 text-xs">
-        <div className="bg-white/80 p-3 rounded-xl border border-[#B9D9F5]">
-          <span className="font-bold text-[#20364D] uppercase tracking-wider text-[11px] block mb-1">
+        <div className="bg-[#071A33]/70 p-3 rounded-xl border border-[#285274]">
+          <span className="font-bold text-[#8ED8F5] uppercase tracking-wider text-[11px] block mb-1">
             Causal Reason:
           </span>
-          <p className="text-[#20364D] leading-relaxed">{alert.reason}</p>
+          <p className="text-[#F3F8FF] leading-relaxed">{alert.reason}</p>
         </div>
 
-        <div className="bg-[#D9F5E8]/60 p-3 rounded-xl border border-[#299765]/30">
-          <span className="font-bold text-[#20364D] uppercase tracking-wider text-[11px] block mb-1">
+        <div className="bg-[#102F50]/90 p-3 rounded-xl border border-[#285274]">
+          <span className="font-bold text-[#35C58B] uppercase tracking-wider text-[11px] block mb-1">
             Precautionary Action Protocol:
           </span>
-          <p className="text-[#20364D] leading-relaxed font-medium">{alert.recommended_action}</p>
+          <p className="text-[#F3F8FF] leading-relaxed font-medium">{alert.recommended_action}</p>
         </div>
       </div>
     </div>

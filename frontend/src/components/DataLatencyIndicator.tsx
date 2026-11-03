@@ -12,23 +12,23 @@ export default function DataLatencyIndicator() {
 
   const statusColor =
     metric.status === 'green'
-      ? 'bg-[#299765] text-white'
+      ? 'bg-[#35C58B] text-[#071A33]'
       : metric.status === 'amber'
-      ? 'bg-[#F2B544] text-[#20364D]'
-      : 'bg-[#E45B62] text-white'
+      ? 'bg-[#F4BC4D] text-[#071A33]'
+      : 'bg-[#F06470] text-white'
 
   const statusDot =
     metric.status === 'green'
-      ? 'bg-[#299765]'
+      ? 'bg-[#35C58B]'
       : metric.status === 'amber'
-      ? 'bg-[#F2B544]'
-      : 'bg-[#E45B62]'
+      ? 'bg-[#F4BC4D]'
+      : 'bg-[#F06470]'
 
   const statusText =
     metric.status === 'green'
       ? 'Normal Latency'
       : metric.status === 'amber'
-      ? 'High Latency / Delay'
+      ? 'Propagation Delay'
       : 'Network Lag / Fault'
 
   return (
@@ -36,7 +36,7 @@ export default function DataLatencyIndicator() {
       aria-label="Live System Latency Monitor"
       className="fixed bottom-4 right-4 z-50 pointer-events-auto select-none"
     >
-      <div className="rounded-2xl border border-[#B9D9F5] bg-[#F0F8FF]/95 shadow-xl backdrop-blur-md overflow-hidden text-[#20364D] transition-all duration-300 w-64">
+      <div className="rounded-2xl border border-[#285274] bg-[#0E2B49]/95 shadow-2xl backdrop-blur-md overflow-hidden text-[#F3F8FF] transition-all duration-300 w-64">
         {/* Header Bar */}
         <div
           role="button"
@@ -50,18 +50,18 @@ export default function DataLatencyIndicator() {
               setCollapsed(!collapsed)
             }
           }}
-          className="flex items-center justify-between px-3.5 py-2 bg-[#B9DEFF]/70 cursor-pointer hover:bg-[#B9DEFF] transition-colors border-b border-[#B9D9F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2784D8]"
+          className="flex items-center justify-between px-3.5 py-2 bg-[#102F50] cursor-pointer hover:bg-[#12385C] transition-colors border-b border-[#285274] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2389D7]"
         >
           <div className="flex items-center gap-2">
             <span className={`w-2.5 h-2.5 rounded-full ${statusDot} ${metric.isFetching ? 'animate-ping' : ''}`} />
-            <span className="text-xs font-bold tracking-wide uppercase text-[#20364D] flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5 text-[#2784D8]" />
+            <span className="text-xs font-bold tracking-wide uppercase text-[#F3F8FF] flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-[#25C5DC]" />
               Data Latency
             </span>
           </div>
 
           <div className="flex items-center gap-1.5">
-            {metric.isFetching && <RefreshCw className="w-3 h-3 text-[#2784D8] animate-spin" />}
+            {metric.isFetching && <RefreshCw className="w-3 h-3 text-[#25C5DC] animate-spin" />}
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${statusColor}`}>
               {metric.totalClientSeconds}s
             </span>
@@ -70,47 +70,47 @@ export default function DataLatencyIndicator() {
 
         {/* Detailed Metrics Panel */}
         {!collapsed && (
-          <div id="latency-details-panel" className="p-3 text-[11px] space-y-2 bg-[#F0F8FF]">
+          <div id="latency-details-panel" className="p-3 text-[11px] space-y-2 bg-[#0E2B49]">
             {metric.totalClientSeconds > 3.0 && (
-              <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-[#F2B544]/20 border border-[#F2B544]/40 text-[#20364D] text-[10px]">
-                <AlertTriangle className="w-3.5 h-3.5 text-[#F2B544] shrink-0 mt-0.5" />
+              <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-[#F4BC4D]/20 border border-[#F4BC4D]/40 text-[#F4BC4D] text-[10px]">
+                <AlertTriangle className="w-3.5 h-3.5 text-[#F4BC4D] shrink-0 mt-0.5" />
                 <span>External APIs experiencing higher than average propagation delay.</span>
               </div>
             )}
 
             {metric.hasError && (
-              <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-[#E45B62]/15 border border-[#E45B62]/40 text-[#20364D] text-[10px]">
-                <XCircle className="w-3.5 h-3.5 text-[#E45B62] shrink-0 mt-0.5" />
+              <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-[#F06470]/15 border border-[#F06470]/40 text-[#F06470] text-[10px]">
+                <XCircle className="w-3.5 h-3.5 text-[#F06470] shrink-0 mt-0.5" />
                 <span>{metric.errorMessage || 'Connection failure. Using cached telemetry.'}</span>
               </div>
             )}
 
             <div className="space-y-1.5 font-medium">
-              <div className="flex justify-between items-center text-[#5B7188]">
+              <div className="flex justify-between items-center text-[#B6C9DC]">
                 <span>Weather API:</span>
-                <span className="font-mono font-semibold text-[#20364D]">{metric.weatherApiSeconds} s</span>
+                <span className="font-mono font-semibold text-[#8ED8F5]">{metric.weatherApiSeconds} s</span>
               </div>
-              <div className="flex justify-between items-center text-[#5B7188]">
+              <div className="flex justify-between items-center text-[#B6C9DC]">
                 <span>Risk Engine:</span>
-                <span className="font-mono font-semibold text-[#20364D]">{metric.riskEngineSeconds} s</span>
+                <span className="font-mono font-semibold text-[#8ED8F5]">{metric.riskEngineSeconds} s</span>
               </div>
-              <div className="flex justify-between items-center text-[#5B7188]">
+              <div className="flex justify-between items-center text-[#B6C9DC]">
                 <span>Backend Response:</span>
-                <span className="font-mono font-semibold text-[#20364D]">{metric.backendSeconds} s</span>
+                <span className="font-mono font-semibold text-[#8ED8F5]">{metric.backendSeconds} s</span>
               </div>
-              <div className="pt-1.5 border-t border-[#B9D9F5]/60 flex justify-between items-center text-[10px]">
-                <span className="text-[#5B7188]">Last Updated:</span>
-                <span className="font-mono text-[#20364D] font-bold">{metric.lastUpdated}</span>
+              <div className="pt-1.5 border-t border-[#285274]/60 flex justify-between items-center text-[10px]">
+                <span className="text-[#B6C9DC]">Last Updated:</span>
+                <span className="font-mono text-[#F3F8FF] font-bold">{metric.lastUpdated}</span>
               </div>
               <div className="flex justify-between items-center text-[10px]">
-                <span className="text-[#5B7188]">Status:</span>
+                <span className="text-[#B6C9DC]">Status:</span>
                 <span className="font-bold flex items-center gap-1">
                   {metric.status === 'green' ? (
-                    <CheckCircle2 className="w-3 h-3 text-[#299765]" />
+                    <CheckCircle2 className="w-3 h-3 text-[#35C58B]" />
                   ) : metric.status === 'amber' ? (
-                    <AlertTriangle className="w-3 h-3 text-[#F2B544]" />
+                    <AlertTriangle className="w-3 h-3 text-[#F4BC4D]" />
                   ) : (
-                    <XCircle className="w-3 h-3 text-[#E45B62]" />
+                    <XCircle className="w-3 h-3 text-[#F06470]" />
                   )}
                   {statusText}
                 </span>

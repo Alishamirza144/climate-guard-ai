@@ -67,6 +67,7 @@ class HttpClient:
         self._headers = {"User-Agent": "ClimateGuard-AI/0.1.0 (resilience@climateguard.ai)", **(headers or {})}
         # Per-instance cache with custom TTL
         self._cache: TTLCache[str, Any] = TTLCache(maxsize=256, ttl=ttl)
+        self._stale_cache: dict[str, tuple[float, Any]] = {}
 
     async def get(
         self,
@@ -76,7 +77,7 @@ class HttpClient:
     ) -> Any:
         """Perform a cached, retried GET request.
 
-        Returns parsed JSON. Raises httpx.HTTPStatusError on 4xx/5xx.
+        Returns parsed JSON. Raises httpx.HTTPStatusError on 4xx/5xx if no fallback is available.
         """
         url = f"{self._base_url}{path}" if self._base_url else path
         key = _cache_key(url, params)
@@ -85,11 +86,24 @@ class HttpClient:
             log.debug("http_cache_hit", url=url)
             return self._cache[key]
 
-        result = await self._fetch(url, params)
-
-        if cache:
-            self._cache[key] = result
-        return result
+        try:
+            result = await self._fetch(url, params)
+            if cache:
+                self._cache[key] = result
+                self._stale_cache[key] = (time.time(), result)
+            return result
+        except httpx.HTTPStatusError as exc:
+            if key in self._stale_cache:
+                timestamp, stale_data = self._stale_cache[key]
+                log.warning("http_rate_limit_fallback_to_stale_cache", url=url, status=exc.response.status_code, age_sec=round(time.time() - timestamp, 1))
+                return stale_data
+            raise
+        except (httpx.TimeoutException, httpx.NetworkError):
+            if key in self._stale_cache:
+                timestamp, stale_data = self._stale_cache[key]
+                log.warning("http_network_fallback_to_stale_cache", url=url, age_sec=round(time.time() - timestamp, 1))
+                return stale_data
+            raise
 
     async def get_text(
         self,

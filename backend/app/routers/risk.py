@@ -303,7 +303,35 @@ async def risk_overview(
             }
 
     async def safe_crop() -> dict[str, Any]:
-        return {"score": 22.0, "level": "Low", "probability": 0.22, "drivers": ["soil moisture stable"], "headline": "Crop stress within normal range."}
+        try:
+            forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
+            hourly = getattr(forecast, "hourly", {}) or {}
+            soil_vals = [float(v) for v in hourly.get("soil_moisture_0_to_1cm", []) if v is not None]
+            rain_vals = [float(v) for v in hourly.get("precipitation", []) if v is not None]
+            avg_soil = sum(soil_vals) / len(soil_vals) if soil_vals else 0.24
+            rain_sum = sum(rain_vals) if rain_vals else 0.0
+            if avg_soil < 0.15:
+                score = 65.0
+                level = "High"
+                headline = "Topsoil moisture depletion; supplemental irrigation recommended."
+            elif avg_soil < 0.20:
+                score = 38.0
+                level = "Moderate"
+                headline = "Moderate root-zone moisture stress."
+            else:
+                score = 15.0
+                level = "Low"
+                headline = "Crop root-zone moisture optimal."
+            return {"score": score, "level": level, "probability": round(score / 100.0, 3), "drivers": ["soil moisture", "precipitation"], "headline": headline, "data_quality": "live"}
+        except Exception:
+            return {
+                "score": 0.0,
+                "level": "Insufficient Data",
+                "probability": 0.0,
+                "drivers": ["Agrometeorology feed unavailable"],
+                "headline": "Agricultural soil moisture observations temporarily unavailable.",
+                "data_quality": "insufficient_data",
+            }
 
     flood_data, heat_data, fire_data, crop_data = await asyncio.gather(
         safe_flood(),

@@ -52,7 +52,7 @@ FLOOD_DAILY_VARIABLES = (
     "river_discharge_max",
 )
 
-_forecast_client = HttpClient(_FORECAST_URL, timeout=20, ttl=300)
+_forecast_client = HttpClient(_FORECAST_URL, timeout=20, ttl=900)
 _archive_client = HttpClient(_ARCHIVE_URL, timeout=30, ttl=86400)
 _flood_client = HttpClient(_FLOOD_URL, timeout=20, ttl=3600)
 _geocoding_client = HttpClient(_GEOCODING_URL, timeout=10, ttl=86400)
@@ -145,7 +145,8 @@ async def get_forecast(
         raise ValueError("past_days must be between 0 and 92")
     if not 0 <= forecast_days <= 16:
         raise ValueError("forecast_days must be between 0 and 16")
-    point = GeoPoint(latitude=lat, longitude=lon)
+    # Round coordinate to ~1.1km grid to share cache across modules and dashboard widgets
+    point = GeoPoint(latitude=round(float(lat), 2), longitude=round(float(lon), 2))
     payload = await _forecast_client.get(
         "/v1/forecast",
         params={

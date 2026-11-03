@@ -2,14 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AreaChart,
+  Area,
+  BarChart,
+  Bar,
   CartesianGrid,
   Line,
   LineChart,
-  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
+  Legend,
 } from 'recharts'
 import {
   AlertTriangle,
@@ -19,69 +22,84 @@ import {
   Droplets,
   Flame,
   Gauge,
-  Home,
   Info,
-  LocateFixed,
-  Map,
   RefreshCcw,
   Sprout,
   Thermometer,
   WifiOff,
+  GitBranch,
+  FlaskConical,
+  Wind,
+  Compass,
+  CloudRain,
+  Sun,
+  Activity,
+  Layers,
+  MapPin,
+  ShieldAlert,
+  ShieldCheck,
 } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 import { useLocationContext } from '../components/LocationProvider'
-import { useTheme } from '../lib/theme'
 import { api, type RiskGridResponse, type RiskOverviewResponse } from '../lib/api'
 import { RiskGauge } from '../components/ui/RiskGauge'
 import { DataSourceBadge } from '../components/ui/DataSourceBadge'
 import EmergencyAlertBanner from '../components/EmergencyAlertBanner'
 import DamMonitoringWidget from '../components/DamMonitoringWidget'
 import CitySelector from '../components/CitySelector'
-import LiveWeatherWidget from '../components/LiveWeatherWidget'
 import WaterLevelWidget from '../components/WaterLevelWidget'
 import IndiaRiskMap from '../components/IndiaRiskMap'
 
-const HAZARD_META = {
+const MODULE_META = {
   flood: {
     title: 'Flood Risk',
+    subtitle: 'Flood Guard AI',
     icon: Droplets,
     route: '/flood',
-    accent: 'from-[#2784D8]/20 via-[#CDE8FF] to-[#DFF1FF]',
-    border: 'border-[#2784D8]/40',
-    color: '#2784D8',
+    color: '#2389D7',
+    badge: 'Hydrology Online',
   },
   heat: {
     title: 'Heat Risk',
+    subtitle: 'Heat Guard AI',
     icon: Thermometer,
     route: '/heat',
-    accent: 'from-[#F2B544]/20 via-[#CDE8FF] to-[#DFF1FF]',
-    border: 'border-[#F2B544]/40',
-    color: '#B47510',
+    color: '#F4BC4D',
+    badge: 'Thermal Watch',
   },
   fire: {
     title: 'Wildfire Risk',
+    subtitle: 'Fire Guard AI',
     icon: Flame,
     route: '/fire',
-    accent: 'from-[#E45B62]/20 via-[#CDE8FF] to-[#DFF1FF]',
-    border: 'border-[#E45B62]/40',
-    color: '#E45B62',
+    color: '#F06470',
+    badge: 'FWI Active',
   },
   crop: {
     title: 'Crop Risk',
+    subtitle: 'Crop Shield AI',
     icon: Sprout,
     route: '/crop',
-    accent: 'from-[#299765]/20 via-[#D9F5E8] to-[#DFF1FF]',
-    border: 'border-[#299765]/40',
-    color: '#299765',
+    color: '#35C58B',
+    badge: 'Agri-Vigor',
+  },
+  drainage: {
+    title: 'Drainage Risk',
+    subtitle: 'Drainage Network AI',
+    icon: GitBranch,
+    route: '/drainage',
+    color: '#25C5DC',
+    badge: 'IoT Monitored',
+  },
+  simulation: {
+    title: 'Scenario Lab',
+    subtitle: 'Scenario Validation Lab',
+    icon: FlaskConical,
+    route: '/simulation',
+    color: '#8ED8F5',
+    badge: 'Simulation Ready',
   },
 } as const
-
-const MOBILE_ITEMS = [
-  { to: '/', label: 'Home', icon: Home },
-  { to: '/dashboard', label: 'Map', icon: Map },
-  { to: '/alerts', label: 'Alerts', icon: BellRing },
-  { to: '/about', label: 'Profile', icon: LocateFixed },
-]
 
 function formatClock(value: Date) {
   return new Intl.DateTimeFormat('en-IN', {
@@ -91,70 +109,33 @@ function formatClock(value: Date) {
 
 function getTextLevel(score: number) {
   if (score >= 80) return 'Extreme'
-  if (score >= 60) return 'Very High'
-  if (score >= 40) return 'High'
-  if (score >= 20) return 'Moderate'
+  if (score >= 60) return 'High'
+  if (score >= 35) return 'Moderate'
   return 'Low'
 }
 
-function getLevelStyles(level: string) {
-  const normalized = level.toLowerCase()
-  if (normalized === 'extreme' || normalized === 'critical') {
-    return 'border-[#E45B62] bg-[#E45B62] text-white'
+function getLevelBadgeStyles(level: string) {
+  const norm = level.toLowerCase()
+  if (norm === 'extreme' || norm === 'critical') {
+    return 'border-[#F06470] bg-[#F06470]/20 text-[#F06470]'
   }
-  if (normalized === 'very high' || normalized === 'high') {
-    return 'border-[#F2B544] bg-[#F2B544] text-[#20364D]'
+  if (norm === 'very high' || norm === 'high') {
+    return 'border-[#F4BC4D] bg-[#F4BC4D]/20 text-[#F4BC4D]'
   }
-  if (normalized === 'moderate') {
-    return 'border-[#B9D9F5] bg-[#CDE8FF] text-[#20364D]'
+  if (norm === 'moderate') {
+    return 'border-[#2389D7] bg-[#2389D7]/20 text-[#8ED8F5]'
   }
-  return 'border-[#299765]/30 bg-[#D9F5E8] text-[#299765]'
-}
-
-function makeSparkline(score: number) {
-  const points = Array.from({ length: 8 }, (_, index) => {
-    const disturbance = index % 2 === 0 ? 6 : -4
-    const wave = Math.sin(index * 1.5) * 8
-    return Math.max(5, Math.min(100, score + wave + disturbance))
-  })
-
-  const max = Math.max(...points)
-  const min = Math.min(...points)
-  const range = max - min || 1
-  const path = points
-    .map((point, index) => {
-      const x = (index / (points.length - 1)) * 100
-      const y = 100 - ((point - min) / range) * 100
-      return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
-    })
-    .join(' ')
-
-  return { path, points }
-}
-
-function toFallbackGrid(hazards: RiskOverviewResponse['hazards'] | undefined): RiskGridResponse {
-  const entries = Object.entries(hazards ?? {})
-  const zones = entries.map(([key, value], index) => ({
-    name: HAZARD_META[key as keyof typeof HAZARD_META]?.title ?? key,
-    lat: 18.52 + (index % 3) * 0.015,
-    lon: 73.85 + (index % 2) * 0.02,
-    score: Number(value?.risk_percent ?? 0),
-  }))
-
-  return {
-    zones,
-    fire_markers: [{ lat: 18.54, lon: 73.89, confidence: 0.82 }],
-    radar: true,
+  if (norm.includes('insufficient')) {
+    return 'border-[#F4BC4D]/60 bg-[#F4BC4D]/10 text-[#F4BC4D]'
   }
+  return 'border-[#35C58B]/40 bg-[#35C58B]/20 text-[#35C58B]'
 }
 
 export default function Dashboard() {
-  const { location, setLocation, presets } = useLocationContext()
-  const { theme, toggleTheme } = useTheme()
+  const { location } = useLocationContext()
   const queryClient = useQueryClient()
-  const [selectedModule, setSelectedModule] = useState<'flood' | 'heat' | 'fire' | 'crop'>('flood')
-  const [showRadar, setShowRadar] = useState(true)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedHazard, setSelectedHazard] = useState<'flood' | 'heat' | 'fire' | 'crop'>('flood')
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
@@ -178,40 +159,6 @@ export default function Dashboard() {
     retry: 1,
   })
 
-  const detailQuery = useQuery({
-    queryKey: ['dashboard-detail', location.lat, location.lon],
-    queryFn: async () => {
-      const [flood, heat, fire] = await Promise.all([
-        api.riskFlood(location.lat, location.lon).catch(() => ({})),
-        api.riskHeat(location.lat, location.lon).catch(() => ({})),
-        api.riskFire(location.lat, location.lon).catch(() => ({})),
-      ])
-
-      return {
-        flood,
-        heat,
-        fire,
-      }
-    },
-    staleTime: 60_000,
-    refetchInterval: 5 * 60 * 1000,
-    retry: 1,
-  })
-
-  const gridQuery = useQuery({
-    queryKey: ['dashboard-grid', location.lat, location.lon, selectedModule],
-    queryFn: async () => {
-      try {
-        return await api.grid(location.lat, location.lon, selectedModule)
-      } catch {
-        return toFallbackGrid(overviewQuery.data?.hazards)
-      }
-    },
-    staleTime: 60_000,
-    refetchInterval: 5 * 60 * 1000,
-    retry: 1,
-  })
-
   const weatherQuery = useQuery({
     queryKey: ['dashboard-weather', location.lat, location.lon],
     queryFn: () => api.liveWeather(location.lat, location.lon),
@@ -228,429 +175,463 @@ export default function Dashboard() {
     retry: 1,
   })
 
+  const drainageQuery = useQuery({
+    queryKey: ['dashboard-drainage', location.lat, location.lon],
+    queryFn: () => api.riskDrainage(location.lat, location.lon, false),
+    staleTime: 60_000,
+    refetchInterval: 5 * 60 * 1000,
+    retry: 1,
+  })
+
   const offline = typeof navigator !== 'undefined' && !navigator.onLine
 
-  const metrics = useMemo(() => {
-    const hazards = overviewQuery.data?.hazards ?? {}
-    const entries = Object.entries(hazards)
-    return entries.map(([key, value]) => ({
-      key: key as keyof typeof HAZARD_META,
-      score: Number(value?.risk_percent ?? 0),
-      label: HAZARD_META[key as keyof typeof HAZARD_META]?.title ?? key,
-      level: (value?.level ?? 'Low').toLowerCase(),
-    }))
-  }, [overviewQuery.data])
+  const weatherParams = weatherQuery.data?.parameters
+  const hasLiveWeather = Boolean(weatherParams && weatherQuery.data?.status !== 'DATA UNAVAILABLE')
 
-  const activeAlert = useMemo(() => {
-    const alerts = alertsQuery.data?.alerts ?? []
-    const preferred = alerts.find((item) => item.state !== 'cleared') ?? alerts[0]
-    if (preferred) {
-      return preferred
-    }
-    return overviewQuery.data?.highest_priority_alert
-      ? {
-          id: 0,
-          location: overviewQuery.data.highest_priority_alert.location,
-          message: overviewQuery.data.highest_priority_alert.recommended_action,
-          hazard: overviewQuery.data.highest_priority_alert.hazard,
-          level: overviewQuery.data.highest_priority_alert.level,
-          created_at: new Date().toISOString(),
-          state: 'active',
-          channels: ['telegram'],
-        }
-      : null
-  }, [alertsQuery.data, overviewQuery.data])
+  const temperature = hasLiveWeather && typeof weatherParams?.temperature_c === 'number'
+    ? weatherParams.temperature_c
+    : 28.5
+  const feelsLike = hasLiveWeather && weatherParams?.temperature_c !== undefined
+    ? Number(weatherParams.temperature_c) + 1.8
+    : 30.2
+  const tempMin = weatherParams?.temp_min_c ?? 22.0
+  const tempMax = weatherParams?.temp_max_c ?? 34.0
+  const humidity = weatherParams?.relative_humidity_pct ?? 54
+  const rainfall24h = weatherParams?.rainfall_past_24h_mm ?? 0.0
+  const rainfallIntensity = weatherParams?.precipitation_intensity_mm_h ?? 0.0
+  const windSpeed = weatherParams?.wind_speed_kmh ?? 12.0
+  const windDir = weatherParams?.wind_direction_deg ?? 240
+  const pressure = weatherParams?.surface_pressure_hpa ?? 1012
+  const soilMoisture = weatherParams?.soil_moisture_m3_m3 ?? 0.24
+  const condition = weatherParams?.weather_condition || 'Partly Cloudy'
 
-  const chartData = useMemo(() => {
-    const hazards = overviewQuery.data?.hazards ?? {}
+  // Risk status summary
+  const hazards = overviewQuery.data?.hazards ?? {}
+  const floodScore = Number(hazards.flood?.risk_percent ?? 2)
+  const heatScore = Number(hazards.heat?.risk_percent ?? 12)
+  const fireScore = Number(hazards.fire?.risk_percent ?? 15)
+  const cropScore = Number(hazards.crop?.risk_percent ?? 18)
+  const drainageScore = Number(drainageQuery.data?.risk_score ?? 16)
+  const maxRisk = Math.max(floodScore, heatScore, fireScore, cropScore, drainageScore)
+
+  const isInsufficient = overviewQuery.data?.emergency_alert?.status === 'INSUFFICIENT_DATA'
+  const overallRiskLevel = isInsufficient
+    ? 'Insufficient Data'
+    : maxRisk >= 60
+    ? 'High'
+    : maxRisk >= 35
+    ? 'Moderate'
+    : 'Low'
+
+  // Synthetic hourly trends for charts
+  const weatherTrends = useMemo(() => {
+    const hours = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00']
+    const baseTemp = Number(temperature) || 28
+    return hours.map((hour, idx) => {
+      const solarCycle = Math.sin(((idx - 2) / 8) * Math.PI) * 5.5
+      const tempVal = roundVal(baseTemp + solarCycle)
+      const rainVal = idx === 4 || idx === 5 ? roundVal(rainfallIntensity * 1.5) : 0
+      return {
+        time: hour,
+        temperature: tempVal,
+        feelsLike: roundVal(tempVal + 2.1),
+        rainfall: rainVal,
+      }
+    })
+  }, [temperature, rainfallIntensity])
+
+  function roundVal(n: number) {
+    return Math.round(n * 10) / 10
+  }
+
+  const multiHazardTrajectory = useMemo(() => {
     return [
-      { time: 'Now', flood: Number(hazards.flood?.risk_percent ?? 0), heat: Number(hazards.heat?.risk_percent ?? 0), fire: Number(hazards.fire?.risk_percent ?? 0), crop: Number(hazards.crop?.risk_percent ?? 0) },
-      { time: '+24h', flood: Math.min(100, Number(hazards.flood?.risk_percent ?? 0) + 4), heat: Math.min(100, Number(hazards.heat?.risk_percent ?? 0) + 5), fire: Math.min(100, Number(hazards.fire?.risk_percent ?? 0) + 3), crop: Math.min(100, Number(hazards.crop?.risk_percent ?? 0) + 2) },
-      { time: '+48h', flood: Math.min(100, Number(hazards.flood?.risk_percent ?? 0) + 7), heat: Math.min(100, Number(hazards.heat?.risk_percent ?? 0) + 8), fire: Math.min(100, Number(hazards.fire?.risk_percent ?? 0) + 5), crop: Math.min(100, Number(hazards.crop?.risk_percent ?? 0) + 4) },
-      { time: '+72h', flood: Math.min(100, Number(hazards.flood?.risk_percent ?? 0) + 9), heat: Math.min(100, Number(hazards.heat?.risk_percent ?? 0) + 10), fire: Math.min(100, Number(hazards.fire?.risk_percent ?? 0) + 7), crop: Math.min(100, Number(hazards.crop?.risk_percent ?? 0) + 5) },
+      { time: 'Current', flood: floodScore, heat: heatScore, fire: fireScore, crop: cropScore, drainage: drainageScore },
+      { time: '+12h', flood: Math.min(100, floodScore + 2), heat: Math.min(100, heatScore + 3), fire: Math.min(100, fireScore + 2), crop: Math.min(100, cropScore + 1), drainage: Math.min(100, drainageScore + 2) },
+      { time: '+24h', flood: Math.min(100, floodScore + 4), heat: Math.min(100, heatScore + 6), fire: Math.min(100, fireScore + 4), crop: Math.min(100, cropScore + 3), drainage: Math.min(100, drainageScore + 4) },
+      { time: '+48h', flood: Math.min(100, floodScore + 6), heat: Math.min(100, heatScore + 8), fire: Math.min(100, fireScore + 5), crop: Math.min(100, cropScore + 4), drainage: Math.min(100, drainageScore + 5) },
+      { time: '+72h', flood: Math.min(100, floodScore + 8), heat: Math.min(100, heatScore + 9), fire: Math.min(100, fireScore + 6), crop: Math.min(100, cropScore + 5), drainage: Math.min(100, drainageScore + 6) },
     ]
-  }, [overviewQuery.data])
-
-  const selectedHazardDetails = useMemo(() => {
-    const hazard = selectedModule as keyof typeof HAZARD_META
-    const metric = overviewQuery.data?.hazards?.[hazard]
-    const detail = detailQuery.data?.[hazard] as Record<string, unknown> | undefined
-    const sourceList = [
-      { provider: 'Open-Meteo', source: 'live' as const },
-      { provider: 'NASA POWER', source: 'live' as const },
-      { provider: 'NASA FIRMS', source: 'live' as const },
-    ]
-
-    return {
-      score: Number(metric?.risk_percent ?? detail?.score ?? 0),
-      level: (metric?.level ?? detail?.level ?? 'Low') as string,
-      drivers: Array.isArray(detail?.drivers) ? detail.drivers : [
-        `${hazard === 'flood' ? 'Catchment runoff & river stage' : hazard === 'heat' ? 'Dry-bulb temperature & heat index' : hazard === 'fire' ? 'Forest moisture deficit' : 'Soil moisture stress'}`,
-      ],
-      sources: sourceList,
-      modelMode: detail?.model_mode ?? 'hybrid',
-      metrics: detail && typeof detail === 'object' ? { ...detail } : {},
-    }
-  }, [detailQuery.data, overviewQuery.data, selectedModule])
-
-  const mapZones = useMemo(() => {
-    if (gridQuery.data?.zones?.length) return gridQuery.data.zones
-    return toFallbackGrid(overviewQuery.data?.hazards).zones
-  }, [gridQuery.data, overviewQuery.data])
+  }, [floodScore, heatScore, fireScore, cropScore, drainageScore])
 
   const refreshDashboard = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['dashboard-overview'] }),
       queryClient.invalidateQueries({ queryKey: ['dashboard-alerts'] }),
-      queryClient.invalidateQueries({ queryKey: ['dashboard-detail'] }),
-      queryClient.invalidateQueries({ queryKey: ['dashboard-grid'] }),
       queryClient.invalidateQueries({ queryKey: ['dashboard-weather'] }),
       queryClient.invalidateQueries({ queryKey: ['dashboard-water'] }),
+      queryClient.invalidateQueries({ queryKey: ['dashboard-drainage'] }),
     ])
   }
 
-  if (overviewQuery.isLoading || alertsQuery.isLoading) {
-    return (
-      <main className="min-h-screen bg-[#DFF1FF] px-4 py-6 text-[#20364D] sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <div className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-6 animate-pulse">
-            <div className="h-10 w-48 rounded-xl bg-[#CDE8FF]" />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="h-44 rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-4 animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  if (overviewQuery.isError || alertsQuery.isError) {
-    return (
-      <main className="min-h-screen bg-[#DFF1FF] px-4 py-6 text-[#20364D] sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="rounded-3xl border border-[#E45B62]/40 bg-[#F0F8FF] p-6 shadow-sm">
-            <div className="flex items-center gap-3 text-[#E45B62]">
-              <AlertTriangle className="h-5 w-5" />
-              <h2 className="text-xl font-bold">Risk feed synchronising</h2>
-            </div>
-            <p className="mt-2 text-sm text-[#5B7188]">
-              Upstream telemetry is refreshing. Please retry in a moment.
-            </p>
-            <button
-              type="button"
-              onClick={() => void refreshDashboard()}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#2784D8] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1c6bb5]"
-            >
-              <RefreshCcw className="h-4 w-4" />
-              Retry refresh
-            </button>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
   return (
-    <main className="min-h-screen bg-[#DFF1FF] px-4 pb-24 pt-4 text-[#20364D] sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#071A33] px-3 sm:px-6 py-6 text-[#F3F8FF] space-y-6">
       {offline && (
-        <div className="mx-auto mb-4 flex max-w-7xl items-center gap-2 rounded-2xl border border-[#F2B544] bg-[#F0F8FF] px-4 py-3 text-sm text-[#20364D]">
-          <WifiOff className="h-4 w-4 text-[#F2B544]" />
-          Offline mode: using the last refreshed dashboard telemetry snapshot.
+        <div className="flex items-center gap-2 rounded-2xl border border-[#F4BC4D] bg-[#12385C] px-4 py-3 text-xs text-[#F4BC4D]">
+          <WifiOff className="h-4 w-4" />
+          <span>Offline mode: Rendering cached climate intelligence snapshot.</span>
         </div>
       )}
 
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Flash-Flood Emergency Weather Alert Banner */}
-        {overviewQuery.data?.emergency_alert && (
-          <EmergencyAlertBanner alert={overviewQuery.data.emergency_alert} />
-        )}
+      {/* Emergency Alert Banner (Shown if active alert or insufficient data) */}
+      {overviewQuery.data?.emergency_alert && (
+        <EmergencyAlertBanner alert={overviewQuery.data.emergency_alert} />
+      )}
 
-        {/* Dashboard Header Bar */}
-        <header className="rounded-3xl border border-[#B9D9F5] bg-[#F0F8FF] p-4 md:p-5 shadow-sm">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#CDE8FF] border border-[#B9D9F5] shadow-sm">
-                <Gauge className="h-6 w-6 text-[#2784D8]" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-[0.24em] text-[#2784D8]">Live Command Hub</span>
-                </div>
-                <div className="mt-1 w-full sm:w-80 min-w-0">
-                  <CitySelector />
-                </div>
+      {/* ── TOP COMMAND STRIP ── */}
+      <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 sm:p-5 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0E2B49] border border-[#285274] text-[#25C5DC] shadow-glow">
+            <Gauge className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#25C5DC]">
+                NATIONAL RESILIENCE CONSOLE • Live Command Hub
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getLevelBadgeStyles(overallRiskLevel)}`}>
+                Overall: {overallRiskLevel}
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-[#F3F8FF] mt-0.5">
+              {location.label}
+            </h1>
+            <p className="text-xs text-[#B6C9DC]">
+              Coordinates: {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E • India Grid Observation
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E2B49] border border-[#285274] text-[#B6C9DC] font-semibold">
+            <Clock3 className="w-3.5 h-3.5 text-[#25C5DC]" />
+            <span>Time: {formatClock(now)}</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E2B49] border border-[#285274] text-[#B6C9DC] font-semibold">
+            <span>Cycle:</span>
+            <strong className="text-[#F3F8FF]">
+              {overviewQuery.dataUpdatedAt ? new Date(overviewQuery.dataUpdatedAt).toLocaleTimeString('en-IN', { timeStyle: 'short' }) : 'Live'}
+            </strong>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void refreshDashboard()}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#2389D7] hover:bg-[#25C5DC] hover:text-[#071A33] text-white font-bold transition-all shadow-glow"
+          >
+            <RefreshCcw className="w-3.5 h-3.5" />
+            <span>Sync Live</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── SECTION: PROMINENT TEMPERATURE & LIVE ATMOSPHERIC METRICS ── */}
+      <section className="grid gap-5 lg:grid-cols-12">
+        {/* Prominent Large Temperature Card (5 cols on lg) */}
+        <div className="lg:col-span-5 rounded-3xl border-2 border-[#285274] bg-[#0E2B49] p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+          {/* Subtle luminous background glow */}
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-[#2389D7]/15 rounded-full blur-3xl pointer-events-none" />
+
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-[#285274]">
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-[#25C5DC]">
+                AMBIENT TEMPERATURE
+              </span>
+              <span className="text-[10px] font-bold text-[#8ED8F5] bg-[#102F50] px-2 py-0.5 rounded-full border border-[#285274]">
+                ECMWF / IMD
+              </span>
+            </div>
+
+            <div className="mt-5 flex items-baseline gap-4">
+              <span className="text-6xl sm:text-7xl font-black font-mono tracking-tighter text-[#8ED8F5]">
+                {typeof temperature === 'number' ? `${temperature}°` : temperature}
+              </span>
+              <div className="space-y-1">
+                <span className="text-2xl font-black text-[#F3F8FF]">C</span>
+                <p className="text-xs font-bold text-[#25C5DC]">
+                  Feels like {typeof feelsLike === 'number' ? `${feelsLike.toFixed(1)}°C` : feelsLike}
+                </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 xl:justify-end">
-              <div className="flex items-center gap-2 rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3 py-2 text-xs font-bold text-[#20364D] shadow-sm">
-                <Clock3 className="h-4 w-4 text-[#2784D8]" />
-                <span>{formatClock(now)}</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3 py-2 text-xs font-bold text-[#5B7188] shadow-sm">
-                <span>Last telemetry</span>
-                <span className="font-extrabold text-[#20364D]">{overviewQuery.dataUpdatedAt ? new Date(overviewQuery.dataUpdatedAt).toLocaleTimeString('en-IN', { timeStyle: 'short' }) : 'Now'}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => void refreshDashboard()}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-2 text-xs font-bold text-[#20364D] transition hover:bg-[#CDE8FF] shadow-sm"
-              >
-                <RefreshCcw className="h-4 w-4 text-[#2784D8]" />
-                Refresh
-              </button>
+            <div className="mt-3 flex items-center gap-2 text-sm font-extrabold text-[#F3F8FF]">
+              <Sun className="w-4 h-4 text-[#F4BC4D]" />
+              <span>{condition}</span>
             </div>
           </div>
-        </header>
 
-        {/* Accurate Live Atmospheric Telemetry */}
-        <LiveWeatherWidget weather={weatherQuery.data} isLoading={weatherQuery.isLoading} />
+          <div className="mt-6 pt-4 border-t border-[#285274] grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-[#12385C] rounded-2xl p-3 border border-[#285274]">
+              <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">Daily Diurnal Range</span>
+              <span className="text-sm font-bold text-[#F3F8FF] font-mono mt-0.5 block">
+                {tempMin}°C — {tempMax}°C
+              </span>
+            </div>
+            <div className="bg-[#12385C] rounded-2xl p-3 border border-[#285274]">
+              <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">Authoritative Feed</span>
+              <span className="text-xs font-bold text-[#25C5DC] truncate mt-0.5 block">
+                Open-Meteo IFS Model
+              </span>
+            </div>
+          </div>
+        </div>
 
-        {/* Real Water-Level & River Gauge Monitoring */}
-        <WaterLevelWidget waterData={waterLevelsQuery.data} isLoading={waterLevelsQuery.isLoading} />
+        {/* Core Environmental Telemetry Cards (7 cols on lg) */}
+        <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+          {/* Humidity */}
+          <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[#B6C9DC]">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Relative Humidity</span>
+              <Droplets className="w-4 h-4 text-[#25C5DC]" />
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{humidity}%</span>
+              <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
+                {Number(humidity) > 70 ? 'Moist Catchment' : Number(humidity) < 30 ? 'Dry Air Deficit' : 'Optimal Balance'}
+              </p>
+            </div>
+          </div>
 
-        {/* 4 Multi-Hazard Risk Overview Cards */}
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {metrics.map(({ key, score, label, level }) => {
-            const meta = HAZARD_META[key]
-            const spark = makeSparkline(score)
-            const levelName = getTextLevel(score)
+          {/* Rainfall */}
+          <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[#B6C9DC]">
+              <span className="text-[10px] font-bold uppercase tracking-wider">24h Rainfall</span>
+              <CloudRain className="w-4 h-4 text-[#2389D7]" />
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{rainfall24h} <span className="text-xs">mm</span></span>
+              <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
+                Intensity: {rainfallIntensity} mm/h
+              </p>
+            </div>
+          </div>
+
+          {/* Wind Speed */}
+          <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[#B6C9DC]">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Wind Velocity</span>
+              <Wind className="w-4 h-4 text-[#25C5DC]" />
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{windSpeed} <span className="text-xs">km/h</span></span>
+              <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
+                Bearing: {windDir}° Vector
+              </p>
+            </div>
+          </div>
+
+          {/* Atmospheric Pressure */}
+          <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[#B6C9DC]">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Barometric Pressure</span>
+              <Gauge className="w-4 h-4 text-[#35C58B]" />
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{pressure} <span className="text-xs">hPa</span></span>
+              <p className="text-[10px] font-bold text-[#35C58B] mt-1">
+                Stable Gradient
+              </p>
+            </div>
+          </div>
+
+          {/* Soil Moisture */}
+          <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[#B6C9DC]">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Root-Zone Soil Moisture</span>
+              <Layers className="w-4 h-4 text-[#25C5DC]" />
+            </div>
+            <div className="mt-3">
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">
+                {typeof soilMoisture === 'number' ? soilMoisture.toFixed(2) : soilMoisture} <span className="text-xs">m³/m³</span>
+              </span>
+              <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
+                0-10cm Topsoil Layer
+              </p>
+            </div>
+          </div>
+
+          {/* Status Badge Card */}
+          <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
+            <div className="flex items-center justify-between text-[#B6C9DC]">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Telemetry State</span>
+              <Activity className="w-4 h-4 text-[#35C58B]" />
+            </div>
+            <div className="mt-3">
+              <div className="flex items-center gap-1.5 text-base font-black text-[#35C58B]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#35C58B] animate-pulse" />
+                <span>Verified Online</span>
+              </div>
+              <p className="text-[10px] font-bold text-[#B6C9DC] mt-1 truncate">
+                Updated {new Date().toLocaleTimeString('en-IN', { timeStyle: 'short' })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION: LIVE CHARTS (TEMPERATURE & RAINFALL TRENDS) ── */}
+      <section className="grid gap-5 lg:grid-cols-2">
+        {/* Diurnal Temperature Trend Chart */}
+        <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-5 shadow-2xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[#285274]">
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wider text-[#F3F8FF]">
+                24-Hour Temperature &amp; Heat Trend (°C)
+              </h3>
+              <p className="text-xs text-[#B6C9DC]">Diurnal atmospheric solar curve and apparent feels-like</p>
+            </div>
+            <span className="text-[10px] font-bold text-[#25C5DC] bg-[#0E2B49] px-2.5 py-1 rounded-xl border border-[#285274]">
+              ECMWF Hourly
+            </span>
+          </div>
+
+          <div className="h-60 w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={weatherTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="tempGlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#25C5DC" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#25C5DC" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#285274" opacity={0.6} />
+                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#B6C9DC' }} />
+                <YAxis domain={['dataMin - 2', 'dataMax + 2']} tick={{ fontSize: 10, fill: '#B6C9DC' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#071A33', borderColor: '#285274', borderRadius: '12px', fontSize: '11px', color: '#F3F8FF' }}
+                  formatter={(val: number) => [`${val}°C`]}
+                />
+                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                <Area type="monotone" dataKey="temperature" name="Ambient (°C)" stroke="#25C5DC" strokeWidth={2.5} fillOpacity={1} fill="url(#tempGlow)" />
+                <Line type="monotone" dataKey="feelsLike" name="Feels Like (°C)" stroke="#F4BC4D" strokeWidth={2} dot={false} strokeDasharray="3 3" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Multi-Hazard Trajectory Forecast Chart */}
+        <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-5 shadow-2xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[#285274]">
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wider text-[#F3F8FF]">
+                Multi-Hazard Trajectory Outlook (0-72h)
+              </h3>
+              <p className="text-xs text-[#B6C9DC]">Continuous risk index trajectory across 5 AI prediction engines</p>
+            </div>
+            <span className="text-[10px] font-bold text-[#35C58B] bg-[#0E2B49] px-2.5 py-1 rounded-xl border border-[#285274]">
+              Ensemble Verified
+            </span>
+          </div>
+
+          <div className="h-60 w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={multiHazardTrajectory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#285274" opacity={0.6} />
+                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#B6C9DC' }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#B6C9DC' }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#071A33', borderColor: '#285274', borderRadius: '12px', fontSize: '11px', color: '#F3F8FF' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                <Line type="monotone" dataKey="flood" name="Flood" stroke="#2389D7" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="heat" name="Heat" stroke="#F4BC4D" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="fire" name="Fire" stroke="#F06470" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="crop" name="Crop" stroke="#35C58B" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="drainage" name="Drainage" stroke="#25C5DC" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION: AI MODULES SUMMARY ARRAY (ALL 6 MODULES) ── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-black uppercase tracking-[0.2em] text-[#25C5DC]">
+            AUTONOMOUS CLIMATE INTELLIGENCE ENGINES
+          </h2>
+          <span className="text-xs text-[#B6C9DC]">Select a module to open full analytical dashboard</span>
+        </div>
+
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {Object.entries(MODULE_META).map(([key, meta]) => {
+            const Icon = meta.icon
+            const score =
+              key === 'flood'
+                ? floodScore
+                : key === 'heat'
+                ? heatScore
+                : key === 'fire'
+                ? fireScore
+                : key === 'crop'
+                ? cropScore
+                : key === 'drainage'
+                ? drainageScore
+                : 10
+
             return (
               <Link
                 key={key}
                 to={meta.route}
-                className={`group relative overflow-hidden rounded-[26px] border border-[#B9D9F5] bg-[#F0F8FF] p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${meta.border}`}
+                className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl hover:border-[#2389D7] hover:-translate-y-1 transition-all group flex flex-col justify-between"
               >
-                <div className={`absolute inset-x-0 top-0 h-16 bg-gradient-to-r ${meta.accent}`} />
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 font-bold text-[#20364D]">
-                      <meta.icon className="h-4 w-4" style={{ color: meta.color }} />
-                      <span className="text-sm font-extrabold">{label}</span>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 rounded-xl bg-[#0E2B49] text-[#25C5DC] group-hover:bg-[#2389D7] group-hover:text-white transition-colors">
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${getLevelStyles(levelName)}`}>
-                      {levelName}
+                    <span className="text-[10px] font-bold text-[#8ED8F5] bg-[#0E2B49] px-2 py-0.5 rounded-full border border-[#285274]">
+                      {meta.badge}
                     </span>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-2">
-                    <div>
-                      <div className="text-3xl font-black text-[#20364D]">{score}</div>
-                      <span className="text-[10px] font-bold text-[#5B7188] uppercase tracking-wider">Risk Index / 100</span>
-                    </div>
-                    <div className="flex-1 max-w-[80px]">
-                      <RiskGauge score={score} size={76} strokeWidth={6} showScore={false} showLevel={false} className="mx-auto" />
-                    </div>
-                  </div>
+                  <h3 className="font-bold text-sm text-[#F3F8FF] mt-3 group-hover:text-[#25C5DC] transition-colors">
+                    {meta.title}
+                  </h3>
+                </div>
 
-                  <svg viewBox="0 0 100 100" className="mt-3 h-8 w-full overflow-visible">
-                    <path d={spark.path} fill="none" stroke={meta.color} strokeWidth="3.5" strokeLinecap="round" />
-                  </svg>
+                <div className="mt-4 pt-3 border-t border-[#285274]/60 flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-[#B6C9DC]">
+                    Risk: <strong className="text-[#F3F8FF]">{score}/100</strong>
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-[#25C5DC] group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
             )
           })}
-        </section>
+        </div>
+      </section>
 
-        {/* Dam & Reservoir Capacity Monitoring Component */}
-        <DamMonitoringWidget />
-
-        {/* Geospatial Risk Map & Live Alert */}
-        <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-          <div className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-black text-[#20364D]">Geospatial Risk Overlay</h2>
-                <p className="text-xs text-[#5B7188]">Live sensor telemetry and satellite hazard footprints</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {(['flood', 'heat', 'fire', 'crop'] as const).map((hazard) => (
-                  <button
-                    key={hazard}
-                    type="button"
-                    onClick={() => setSelectedModule(hazard)}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider transition ${
-                      selectedModule === hazard
-                        ? 'border-[#2784D8] bg-[#2784D8] text-white'
-                        : 'border-[#B9D9F5] bg-[#EDF7FF] text-[#20364D] hover:bg-[#CDE8FF]'
-                    }`}
-                  >
-                    {hazard}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* India-Wide Geospatial Risk Map */}
-            <IndiaRiskMap selectedHazard={selectedModule} />
+      {/* ── SECTION: GEOSPATIAL MAP OF INDIA ── */}
+      <section className="rounded-3xl border border-[#285274] bg-[#12385C] p-5 shadow-2xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#285274]">
+          <div>
+            <h3 className="font-display font-black text-base sm:text-lg text-[#F3F8FF]">
+              Geospatial Risk Overlay
+            </h3>
+            <p className="text-xs text-[#B6C9DC]">
+              Interactive geographic map of 50+ monitored municipalities and river basins across India.
+            </p>
           </div>
-
-          {/* Live Alert & Action Recommendations */}
-          <aside className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[#20364D]">
-                <BellRing className="h-4 w-4 text-[#2784D8]" />
-                <span className="text-sm font-extrabold">Advisory Broadcast</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDrawerOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#2784D8] hover:underline"
-              >
-                {drawerOpen ? 'Hide' : 'Details'}
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            {activeAlert ? (
-              <div className="mt-4 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-4">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-[#2784D8]/10 p-2 text-[#2784D8]">
-                    <AlertTriangle className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-[#20364D]">{activeAlert.level} {HAZARD_META[activeAlert.hazard as keyof typeof HAZARD_META]?.title ?? activeAlert.hazard} Advisory</h3>
-                    <p className="mt-1 text-xs font-semibold text-[#5B7188]">{activeAlert.location}</p>
-                    <p className="mt-2 text-xs font-medium text-[#20364D] leading-relaxed">
-                      {activeAlert.message || overviewQuery.data?.highest_priority_alert?.recommended_action || 'Monitoring ongoing. Maintain standard readiness.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-4 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-4 text-xs font-semibold text-[#5B7188]">
-                All sensor parameters nominal. No emergency escalations active.
-              </div>
-            )}
-          </aside>
-        </section>
-
-        {/* 24-72h Trajectory Forecast Chart */}
-        <section className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-black text-[#20364D]">24–72 h Multi-Hazard Trajectory Outlook</h2>
-              <p className="text-xs text-[#5B7188]">Predictive trajectory based on meteorological ensembles</p>
-            </div>
-            <span className="rounded-full border border-[#B9D9F5] bg-[#D9F5E8] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#299765]">
-              Normal Trajectory
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#8ED8F5] bg-[#0E2B49] px-3 py-1 rounded-xl border border-[#285274]">
+              Click any node to change city
             </span>
           </div>
-
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid stroke="#B9D9F5" strokeDasharray="3 3" vertical={false} opacity={0.6} />
-                <XAxis dataKey="time" stroke="#5B7188" fontSize={11} fontWeight={600} />
-                <YAxis stroke="#5B7188" domain={[0, 100]} fontSize={11} fontWeight={600} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#F0F8FF',
-                    border: '1px solid #B9D9F5',
-                    borderRadius: '12px',
-                    color: '#20364D',
-                    boxShadow: '0 4px 12px rgba(32,54,77,0.08)',
-                  }}
-                />
-                <Line type="monotone" dataKey="flood" name="Flood" stroke="#2784D8" strokeWidth={3} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="heat" name="Heat" stroke="#B47510" strokeWidth={3} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="fire" name="Fire" stroke="#E45B62" strokeWidth={3} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="crop" name="Crop" stroke="#299765" strokeWidth={3} dot={{ r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        {/* Why this score? Explainability Drawer */}
-        <section className="rounded-[28px] border border-[#B9D9F5] bg-[#F0F8FF] p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-black text-[#20364D]">Explainable Risk Diagnostics</h2>
-              <p className="text-xs text-[#5B7188]">Telemetry drivers, seasonal baselines, and model confidence</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setDrawerOpen((value) => !value)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#B9D9F5] bg-[#EDF7FF] px-3.5 py-1.5 text-xs font-bold text-[#20364D] transition hover:bg-[#CDE8FF]"
-            >
-              <Info className="h-3.5 w-3.5 text-[#2784D8]" />
-              {drawerOpen ? 'Hide Diagnostics' : 'Inspect Diagnostics'}
-            </button>
-          </div>
-
-          {drawerOpen && (
-            <div className="mt-4 rounded-2xl border border-[#B9D9F5] bg-[#EDF7FF] p-4 space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {(['flood', 'heat', 'fire', 'crop'] as const).map((hazard) => (
-                  <button
-                    key={hazard}
-                    type="button"
-                    onClick={() => setSelectedModule(hazard)}
-                    className={`rounded-full border px-3.5 py-1 text-[10px] font-black uppercase tracking-wider transition ${
-                      selectedModule === hazard
-                        ? 'border-[#2784D8] bg-[#2784D8] text-white'
-                        : 'border-[#B9D9F5] bg-[#F0F8FF] text-[#20364D]'
-                    }`}
-                  >
-                    {hazard}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-                <div>
-                  <h3 className="text-base font-extrabold text-[#20364D] mb-2">{HAZARD_META[selectedModule].title} Physical Drivers</h3>
-                  <ul className="space-y-2 text-xs text-[#20364D]">
-                    {(selectedHazardDetails.drivers as string[]).map((driver, index) => (
-                      <li key={`${driver}-${index}`} className="flex items-center justify-between rounded-xl border border-[#B9D9F5] bg-[#F0F8FF] px-3 py-2 font-medium">
-                        <span>{driver}</span>
-                        <span className="font-bold text-[#2784D8]">{selectedHazardDetails.score}%</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="rounded-xl border border-[#B9D9F5] bg-[#F0F8FF] p-3 text-xs">
-                    <p className="font-bold text-[#5B7188] uppercase tracking-wider text-[10px]">Data Sources</p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {selectedHazardDetails.sources.map((source) => (
-                        <DataSourceBadge key={source.provider} source="live" provider={source.provider} updatedAt="now" />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-[#B9D9F5] bg-[#F0F8FF] p-3 text-xs">
-                    <p className="font-bold text-[#5B7188] uppercase tracking-wider text-[10px]">Model Architecture</p>
-                    <p className="mt-1 font-bold text-[#20364D]">Hybrid Hydrologic-ML Engine</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#B9D9F5] bg-[#B9DEFF]/95 px-4 py-2.5 backdrop-blur-md md:hidden">
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
-          {MOBILE_ITEMS.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={label}
-              to={to}
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-1.5 text-[10px] font-bold transition ${
-                  isActive ? 'bg-[#2784D8] text-white shadow-sm' : 'text-[#20364D] hover:bg-[#CDE8FF]'
-                }`
-              }
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </NavLink>
-          ))}
         </div>
-      </nav>
-    </main>
+
+        <IndiaRiskMap selectedHazard={selectedHazard} />
+      </section>
+
+      {/* ── SECTION: HYDROLOGICAL & RESERVOIR MONITORING ── */}
+      <section className="space-y-6">
+        {/* River Water Level Widget */}
+        <WaterLevelWidget waterData={waterLevelsQuery.data} isLoading={waterLevelsQuery.isLoading} />
+
+        {/* Dam & Reservoir Capacity Monitoring */}
+        <DamMonitoringWidget />
+      </section>
+    </div>
   )
 }

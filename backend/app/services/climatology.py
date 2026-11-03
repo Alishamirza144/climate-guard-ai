@@ -69,8 +69,9 @@ async def build_climatology(
                 end.isoformat(),
                 daily=["temperature_2m_max", "precipitation_sum"],
             )
-        except ValueError:
-            continue
+        except Exception:
+            # If archive API is rate-limited (429) or unavailable, break early and use fallback normals
+            break
 
         daily = payload.daily or {}
         temperature_values = daily.get("temperature_2m_max", [])

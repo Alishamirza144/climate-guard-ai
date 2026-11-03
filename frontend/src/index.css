@@ -4,71 +4,71 @@
 
 @layer base {
   :root {
-    --bg-base: #DFF1FF;
-    --bg-alt: #CDE8FF;
-    --bg-nav: #B9DEFF;
-    --bg-card: #F0F8FF;
-    --bg-panel: #EDF7FF;
-    --text-base: #20364D;
-    --text-muted: #5B7188;
-    --cg-border-rgb: 185 217 245;
-    --cg-white-rgb: 32 54 77;
-    --cg-navy-rgb: 223 241 255;
-    --cg-navy-dark-rgb: 205 232 255;
-    --cg-navy-card-rgb: 240 248 255;
-    --cg-lime-rgb: 39 132 216;
-    --cg-lime-dark-rgb: 28 107 181;
-    --cg-lime-light-rgb: 75 160 236;
-    --cg-orange-rgb: 242 181 68;
-    --cg-olive-rgb: 22 166 163;
-    --cg-teal-rgb: 22 166 163;
-    --cg-red-rgb: 228 91 98;
-    --cg-green-rgb: 41 151 101;
-    color-scheme: light;
+    --bg-base: #071A33;
+    --bg-alt: #0B2545;
+    --bg-nav: #102F50;
+    --bg-card: #12385C;
+    --bg-panel: #0E2B49;
+    --text-base: #F3F8FF;
+    --text-muted: #B6C9DC;
+    --cg-border-rgb: 40 82 116;
+    --cg-white-rgb: 243 248 255;
+    --cg-navy-rgb: 7 26 51;
+    --cg-navy-dark-rgb: 11 37 69;
+    --cg-navy-card-rgb: 18 56 92;
+    --cg-lime-rgb: 35 137 215;
+    --cg-lime-dark-rgb: 22 100 163;
+    --cg-lime-light-rgb: 142 216 245;
+    --cg-orange-rgb: 244 188 77;
+    --cg-olive-rgb: 37 197 220;
+    --cg-teal-rgb: 37 197 220;
+    --cg-red-rgb: 240 100 112;
+    --cg-green-rgb: 53 197 139;
+    color-scheme: dark;
   }
 
   html.dark, html.light {
-    --bg-base: #DFF1FF;
-    --bg-alt: #CDE8FF;
-    --bg-nav: #B9DEFF;
-    --bg-card: #F0F8FF;
-    --bg-panel: #EDF7FF;
-    --text-base: #20364D;
-    --text-muted: #5B7188;
-    --cg-border-rgb: 185 217 245;
-    --cg-white-rgb: 32 54 77;
-    --cg-navy-rgb: 223 241 255;
-    --cg-navy-dark-rgb: 205 232 255;
-    --cg-navy-card-rgb: 240 248 255;
-    --cg-lime-rgb: 39 132 216;
-    --cg-lime-dark-rgb: 28 107 181;
-    --cg-lime-light-rgb: 75 160 236;
-    --cg-orange-rgb: 242 181 68;
-    --cg-olive-rgb: 22 166 163;
-    --cg-teal-rgb: 22 166 163;
-    --cg-red-rgb: 228 91 98;
-    --cg-green-rgb: 41 151 101;
-    color-scheme: light;
+    --bg-base: #071A33;
+    --bg-alt: #0B2545;
+    --bg-nav: #102F50;
+    --bg-card: #12385C;
+    --bg-panel: #0E2B49;
+    --text-base: #F3F8FF;
+    --text-muted: #B6C9DC;
+    --cg-border-rgb: 40 82 116;
+    --cg-white-rgb: 243 248 255;
+    --cg-navy-rgb: 7 26 51;
+    --cg-navy-dark-rgb: 11 37 69;
+    --cg-navy-card-rgb: 18 56 92;
+    --cg-lime-rgb: 35 137 215;
+    --cg-lime-dark-rgb: 22 100 163;
+    --cg-lime-light-rgb: 142 216 245;
+    --cg-orange-rgb: 244 188 77;
+    --cg-olive-rgb: 37 197 220;
+    --cg-teal-rgb: 37 197 220;
+    --cg-red-rgb: 240 100 112;
+    --cg-green-rgb: 53 197 139;
+    color-scheme: dark;
   }
 
   body {
     background-color: var(--bg-base);
     color: var(--text-base);
-    @apply font-body antialiased selection:bg-[#2784D8]/20 selection:text-[#2784D8] transition-colors duration-200;
+    @apply font-body antialiased selection:bg-[#2389D7]/30 selection:text-[#8ED8F5] transition-colors duration-200;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight text-[#20364D];
+    @apply font-display tracking-tight text-[#F3F8FF];
   }
 }
 
 @layer utilities {
   .animate-fade-in {
-    animation: cg-fade-in 500ms ease-out both;
+    animation: cg-fade-in 400ms ease-out both;
   }
 
   .animate-fade-in-up {
-    animation: cg-fade-in-up 500ms ease-out both;
+    animation: cg-fade-in-up 400ms ease-out both;
   }
 
   .animate-slide-in-right {
@@ -93,7 +93,7 @@
   }
 
   @keyframes cg-fade-in-up {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
@@ -102,40 +102,40 @@
     to { transform: translateX(0); }
   }
 
-  /* Glassmorphism surfaces styled in Sky-Blue Palette */
+  /* Premium Navy Blue Climate-Tech Glass Panels */
   .glass-panel {
-    background: rgba(185, 222, 255, 0.88);
+    background: rgba(16, 47, 80, 0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(185, 217, 245, 0.8);
+    border: 1px solid rgba(40, 82, 116, 0.8);
   }
 
   .glass-panel-light {
-    background: #F0F8FF;
+    background: #12385C;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid #B9D9F5;
+    border: 1px solid #285274;
   }
 
   .glass-card {
-    background: #F0F8FF;
-    border: 1px solid #B9D9F5;
-    box-shadow: 0 4px 16px -2px rgba(32, 54, 77, 0.06);
+    background: #12385C;
+    border: 1px solid #285274;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
   }
 
-  /* Soft climate sky grid background */
+  /* Deep Navy cyber grid */
   .bg-cyber-grid {
     background-size: 36px 36px;
     background-image: 
-      linear-gradient(to right, rgba(39, 132, 216, 0.06) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(39, 132, 216, 0.06) 1px, transparent 1px);
+      linear-gradient(to right, rgba(35, 137, 215, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(35, 137, 215, 0.08) 1px, transparent 1px);
   }
 
   .glass-panel-elevated {
-    background: rgba(240, 248, 255, 0.95);
+    background: rgba(18, 56, 92, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(185, 217, 245, 0.9);
-    box-shadow: 0 10px 30px -5px rgba(32, 54, 77, 0.08);
+    border: 1px solid rgba(40, 82, 116, 0.9);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
   }
 }

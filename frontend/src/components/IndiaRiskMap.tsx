@@ -23,8 +23,8 @@ function MapCenterController({ center }: { center: [number, number] }) {
 }
 
 function createMarkerIcon(isSelected: boolean, isCore: boolean) {
-  const color = isSelected ? '#E45B62' : isCore ? '#2784D8' : '#16A6A3'
-  const size = isSelected ? 18 : 13
+  const color = isSelected ? '#F06470' : isCore ? '#25C5DC' : '#2389D7'
+  const size = isSelected ? 20 : 14
 
   return L.divIcon({
     className: 'custom-city-marker',
@@ -33,9 +33,9 @@ function createMarkerIcon(isSelected: boolean, isCore: boolean) {
         width: ${size}px;
         height: ${size}px;
         background: ${color};
-        border: 2.5px solid white;
+        border: 2.5px solid #071A33;
         border-radius: 50%;
-        box-shadow: 0 0 ${isSelected ? '12px #E45B62' : '6px rgba(0,0,0,0.3)'};
+        box-shadow: 0 0 ${isSelected ? '14px #F06470' : '8px #25C5DC'};
         transform: translate(-50%, -50%);
         transition: all 0.2s ease;
       "></div>
@@ -53,7 +53,7 @@ export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapP
   const { location, selectCity, cities, currentCity } = useLocationContext()
 
   return (
-    <div className="relative h-[340px] w-full overflow-hidden rounded-[22px] border border-[#B9D9F5] shadow-inner bg-[#EDF7FF]">
+    <div className="relative h-[360px] w-full overflow-hidden rounded-3xl border border-[#285274] shadow-2xl bg-[#071A33]">
       <MapContainer
         center={[location.lat, location.lon]}
         zoom={6}
@@ -62,10 +62,10 @@ export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapP
       >
         <MapCenterController center={[location.lat, location.lon]} />
 
-        {/* Clean Carto / OpenStreetMap Base Tiles */}
+        {/* High-Contrast Navy/Dark Base Tiles */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
 
         {/* City Markers across India */}
@@ -83,37 +83,34 @@ export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapP
                 click: () => selectCity(city.id),
               }}
             >
-              <Tooltip direction="top" offset={[0, -6]} opacity={0.95}>
-                <div className="text-xs font-bold text-[#20364D]">
+              <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+                <div className="text-xs font-bold text-white bg-[#071A33] px-2 py-1 rounded border border-[#285274]">
                   {city.name} ({city.state})
                 </div>
               </Tooltip>
 
               <Popup>
-                <div className="p-1 space-y-1.5 text-xs text-[#20364D] min-w-[160px]">
-                  <div className="flex items-center justify-between gap-2 border-b border-gray-200 pb-1">
-                    <span className="font-extrabold text-sm text-[#2784D8]">{city.name}</span>
-                    <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">
+                <div className="p-1 space-y-1.5 text-xs text-white min-w-[160px] bg-[#0E2B49] rounded-xl">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#285274] pb-1">
+                    <span className="font-extrabold text-sm text-[#25C5DC]">{city.name}</span>
+                    <span className="text-[10px] bg-[#102F50] text-[#8ED8F5] px-1.5 py-0.5 rounded font-bold border border-[#285274]">
                       {city.state}
                     </span>
                   </div>
-
-                  <p className="text-[11px] text-gray-600">
-                    Coords: {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
-                  </p>
-
+                  <div className="text-[11px] text-[#B6C9DC]">
+                    Coordinates: {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
+                  </div>
                   {city.rivers.length > 0 && (
-                    <div className="text-[10px] text-gray-700">
-                      <span className="font-bold">Water Body:</span> {city.rivers[0].station} ({city.rivers[0].river})
+                    <div className="text-[11px] text-[#8ED8F5]">
+                      Catchment: {city.rivers.map((r) => r.river).join(', ')}
                     </div>
                   )}
-
                   <button
                     type="button"
                     onClick={() => selectCity(city.id)}
-                    className="mt-1 w-full rounded-lg bg-[#2784D8] px-2 py-1 text-center text-[11px] font-bold text-white hover:bg-[#1c6bb5] transition"
+                    className="w-full mt-2 rounded-lg bg-[#2389D7] hover:bg-[#25C5DC] hover:text-[#071A33] py-1 text-center font-bold text-white transition text-[11px]"
                   >
-                    {isSelected ? '✓ Active City' : 'Select City for Dashboard'}
+                    Select City
                   </button>
                 </div>
               </Popup>
@@ -122,24 +119,26 @@ export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapP
         })}
       </MapContainer>
 
-      {/* Floating Map Legend & Help Note */}
-      <div className="absolute bottom-3 left-3 z-[400] flex flex-wrap items-center gap-2 rounded-2xl border border-[#B9D9F5] bg-[#F0F8FF]/95 p-2 shadow-md backdrop-blur-sm text-[10px] font-bold text-[#20364D]">
-        <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#E45B62] ring-2 ring-red-200 animate-pulse" />
-          <span>Active City</span>
+      {/* Floating Legend Overlay */}
+      <div className="absolute bottom-3 left-3 z-[1000] rounded-2xl border border-[#285274] bg-[#0E2B49]/90 px-3 py-2 shadow-lg backdrop-blur-md text-[10px] text-[#F3F8FF] space-y-1">
+        <div className="font-bold uppercase tracking-wider text-[#25C5DC] flex items-center gap-1.5">
+          <Navigation className="h-3 w-3" />
+          <span>India Monitoring Grid</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#2784D8]" />
-          <span>Compulsory Hubs</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#F06470] border border-[#071A33]" />
+            <span className="text-[#B6C9DC]">Selected</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-[#25C5DC] border border-[#071A33]" />
+            <span className="text-[#B6C9DC]">Compulsory Core</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-[#2389D7] border border-[#071A33]" />
+            <span className="text-[#B6C9DC]">Monitored Node</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#16A6A3]" />
-          <span>Indian Cities (50+)</span>
-        </div>
-      </div>
-
-      <div className="absolute top-3 right-3 z-[400] rounded-xl border border-[#B9D9F5] bg-[#F0F8FF]/90 px-2 py-1 text-[10px] font-bold text-[#5B7188] shadow-sm">
-        Click any marker to switch telemetry
       </div>
     </div>
   )

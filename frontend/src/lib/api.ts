@@ -257,10 +257,21 @@ export const api = {
   riskFlood: (lat: number, lon: number) => request<Record<string, unknown>>(`/api/risk/flood?lat=${lat}&lon=${lon}`),
   riskHeat: (lat: number, lon: number) => request<Record<string, unknown>>(`/api/risk/heat?lat=${lat}&lon=${lon}`),
   riskFire: (lat: number, lon: number) => request<Record<string, unknown>>(`/api/risk/fire?lat=${lat}&lon=${lon}`),
-  riskCrop: (lat: number, lon: number, profile?: Record<string, unknown>) =>
-    request<Record<string, unknown>>(`/api/risk/crop?lat=${lat}&lon=${lon}`, {
+  riskCrop: (lat: number, lon: number, profile?: Record<string, unknown>) => {
+    if (profile && (profile.crop || profile.sowing_date)) {
+      return request<Record<string, unknown>>('/api/risk/crop', {
+        method: 'POST',
+        body: JSON.stringify({ lat, lon, ...profile }),
+      })
+    }
+    return request<Record<string, unknown>>(`/api/risk/crop?lat=${lat}&lon=${lon}`)
+  },
+  riskDrainage: (lat: number, lon: number, simulated: boolean = false) =>
+    request<Record<string, unknown>>(`/api/risk/drainage?lat=${lat}&lon=${lon}&simulated=${simulated}`),
+  simulateDrainage: (lat: number, lon: number, simulated: boolean = true) =>
+    request<Record<string, unknown>>('/api/risk/drainage/simulate', {
       method: 'POST',
-      body: JSON.stringify(profile ?? { lat, lon }),
+      body: JSON.stringify({ lat, lon, simulated }),
     }),
   riskFloodWhatIf: (lat: number, lon: number, addedRainMm: number) =>
     request<Record<string, unknown>>('/api/risk/flood/whatif', {

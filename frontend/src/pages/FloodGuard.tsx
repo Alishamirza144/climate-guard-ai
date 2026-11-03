@@ -30,27 +30,27 @@ export default function FloodGuard() {
 
       {/* FloodGuard AI Detail Engine View */}
       <ModuleDetailPage
-        title="FloodGuard AI"
-        subtitle="Short-lead flood risk, river stage monitoring, and drainage stress built from rainfall, runoff, and terrain exposure."
+        title="Flood Guard AI"
+        subtitle="Hydrological runoff modeling, CWC river stage benchmarks, rainfall accumulation, and drainage surcharge prediction."
         moduleKey="flood"
-        accentClass="from-[#2784D8]/30 via-[#CDE8FF] to-[#DFF1FF]"
-        badge="PRECISION HYDROLOGY · MAHARASHTRA"
+        accentClass="from-[#2389D7]/30 via-[#102F50] to-[#071A33]"
+        badge="PRECISION HYDROLOGY · PAN-INDIA CATCHMENTS"
         fetchData={(lat, lon) => api.riskFlood(lat, lon) as Promise<Record<string, unknown>>}
         recommendations={{
           Citizen: [
-            'Move valuables and low-lying gear to higher ground before peak runoff arrives.',
-            'Avoid crossing flooded roads or underpasses while rainfall remains elevated.',
-            'Monitor local ward updates and keep an emergency bag ready if the lead time shortens.',
+            'Relocate electrical equipment, vehicles, and valuables from low-lying ground before peak runoff arrives.',
+            'Never attempt to drive or walk through flooded roadways, causeways, or submerged railway underpasses.',
+            'Keep emergency grab bags packed with dry food, flashlight, drinking water, and essential medications.',
           ],
           Authority: [
-            'Deploy pumps and sandbags to the most exposed catchments before the next three-hour peak.',
-            'Coordinate road closure orders for low-lying segments and drainage channels.',
-            'Prioritise camp and shelter access for zones with the highest runoff sensitivity.',
+            'Pre-deploy de-watering suction pumps and sandbags to historically vulnerable low-lying urban catchments.',
+            'Issue traffic diversion orders away from riverbanks and arterial storm channels.',
+            'Coordinate emergency relief shelters with medical supplies and potable drinking water.',
           ],
           Farmer: [
-            'Protect downstream plots and seed storage from overtopping and field-to-field pooling.',
-            'Shift short-cycle crops away from depressions and drainage channels with the highest exposure.',
-            'Check bund integrity and drainage outlets before the next intense rain burst.',
+            'Clear field drainage bunds and check outlet channels to prevent root-zone water stagnation.',
+            'Move harvested produce and bags to elevated concrete platforms away from natural drainage channels.',
+            'Secure livestock in high-elevation barns before intense rainfall bursts commence.',
           ],
         }}
       />

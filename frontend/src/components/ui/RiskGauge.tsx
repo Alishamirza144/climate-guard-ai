@@ -26,13 +26,11 @@ export function RiskGauge({
     setAnimateGauge(true)
   }, [])
 
-  // Clamp score between 0 and 100
   const clampedScore = Math.max(0, Math.min(100, Math.round(score)))
   const level: RiskLevel = getRiskLevelFromScore(clampedScore)
 
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
-  // Using an arc or full circle gauge: standard 270 degree or full 360 circle
   const progressOffset = circumference - (clampedScore / 100) * circumference
 
   const levelConfig: Record<
@@ -40,28 +38,28 @@ export function RiskGauge({
     { color: string; label: string; textClass: string; glow: string }
   > = {
     low: {
-      color: '#AFD17F',
+      color: '#35C58B',
       label: 'LOW',
-      textClass: 'text-lime',
-      glow: 'rgba(175, 209, 127, 0.4)',
+      textClass: 'text-[#35C58B]',
+      glow: 'rgba(53, 197, 139, 0.45)',
     },
     moderate: {
-      color: '#FDB52B',
+      color: '#25C5DC',
       label: 'MODERATE',
-      textClass: 'text-brand-orange',
-      glow: 'rgba(253, 181, 43, 0.4)',
+      textClass: 'text-[#25C5DC]',
+      glow: 'rgba(37, 197, 220, 0.45)',
     },
     high: {
-      color: '#BAB329',
+      color: '#F4BC4D',
       label: 'HIGH',
-      textClass: 'text-[#D8D03F]',
-      glow: 'rgba(186, 179, 41, 0.4)',
+      textClass: 'text-[#F4BC4D]',
+      glow: 'rgba(244, 188, 77, 0.45)',
     },
     critical: {
-      color: '#E5484D',
+      color: '#F06470',
       label: 'CRITICAL',
-      textClass: 'text-brand-red',
-      glow: 'rgba(229, 72, 77, 0.5)',
+      textClass: 'text-[#F06470]',
+      glow: 'rgba(240, 100, 112, 0.55)',
     },
   }
 
@@ -84,10 +82,9 @@ export function RiskGauge({
           className="transform -rotate-90 overflow-visible"
           aria-hidden="true"
         >
-          {/* Subtle Glow Filter */}
           <defs>
             <filter id={`gauge-glow-${level}`} x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={current.color} floodOpacity="0.4" />
+              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={current.color} floodOpacity="0.45" />
             </filter>
           </defs>
 
@@ -96,9 +93,8 @@ export function RiskGauge({
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="currentColor"
+            stroke="#102F50"
             strokeWidth={strokeWidth}
-            className="text-white/10"
             fill="transparent"
           />
 
@@ -124,7 +120,7 @@ export function RiskGauge({
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           {showScore && (
             <span
-              className="font-display font-black leading-none tracking-tight text-white"
+              className="font-display font-black leading-none tracking-tight text-[#F3F8FF] font-mono"
               style={{ fontSize: size * 0.28 }}
             >
               {clampedScore}
@@ -133,7 +129,7 @@ export function RiskGauge({
 
           {showLevel && (
             <span
-              className={`font-semibold tracking-wider uppercase mt-1 ${current.textClass}`}
+              className={`font-black tracking-wider uppercase mt-1 ${current.textClass}`}
               style={{ fontSize: Math.max(10, size * 0.08) }}
             >
               {current.label}
@@ -143,7 +139,7 @@ export function RiskGauge({
       </div>
 
       {label && (
-        <span className="text-xs text-white/60 font-medium tracking-wide mt-2 text-center">
+        <span className="text-xs text-[#B6C9DC] font-bold tracking-wide mt-2 text-center">
           {label}
         </span>
       )}

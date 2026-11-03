@@ -11,40 +11,87 @@ import {
   Bell,
   Menu,
   X,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
-  Layers,
-  ArrowRight,
   FlaskConical,
-  Activity,
   CheckCircle2,
+  Database,
+  BookOpen,
+  Users,
+  Shield,
+  Activity,
 } from 'lucide-react'
 import DataLatencyIndicator from './DataLatencyIndicator'
+import CitySelector from './CitySelector'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
 }
 
-const PRIMARY_NAV = [
-  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { to: '/flood', label: 'Flood Guard AI', icon: Droplets },
-  { to: '/heat', label: 'Heat Guard AI', icon: Thermometer },
-  { to: '/fire', label: 'Fire Guard AI', icon: Flame },
-  { to: '/crop', label: 'Crop Shield AI', icon: Sprout },
-  { to: '/drainage', label: 'Drainage Network', icon: GitBranch },
-  { to: '/simulation', label: 'Scenario Lab', icon: FlaskConical },
-]
+export const AI_MODULES = [
+  {
+    to: '/flood',
+    label: 'Flood Guard AI',
+    icon: Droplets,
+    statusText: 'Hydrology Online',
+    statusDot: 'bg-[#35C58B]',
+    accentColor: '#2389D7',
+  },
+  {
+    to: '/heat',
+    label: 'Heat Guard AI',
+    icon: Thermometer,
+    statusText: 'Thermal Watch',
+    statusDot: 'bg-[#F4BC4D]',
+    accentColor: '#F4BC4D',
+  },
+  {
+    to: '/fire',
+    label: 'Fire Guard AI',
+    icon: Flame,
+    statusText: 'FWI Active',
+    statusDot: 'bg-[#F06470]',
+    accentColor: '#F06470',
+  },
+  {
+    to: '/crop',
+    label: 'Crop Shield AI',
+    icon: Sprout,
+    statusText: 'Agri-Vigor',
+    statusDot: 'bg-[#35C58B]',
+    accentColor: '#35C58B',
+  },
+  {
+    to: '/drainage',
+    label: 'Drainage Network AI',
+    icon: GitBranch,
+    statusText: 'IoT Monitored',
+    statusDot: 'bg-[#25C5DC]',
+    accentColor: '#25C5DC',
+  },
+  {
+    to: '/simulation',
+    label: 'Scenario Validation Lab',
+    icon: FlaskConical,
+    statusText: 'Simulation Ready',
+    statusDot: 'bg-[#8ED8F5]',
+    accentColor: '#8ED8F5',
+  },
+] as const
 
 const SECONDARY_NAV = [
   { to: '/alerts', label: 'Alerts', icon: Bell },
-  { to: '/data-sources', label: 'Data Sources' },
-  { to: '/methodology', label: 'Methodology' },
-  { to: '/about', label: 'About Team' },
+  { to: '/data-sources', label: 'Data Sources', icon: Database },
+  { to: '/methodology', label: 'Methodology', icon: BookOpen },
+  { to: '/about', label: 'About Team', icon: Users },
 ]
 
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false)
   const [installPrompt, setInstallPrompt] = useState<{ prompt: () => Promise<void> } | null>(null)
   const location = useLocation()
@@ -66,98 +113,102 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#DFF1FF] text-[#20364D] selection:bg-[#2784D8]/20 selection:text-[#2784D8]">
-      {/* ── Top Horizontal Sky-Blue Navigation Bar ── */}
+    <div className="min-h-screen flex flex-col bg-[#071A33] text-[#F3F8FF] selection:bg-[#2389D7]/30 selection:text-[#8ED8F5]">
+      {/* ── Top Header Navigation Bar ── */}
       <header
-        className="sticky top-0 z-40 w-full bg-[#B9DEFF]/95 backdrop-blur-md border-b border-[#B9D9F5] shadow-sm transition-colors"
+        className="sticky top-0 z-40 w-full bg-[#102F50]/95 backdrop-blur-md border-b border-[#285274] shadow-md transition-colors"
         role="banner"
       >
-        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
-          {/* Brand Logo & Tagline */}
-          <Link
-            to="/"
-            className="flex items-center gap-2.5 no-underline group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2784D8] rounded-xl p-1 shrink-0"
-          >
-            {/* Emblem */}
-            <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
-              <div
-                className="absolute inset-0 bg-[#2784D8] group-hover:bg-[#1c6bb5] transition-colors clip-hexagon shadow-sm"
-                aria-hidden="true"
-              />
-              <svg
-                viewBox="0 0 24 24"
-                className="relative z-10 w-5 h-5 text-white fill-none stroke-current stroke-2 stroke-linecap-round stroke-linejoin-round"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-                <path d="M2 12h20" />
-              </svg>
-            </div>
+        <div className="w-full px-3 sm:px-6 h-16 flex items-center justify-between gap-3">
+          {/* Brand Logo & Collapse Toggle */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              aria-label={sidebarCollapsed ? 'Expand module sidebar' : 'Collapse module sidebar'}
+              className="hidden lg:flex items-center justify-center p-2 rounded-xl text-[#B6C9DC] hover:text-[#F3F8FF] hover:bg-[#12385C] border border-[#285274] transition-colors"
+              title={sidebarCollapsed ? 'Expand module panel' : 'Collapse module panel'}
+            >
+              {sidebarCollapsed ? <ChevronRight className="w-4 h-4 text-[#25C5DC]" /> : <ChevronLeft className="w-4 h-4 text-[#25C5DC]" />}
+            </button>
 
-            <div className="flex flex-col">
-              <span className="font-display font-black text-sm sm:text-base tracking-wider text-[#20364D] flex items-center gap-0.5 leading-none">
-                CLIMATEGUARD<span className="text-[#2784D8]">.AI</span>
-              </span>
-              <span className="text-[9px] font-bold tracking-[0.2em] text-[#16A6A3] mt-0.5 uppercase">
-                DEMO • SKY-BLUE
-              </span>
-            </div>
-          </Link>
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 no-underline group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2389D7] rounded-xl p-1 shrink-0"
+            >
+              {/* Defense-Grade Hex Emblem */}
+              <div className="relative w-9 h-9 flex items-center justify-center shrink-0">
+                <div
+                  className="absolute inset-0 bg-[#2389D7] group-hover:bg-[#25C5DC] transition-colors clip-hexagon shadow-glow"
+                  aria-hidden="true"
+                />
+                <Shield className="relative z-10 w-5 h-5 text-white" />
+              </div>
 
-          {/* Desktop Horizontal Navigation (All 5 Modules + Overview + Scenario Lab) */}
-          <nav
-            className="hidden xl:flex items-center gap-1 overflow-x-auto py-1"
-            aria-label="Primary Navigation"
-          >
-            {PRIMARY_NAV.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'bg-[#2784D8] text-white shadow-sm'
-                      : 'text-[#20364D] hover:bg-[#CDE8FF] hover:text-[#1c6bb5]'
-                  }`
-                }
-              >
-                <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>{label}</span>
-              </NavLink>
-            ))}
+              <div className="flex flex-col">
+                <span className="font-display font-black text-sm sm:text-base tracking-wider text-[#F3F8FF] flex items-center gap-0.5 leading-none">
+                  CLIMATEGUARD<span className="text-[#25C5DC]">.AI</span>
+                </span>
+                <span className="text-[9px] font-bold tracking-[0.2em] text-[#8ED8F5] mt-0.5 uppercase">
+                  NATIONAL CLIMATE INTELLIGENCE
+                </span>
+              </div>
+            </Link>
+          </div>
 
-            {/* "More" Dropdown */}
+          {/* Center: City Selector Bar */}
+          <div className="hidden md:flex max-w-xs lg:max-w-md w-full">
+            <CitySelector />
+          </div>
+
+          {/* Right Action Bar */}
+          <div className="flex items-center gap-2">
+            {/* Direct Dashboard Link */}
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                `hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  isActive
+                    ? 'bg-[#2389D7] text-white shadow-glow'
+                    : 'text-[#B6C9DC] hover:bg-[#12385C] hover:text-[#F3F8FF] border border-[#285274]'
+                }`
+              }
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-[#25C5DC]" />
+              <span>Main Dashboard</span>
+            </NavLink>
+
+            {/* "More" Intelligence Dropdown */}
             <div
-              className="relative"
+              className="relative hidden sm:block"
               onMouseEnter={() => setMoreDropdownOpen(true)}
               onMouseLeave={() => setMoreDropdownOpen(false)}
             >
               <button
                 type="button"
-                className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-xl transition-colors ${
+                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl transition-colors border border-[#285274] ${
                   moreDropdownOpen || location.pathname.match(/\/(alerts|data-sources|methodology|about)/)
-                    ? 'bg-[#2784D8]/20 text-[#2784D8]'
-                    : 'text-[#20364D] hover:bg-[#CDE8FF]'
+                    ? 'bg-[#12385C] text-[#25C5DC]'
+                    : 'text-[#B6C9DC] hover:bg-[#12385C] hover:text-[#F3F8FF]'
                 }`}
                 aria-expanded={moreDropdownOpen}
                 aria-haspopup="true"
               >
-                <span>More</span>
-                <ChevronDown className="w-3 h-3" />
+                <span>Docs</span>
+                <ChevronDown className="w-3 h-3 text-[#25C5DC]" />
               </button>
 
               {moreDropdownOpen && (
-                <div className="absolute right-0 top-full pt-1.5 w-44 z-50 animate-fade-in">
-                  <div className="rounded-xl border border-[#B9D9F5] bg-[#F0F8FF] p-1.5 shadow-lg space-y-0.5">
+                <div className="absolute right-0 top-full pt-1.5 w-48 z-50 animate-fade-in">
+                  <div className="rounded-2xl border border-[#285274] bg-[#0E2B49] p-1.5 shadow-2xl space-y-0.5">
                     {SECONDARY_NAV.map((item) => (
                       <Link
                         key={item.to}
                         to={item.to}
                         onClick={() => setMoreDropdownOpen(false)}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-[#20364D] hover:bg-[#CDE8FF] hover:text-[#2784D8] rounded-lg transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#B6C9DC] hover:bg-[#12385C] hover:text-[#F3F8FF] rounded-xl transition-colors"
                       >
-                        {item.icon && <item.icon className="w-3.5 h-3.5 text-[#2784D8]" />}
+                        <item.icon className="w-3.5 h-3.5 text-[#25C5DC]" />
                         <span>{item.label}</span>
                       </Link>
                     ))}
@@ -165,28 +216,25 @@ export default function Layout() {
                 </div>
               )}
             </div>
-          </nav>
 
-          {/* Right Action Bar */}
-          <div className="flex items-center gap-2">
-            {/* System Status Compact Indicator */}
-            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#D9F5E8] border border-[#299765]/30 text-[#20364D] text-[11px] font-bold">
-              <span className="w-2 h-2 rounded-full bg-[#299765] animate-pulse" />
-              <span>Normal Baseline</span>
+            {/* Live Operational Status */}
+            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#0B2545] border border-[#285274] text-[#8ED8F5] text-[11px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#35C58B] animate-pulse" />
+              <span>Telemetry Verified</span>
             </div>
 
             {/* Language Switcher */}
-            <label className="flex items-center gap-1 rounded-xl border border-[#B9D9F5] bg-[#F0F8FF] px-2 py-1 text-xs text-[#20364D] font-bold">
+            <label className="flex items-center gap-1 rounded-xl border border-[#285274] bg-[#12385C] px-2 py-1 text-xs text-[#F3F8FF] font-bold">
               <span className="sr-only">{t('app.language')}</span>
               <select
                 value={i18n.language}
                 onChange={(event) => setLanguage(event.target.value)}
-                className="bg-transparent text-xs text-[#20364D] font-bold outline-none cursor-pointer"
+                className="bg-transparent text-xs text-[#F3F8FF] font-bold outline-none cursor-pointer"
                 aria-label={t('app.language')}
               >
-                <option value="en">EN</option>
-                <option value="hi">हिं</option>
-                <option value="mr">मर</option>
+                <option value="en" className="bg-[#0B2545] text-white">EN</option>
+                <option value="hi" className="bg-[#0B2545] text-white">हिं</option>
+                <option value="mr" className="bg-[#0B2545] text-white">मर</option>
               </select>
             </label>
 
@@ -195,7 +243,7 @@ export default function Layout() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle navigation drawer"
               aria-expanded={mobileMenuOpen}
-              className="xl:hidden p-2 rounded-xl text-[#20364D] hover:bg-[#CDE8FF] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2784D8]"
+              className="lg:hidden p-2 rounded-xl text-[#F3F8FF] hover:bg-[#12385C] border border-[#285274] transition-colors"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -203,152 +251,308 @@ export default function Layout() {
         </div>
       </header>
 
+      {/* ── Main Layout Body: Left Sidebar + Right Content ── */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* ── LEFT VERTICAL COLUMN: CLIMATE INTELLIGENCE MODULES ── */}
+        <aside
+          className={`hidden lg:flex flex-col border-r border-[#285274] bg-[#0B2545] transition-all duration-300 ease-in-out shrink-0 select-none ${
+            sidebarCollapsed ? 'w-20' : 'w-72'
+          }`}
+          aria-label="Climate Intelligence Modules"
+        >
+          {/* Panel Header */}
+          <div className="p-4 border-b border-[#285274] flex items-center justify-between">
+            {!sidebarCollapsed ? (
+              <div>
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#25C5DC]">
+                  CLIMATE INTELLIGENCE MODULES
+                </h3>
+                <p className="text-[10px] text-[#B6C9DC] mt-0.5">
+                  Real-time multi-hazard risk array
+                </p>
+              </div>
+            ) : (
+              <div className="w-full flex justify-center">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#25C5DC]">AI</span>
+              </div>
+            )}
+          </div>
+
+          {/* Module Links Vertical List */}
+          <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto">
+            {/* Overview item */}
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                `group flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all ${
+                  isActive
+                    ? 'bg-[#2389D7] text-white shadow-glow border border-[#8ED8F5]/30'
+                    : 'text-[#B6C9DC] hover:bg-[#12385C] hover:text-[#F3F8FF] border border-transparent'
+                } ${sidebarCollapsed ? 'justify-center px-2' : ''}`
+              }
+              title="Overview Dashboard"
+            >
+              <div className="relative flex items-center justify-center shrink-0">
+                <LayoutDashboard className="w-4 h-4 text-[#25C5DC] group-hover:text-white" />
+              </div>
+              {!sidebarCollapsed && (
+                <div className="flex-1 min-w-0 flex items-center justify-between">
+                  <span className="text-xs font-black truncate">Main Overview</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#102F50] text-[#8ED8F5] font-bold">
+                    Core
+                  </span>
+                </div>
+              )}
+            </NavLink>
+
+            <div className="pt-2 pb-1">
+              {!sidebarCollapsed && (
+                <div className="text-[9px] font-black uppercase tracking-widest text-[#B6C9DC]/60 px-3">
+                  Autonomous Modules
+                </div>
+              )}
+            </div>
+
+            {/* The 6 AI Modules */}
+            {AI_MODULES.map(({ to, label, icon: Icon, statusText, statusDot, accentColor }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all ${
+                    isActive
+                      ? 'bg-[#12385C] text-white border-2 border-[#2389D7] shadow-glow'
+                      : 'text-[#B6C9DC] hover:bg-[#102F50] hover:text-[#F3F8FF] border border-[#285274]/50'
+                  } ${sidebarCollapsed ? 'justify-center px-2' : ''}`
+                }
+                title={label}
+              >
+                {({ isActive }) => (
+                  <>
+                    {/* Active left indicator bar */}
+                    {isActive && (
+                      <span
+                        className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-[#25C5DC]"
+                        aria-hidden="true"
+                      />
+                    )}
+
+                    <div
+                      className={`relative flex items-center justify-center shrink-0 w-8 h-8 rounded-xl transition-colors ${
+                        isActive ? 'bg-[#2389D7]/20 text-[#25C5DC]' : 'bg-[#0E2B49] text-[#B6C9DC] group-hover:text-[#25C5DC]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+
+                    {!sidebarCollapsed && (
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black truncate text-[#F3F8FF] group-hover:text-white">
+                            {label}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusDot} shrink-0`} />
+                          <span className="text-[10px] font-semibold text-[#B6C9DC] truncate">
+                            {statusText}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* Sidebar Footer */}
+          {!sidebarCollapsed && (
+            <div className="p-3 border-t border-[#285274] bg-[#071A33]/50 text-[11px] text-[#B6C9DC] space-y-1">
+              <div className="flex items-center justify-between font-bold text-[#8ED8F5]">
+                <span>Platform State</span>
+                <span className="text-[#35C58B]">24/7 Verified</span>
+              </div>
+              <p className="text-[10px] leading-tight text-[#B6C9DC]/80">
+                Government-grade climate telemetry across Indian catchments.
+              </p>
+            </div>
+          )}
+        </aside>
+
+        {/* ── RIGHT MAIN DASHBOARD WORKSPACE ── */}
+        <main className="flex-1 flex flex-col min-w-0 overflow-y-auto" id="main-content" tabIndex={-1}>
+          {/* Mobile City Selector on Small Screens */}
+          <div className="md:hidden px-4 pt-4">
+            <CitySelector />
+          </div>
+
+          <Outlet />
+
+          {/* ── Navy Institutional Footer ── */}
+          <footer
+            className="border-t border-[#285274] bg-[#0B2545] text-[#F3F8FF] py-10 px-4 sm:px-6 lg:px-8 mt-auto"
+            role="contentinfo"
+          >
+            <div className="max-w-7xl mx-auto space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-[#2389D7] rounded-lg flex items-center justify-center clip-hexagon text-white text-[10px] font-black">
+                      CG
+                    </div>
+                    <span className="font-display font-black text-sm tracking-wider text-[#F3F8FF]">
+                      CLIMATEGUARD<span className="text-[#25C5DC]">.AI</span>
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-bold text-[#25C5DC] tracking-widest uppercase">
+                    PREDICT. PREPARE. PROTECT.
+                  </p>
+                  <p className="text-xs text-[#B6C9DC] leading-relaxed">
+                    High-accuracy climate monitoring, hydrological modeling, and disaster prediction platform across India.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">Prediction Engines</h4>
+                  <ul className="space-y-1 text-[#B6C9DC] font-medium">
+                    <li><Link to="/flood" className="hover:text-[#25C5DC]">Flood Guard AI</Link></li>
+                    <li><Link to="/heat" className="hover:text-[#25C5DC]">Heat Guard AI</Link></li>
+                    <li><Link to="/fire" className="hover:text-[#25C5DC]">Fire Guard AI</Link></li>
+                    <li><Link to="/crop" className="hover:text-[#25C5DC]">Crop Shield AI</Link></li>
+                    <li><Link to="/drainage" className="hover:text-[#25C5DC]">Drainage Network AI</Link></li>
+                  </ul>
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">Platform Tools</h4>
+                  <ul className="space-y-1 text-[#B6C9DC] font-medium">
+                    <li><Link to="/dashboard" className="hover:text-[#25C5DC]">Command Dashboard</Link></li>
+                    <li><Link to="/simulation" className="hover:text-[#25C5DC]">Scenario Validation Lab</Link></li>
+                    <li><Link to="/methodology" className="hover:text-[#25C5DC]">Scientific Methodology</Link></li>
+                    <li><Link to="/alerts" className="hover:text-[#25C5DC]">Emergency Broadcasts</Link></li>
+                    <li><Link to="/data-sources" className="hover:text-[#25C5DC]">Data Registry</Link></li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">Authoritative Sources</h4>
+                  <p className="text-[#B6C9DC] leading-relaxed text-[11px]">
+                    Open-Meteo ECMWF/GFS, CWC River Basins, WRD Maharashtra, and NASA FIRMS.
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#35C58B] bg-[#0E2B49] px-2.5 py-1 rounded-xl border border-[#35C58B]/30 w-fit">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#35C58B]" />
+                    <span>Scientific Explainable AI</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#285274] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#B6C9DC]">
+                <p className="font-medium text-[#F3F8FF]">
+                  ⚠️ Decision-support system. Follow official IMD / CWC / NDMA bulletins during severe events.
+                </p>
+                <p>© {new Date().getFullYear()} ClimateGuard AI • Government-Grade Resilience Platform</p>
+              </div>
+            </div>
+          </footer>
+        </main>
+      </div>
+
       {/* ── Mobile Sliding Drawer ── */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 xl:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
           <div
             onClick={() => setMobileMenuOpen(false)}
-            className="fixed inset-0 bg-[#20364D]/50 backdrop-blur-sm -z-10 animate-fade-in"
+            className="fixed inset-0 bg-[#071A33]/80 backdrop-blur-sm -z-10 animate-fade-in"
           />
 
-          <div className="fixed right-0 top-0 bottom-0 w-80 max-w-full bg-[#DFF1FF] border-l border-[#B9D9F5] p-6 flex flex-col justify-between overflow-y-auto animate-slide-in-right text-[#20364D]">
+          <div className="fixed right-0 top-0 bottom-0 w-80 max-w-full bg-[#0B2545] border-l border-[#285274] p-6 flex flex-col justify-between overflow-y-auto animate-slide-in-right text-[#F3F8FF]">
             <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#B9D9F5] mb-4">
-                <div className="font-display font-extrabold text-base text-[#20364D]">
-                  CLIMATEGUARD<span className="text-[#2784D8]">.AI</span>
+              <div className="flex items-center justify-between pb-4 border-b border-[#285274] mb-4">
+                <div className="font-display font-extrabold text-base text-[#F3F8FF]">
+                  CLIMATEGUARD<span className="text-[#25C5DC]">.AI</span>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   aria-label="Close menu"
-                  className="p-1.5 rounded-lg text-[#20364D] hover:bg-[#CDE8FF]"
+                  className="p-1.5 rounded-lg text-[#F3F8FF] hover:bg-[#12385C]"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Navigation Items */}
               <div className="space-y-1 mb-6">
-                <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#5B7188] px-2 mb-2">
-                  Navigation & AI Modules
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#25C5DC] px-2 mb-2">
+                  CLIMATE INTELLIGENCE MODULES
                 </div>
-                {PRIMARY_NAV.map(({ to, label, icon: Icon }) => (
+
+                <NavLink
+                  to="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                      isActive
+                        ? 'bg-[#2389D7] text-white shadow-glow'
+                        : 'text-[#B6C9DC] hover:bg-[#12385C]'
+                    }`
+                  }
+                >
+                  <LayoutDashboard className="w-4 h-4 shrink-0 text-[#25C5DC]" />
+                  <span>Main Overview</span>
+                </NavLink>
+
+                {AI_MODULES.map(({ to, label, icon: Icon, statusText, statusDot }) => (
                   <NavLink
                     key={to}
                     to={to}
                     onClick={() => setMobileMenuOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                      `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
                         isActive
-                          ? 'bg-[#2784D8] text-white shadow-sm'
-                          : 'text-[#20364D] hover:bg-[#CDE8FF]'
+                          ? 'bg-[#12385C] text-white border border-[#2389D7]'
+                          : 'text-[#B6C9DC] hover:bg-[#102F50]'
                       }`
                     }
                   >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{label}</span>
+                    <div className="flex items-center gap-3">
+                      <Icon className="w-4 h-4 shrink-0 text-[#25C5DC]" />
+                      <span>{label}</span>
+                    </div>
+                    <span className="flex items-center gap-1 text-[10px] text-[#B6C9DC]">
+                      <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
+                      {statusText}
+                    </span>
                   </NavLink>
                 ))}
               </div>
 
-              <div className="pt-4 border-t border-[#B9D9F5] space-y-1">
-                <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#5B7188] px-2 mb-2">
-                  Intelligence & Documentation
+              <div className="pt-4 border-t border-[#285274] space-y-1">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#25C5DC] px-2 mb-2">
+                  Documentation & System
                 </div>
                 {SECONDARY_NAV.map(({ to, label, icon: Icon }) => (
                   <Link
                     key={to}
                     to={to}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-[#20364D] hover:bg-[#CDE8FF]"
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-[#B6C9DC] hover:bg-[#12385C] hover:text-[#F3F8FF]"
                   >
-                    {Icon && <Icon className="w-4 h-4 text-[#2784D8]" />}
+                    <Icon className="w-4 h-4 text-[#25C5DC]" />
                     <span>{label}</span>
                   </Link>
                 ))}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[#B9D9F5] text-center text-xs text-[#5B7188]">
-              Team Spartans • KKWIEER Nashik
+            <div className="pt-4 border-t border-[#285274] text-center text-xs text-[#B6C9DC]">
+              Government-Grade Climate Intelligence
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Main Content Outlet ── */}
-      <main className="flex-1 flex flex-col" id="main-content" tabIndex={-1}>
-        <Outlet />
-      </main>
-
       {/* ── Live Data Delay & Latency Indicator (Bottom Right Corner) ── */}
       <DataLatencyIndicator />
-
-      {/* ── Sky-Blue Institutional Footer ── */}
-      <footer
-        className="border-t border-[#B9D9F5] bg-[#CDE8FF] text-[#20364D] py-10 px-4 sm:px-6 lg:px-8 mt-auto"
-        role="contentinfo"
-      >
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#2784D8] rounded-lg flex items-center justify-center clip-hexagon text-white text-[10px] font-black">
-                  CG
-                </div>
-                <span className="font-display font-black text-sm tracking-wider text-[#20364D]">
-                  CLIMATEGUARD<span className="text-[#2784D8]">.AI</span>
-                </span>
-              </div>
-              <p className="text-[11px] font-bold text-[#16A6A3] tracking-widest">
-                PREDICT. PREPARE. PROTECT.
-              </p>
-              <p className="text-xs text-[#5B7188] leading-relaxed">
-                AI-Powered Multi-Hazard Climate Risk Prediction &amp; Early Warning System for Maharashtra, India.
-              </p>
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <h4 className="font-bold text-[#20364D] uppercase tracking-wider text-[11px]">Prediction Engines</h4>
-              <ul className="space-y-1 text-[#5B7188] font-medium">
-                <li><Link to="/flood" className="hover:text-[#2784D8]">FloodGuard AI</Link></li>
-                <li><Link to="/heat" className="hover:text-[#2784D8]">HeatGuard AI</Link></li>
-                <li><Link to="/fire" className="hover:text-[#2784D8]">FireGuard AI</Link></li>
-                <li><Link to="/crop" className="hover:text-[#2784D8]">CropShield AI</Link></li>
-                <li><Link to="/drainage" className="hover:text-[#2784D8]">Drainage Network</Link></li>
-              </ul>
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <h4 className="font-bold text-[#20364D] uppercase tracking-wider text-[11px]">Platform Tools</h4>
-              <ul className="space-y-1 text-[#5B7188] font-medium">
-                <li><Link to="/dashboard" className="hover:text-[#2784D8]">Live Command Dashboard</Link></li>
-                <li><Link to="/simulation" className="hover:text-[#2784D8]">Scenario Validation Lab</Link></li>
-                <li><Link to="/methodology" className="hover:text-[#2784D8]">Hydrologic &amp; ML Methodology</Link></li>
-                <li><Link to="/alerts" className="hover:text-[#2784D8]">Early Warning Broadcasts</Link></li>
-                <li><Link to="/data-sources" className="hover:text-[#2784D8]">Verified Open Data Registry</Link></li>
-              </ul>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <h4 className="font-bold text-[#20364D] uppercase tracking-wider text-[11px]">Data Attribution</h4>
-              <p className="text-[#5B7188] leading-relaxed text-[11px]">
-                Open-Meteo, NASA POWER, NASA FIRMS, OpenStreetMap Overpass, and WRD Maharashtra.
-              </p>
-              <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#299765] bg-[#D9F5E8] px-2 py-1 rounded-lg border border-[#299765]/30 w-fit">
-                <CheckCircle2 className="w-3 h-3 text-[#299765]" />
-                <span>Verified Scientific Framework</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-[#B9D9F5] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#5B7188]">
-            <p className="font-medium text-[#20364D]">
-              ⚠️ Decision-support system. Follow official IMD / CWC / NDMA warnings.
-            </p>
-            <p>© {new Date().getFullYear()} Team Spartans • KKWIEER Nashik • Academic Research Project</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
