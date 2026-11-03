@@ -119,3 +119,15 @@ async def test_drainage_simulation_endpoint() -> None:
     assert data["simulated"] is True
     assert data["telemetry"]["is_simulated"] is True
     assert data["level"] == "Critical"
+
+    # Test GET /api/risk/drainage/simulate
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp_sim = await ac.get("/api/risk/drainage/simulate?lat=19.9975&lon=73.7898")
+    assert resp_sim.status_code == 200
+    assert resp_sim.json()["simulated"] is True
+
+    # Test POST /api/risk/drainage/simulate
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        resp_post = await ac.post("/api/risk/drainage/simulate", json={"lat": 19.9975, "lon": 73.7898, "simulated": True})
+    assert resp_post.status_code == 200
+    assert resp_post.json()["simulated"] is True

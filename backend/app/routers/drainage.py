@@ -32,10 +32,19 @@ async def get_drainage_risk(
     return await _process_drainage(lat=lat, lon=lon, simulated=simulated)
 
 
+@router.get("/risk/drainage/simulate")
 @router.post("/risk/drainage/simulate")
-async def simulate_drainage(payload: DrainageSimulateRequest) -> dict[str, Any]:
-    """Toggle drainage blockage simulation."""
-    return await _process_drainage(lat=payload.lat, lon=payload.lon, simulated=payload.simulated)
+async def simulate_drainage(
+    lat: float | None = Query(None, description="Latitude"),
+    lon: float | None = Query(None, description="Longitude"),
+    simulated: bool = Query(True, description="Enable simulated blockage"),
+    payload: DrainageSimulateRequest | None = None,
+) -> dict[str, Any]:
+    """Toggle drainage blockage simulation via GET or POST."""
+    actual_lat = payload.lat if payload else (lat if lat is not None else 19.9975)
+    actual_lon = payload.lon if payload else (lon if lon is not None else 73.7898)
+    actual_sim = payload.simulated if payload else simulated
+    return await _process_drainage(lat=actual_lat, lon=actual_lon, simulated=actual_sim)
 
 
 async def _process_drainage(lat: float, lon: float, simulated: bool) -> dict[str, Any]:
