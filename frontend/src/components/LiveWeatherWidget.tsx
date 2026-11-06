@@ -7,6 +7,9 @@ import {
   Clock,
   Radio,
   AlertCircle,
+  MapPin,
+  Scale,
+  CheckCircle2,
 } from 'lucide-react'
 import type { LiveWeatherResponse } from '../lib/api'
 import { useLocaleFormatter } from '../i18n/formatters'
@@ -33,6 +36,8 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
   }
 
   const params = weather?.parameters
+  const comp = weather?.comparison
+  const actualObs = weather?.actual_observation
   const isAvailable = weather && weather.status !== 'DATA UNAVAILABLE' && params
 
   return (
@@ -179,6 +184,101 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
                 Soil: {typeof params.soil_moisture_m3_m3 === 'number'
                   ? `${formatNumber(params.soil_moisture_m3_m3, { minimumFractionDigits: 2, maximumFractionDigits: 3 })} m³/m³`
                   : 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TRANSPARENT VERIFIED OBSERVATION VS MODEL COMPARISON ── */}
+      {comp && comp.is_comparable && (
+        <div className="rounded-2xl border border-[#2389D7]/40 bg-[#0B2545]/90 p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-[#285274]">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-[#35C58B]" />
+              <h4 className="text-xs font-black uppercase tracking-wider text-[#F3F8FF]">
+                Ground Observation vs. NWP Model Comparison
+              </h4>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#35C58B]/20 text-[#35C58B] border border-[#35C58B]/40">
+                {comp.agreement_status}
+              </span>
+            </div>
+            <div className="text-[11px] text-[#B6C9DC] font-semibold">
+              Station: <span className="text-[#F3F8FF] font-bold">{comp.station_name}</span> ({typeof comp.station_distance_km === 'number' ? `${formatNumber(comp.station_distance_km, { maximumFractionDigits: 1 })} km away` : ''})
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            {/* Ground Observatory Reading */}
+            <div className="rounded-xl border border-[#285274] bg-[#0E2B49] p-3 space-y-1.5">
+              <div className="flex items-center justify-between text-[#B6C9DC] font-bold text-[11px]">
+                <span className="text-[#35C58B] flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5 text-[#35C58B]" /> IMD Ground Station
+                </span>
+                <span className="text-[10px] font-mono text-[#8ED8F5]">ID: {comp.station_id}</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl font-black font-mono text-[#F3F8FF]">
+                  {typeof comp.station_temp_max_c === 'number' ? `${formatNumber(comp.station_temp_max_c, { maximumFractionDigits: 1 })}°C` : '—'}
+                </span>
+                <span className="text-[10px] text-[#B6C9DC]">
+                  Min: {typeof comp.station_temp_min_c === 'number' ? `${formatNumber(comp.station_temp_min_c, { maximumFractionDigits: 1 })}°C` : '—'}
+                </span>
+              </div>
+              <div className="text-[10px] text-[#B6C9DC] space-y-0.5">
+                <p>24h Rain: <span className="font-bold text-[#F3F8FF]">{formatNumber(comp.station_rainfall_24h_mm, { maximumFractionDigits: 1 })} mm</span> • RH: <span className="font-bold text-[#F3F8FF]">{formatNumber(comp.station_rh_pct)}%</span></p>
+                <p className="text-[#8ED8F5]/80 truncate">Observed: {comp.station_obs_timestamp ? formatDigits(comp.station_obs_timestamp, lang) : '—'} IST ({comp.station_freshness || 'Verified'})</p>
+              </div>
+            </div>
+
+            {/* Numerical Weather Prediction Model */}
+            <div className="rounded-xl border border-[#285274] bg-[#0E2B49] p-3 space-y-1.5">
+              <div className="flex items-center justify-between text-[#B6C9DC] font-bold text-[11px]">
+                <span className="text-[#25C5DC] flex items-center gap-1">
+                  <Radio className="h-3.5 w-3.5 text-[#25C5DC]" /> ECMWF IFS 0.1° Model
+                </span>
+                <span className="text-[10px] font-mono text-[#8ED8F5]">Grid Output</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl font-black font-mono text-[#F3F8FF]">
+                  {typeof comp.model_temp_max_c === 'number' ? `${formatNumber(comp.model_temp_max_c, { maximumFractionDigits: 1 })}°C` : '—'}
+                </span>
+                <span className="text-[10px] text-[#B6C9DC]">
+                  Min: {typeof comp.model_temp_min_c === 'number' ? `${formatNumber(comp.model_temp_min_c, { maximumFractionDigits: 1 })}°C` : '—'}
+                </span>
+              </div>
+              <div className="text-[10px] text-[#B6C9DC] space-y-0.5">
+                <p>Current: <span className="font-bold text-[#F3F8FF]">{formatNumber(comp.model_current_temp_c, { maximumFractionDigits: 1 })}°C</span> • Rain: <span className="font-bold text-[#F3F8FF]">{formatNumber(comp.model_rainfall_24h_mm, { maximumFractionDigits: 1 })} mm</span></p>
+                <p className="text-[#8ED8F5]/80 truncate">Cycle: {comp.model_timestamp ? formatDigits(comp.model_timestamp.replace('T', ' '), lang) : '—'}</p>
+              </div>
+            </div>
+
+            {/* Variance & Comparison Details (Never Averaged) */}
+            <div className="rounded-xl border border-[#285274] bg-[#0E2B49] p-3 space-y-1.5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between text-[#B6C9DC] font-bold text-[11px]">
+                  <span className="text-[#F4BC4D] flex items-center gap-1">
+                    <Scale className="h-3.5 w-3.5 text-[#F4BC4D]" /> Discrepancy & Variance
+                  </span>
+                  <span className="text-[9px] uppercase font-bold text-[#35C58B] px-1.5 py-0.5 bg-[#35C58B]/10 rounded border border-[#35C58B]/30">Unblended</span>
+                </div>
+                <div className="mt-1 flex items-baseline gap-3">
+                  <div>
+                    <span className="text-[10px] text-[#B6C9DC] block">Max Temp Variance</span>
+                    <span className="text-lg font-black font-mono text-[#F3F8FF]">
+                      {typeof comp.delta_temp_max_c === 'number' ? `${comp.delta_temp_max_c > 0 ? '+' : ''}${formatNumber(comp.delta_temp_max_c, { maximumFractionDigits: 1 })}°C` : '—'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#B6C9DC] block">Min Temp Variance</span>
+                    <span className="text-lg font-black font-mono text-[#F3F8FF]">
+                      {typeof comp.delta_temp_min_c === 'number' ? `${comp.delta_temp_min_c > 0 ? '+' : ''}${formatNumber(comp.delta_temp_min_c, { maximumFractionDigits: 1 })}°C` : '—'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[9px] text-[#B6C9DC] leading-tight">
+                {comp.methodology_note}
               </p>
             </div>
           </div>

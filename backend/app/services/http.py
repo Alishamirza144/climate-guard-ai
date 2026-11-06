@@ -139,6 +139,60 @@ class HttpClient:
             self._cache[key] = result
         return result
 
+    async def post(
+        self,
+        path: str,
+        data: dict[str, Any] | None = None,
+        json_body: dict[str, Any] | None = None,
+        cache: bool = True,
+    ) -> Any:
+        """Perform a cached, retried POST request. Returns parsed JSON."""
+        url = f"{self._base_url}{path}" if self._base_url else path
+        key = _cache_key(url, {"data": data or {}, "json": json_body or {}})
+
+        if cache and key in self._cache:
+            log.debug("http_cache_hit", url=url)
+            return self._cache[key]
+
+        try:
+            result = await self._post(url, data=data, json_body=json_body)
+            if cache:
+                self._cache[key] = result
+                self._stale_cache[key] = (time.time(), result)
+            return result
+        except httpx.HTTPStatusError as exc:
+            if key in self._stale_cache:
+                timestamp, stale_data = self._stale_cache[key]
+                log.warning("http_rate_limit_fallback_to_stale_cache", url=url, status=exc.response.status_code, age_sec=round(time.time() - timestamp, 1))
+                return stale_data
+            raise
+        except (httpx.TimeoutException, httpx.NetworkError):
+            if key in self._stale_cache:
+                timestamp, stale_data = self._stale_cache[key]
+                log.warning("http_network_fallback_to_stale_cache", url=url, age_sec=round(time.time() - timestamp, 1))
+                return stale_data
+            raise
+
+    @_RETRY
+    async def _post(
+        self,
+        url: str,
+        data: dict[str, Any] | None,
+        json_body: dict[str, Any] | None,
+    ) -> Any:
+        t0 = time.perf_counter()
+        client = await self._get_client()
+        resp = await client.post(url, data=data, json=json_body)
+        resp.raise_for_status()
+        elapsed = time.perf_counter() - t0
+        log.info(
+            "http_response",
+            host=resp.url.host,
+            status=resp.status_code,
+            elapsed_s=round(elapsed, 3),
+        )
+        return resp.json()
+
     @_RETRY
     async def _fetch(self, url: str, params: dict[str, Any] | None) -> Any:
         t0 = time.perf_counter()

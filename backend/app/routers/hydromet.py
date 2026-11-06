@@ -6,6 +6,7 @@ and State Water Resources Department (WRD) river monitoring stations across Indi
 
 from __future__ import annotations
 
+import asyncio
 import math
 from datetime import datetime, timezone
 from typing import Any
@@ -13,6 +14,7 @@ from fastapi import APIRouter, Query
 
 from app.data.cities import find_nearest_city, CITY_BY_ID, get_reference_station
 from app.services import openmeteo
+from app.services.imd import fetch_imd_station_observation
 
 router = APIRouter(prefix="", tags=["hydromet"])
 
@@ -47,16 +49,32 @@ async def get_live_weather(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
 ) -> dict[str, Any]:
-    """Retrieve accurate live weather telemetry for the selected city coordinates."""
+    """Retrieve accurate live weather telemetry and actual IMD observations."""
     city = find_nearest_city(lat, lon)
     now_utc = datetime.now(timezone.utc)
     ref_station = get_reference_station(city)
 
-    try:
-        forecast = await openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
-    except Exception as exc:
+    # Concurrently retrieve high-resolution model assimilation & actual IMD station observation
+    forecast_task = openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
+    imd_task = fetch_imd_station_observation(lat, lon, city.get("id"))
+
+    results = await asyncio.gather(forecast_task, imd_task, return_exceptions=True)
+
+    if isinstance(results[0], Exception):
         fallback_data = openmeteo._build_climatological_fallback_forecast(lat, lon, past_days=3, forecast_days=3)
         forecast = openmeteo.ForecastResponse.model_validate(fallback_data)
+    else:
+        forecast = results[0]
+
+    if isinstance(results[1], Exception) or not isinstance(results[1], dict):
+        imd_obs = {
+            "is_available": False,
+            "station_id": None,
+            "station_name": None,
+            "message": "IMD surface station telemetry temporarily unreachable.",
+        }
+    else:
+        imd_obs = results[1]
 
     current = getattr(forecast, "current", {}) or {}
     daily = getattr(forecast, "daily", {}) or {}
@@ -188,6 +206,64 @@ async def get_live_weather(
     elevation_m = getattr(forecast, "elevation", None)
     tz_name = getattr(forecast, "timezone", "Asia/Kolkata") or "Asia/Kolkata"
 
+    # Transparent comparison between actual IMD observation and Open-Meteo model estimate (No averaging)
+    st_params = imd_obs.get("parameters") or {}
+    st_max = st_params.get("temp_max_c")
+    st_min = st_params.get("temp_min_c")
+    st_rain = st_params.get("rainfall_past_24h_mm")
+    st_rh = st_params.get("relative_humidity_pct")
+
+    delta_max = (
+        round(float(st_max) - float(t_max), 1)
+        if (st_max is not None and t_max is not None and isinstance(t_max, (int, float)))
+        else None
+    )
+    delta_min = (
+        round(float(st_min) - float(t_min), 1)
+        if (st_min is not None and t_min is not None and isinstance(t_min, (int, float)))
+        else None
+    )
+    delta_rain = (
+        round(float(st_rain) - float(rain_24h), 1)
+        if (st_rain is not None and rain_24h is not None and isinstance(rain_24h, (int, float)))
+        else None
+    )
+
+    if delta_max is not None:
+        abs_d = abs(delta_max)
+        if abs_d <= 1.5:
+            agreement_status = "High Agreement (≤1.5°C variance)"
+        elif abs_d <= 3.0:
+            agreement_status = "Moderate Variance (1.5°C - 3.0°C)"
+        else:
+            agreement_status = "Significant Variance (>3.0°C)"
+    else:
+        agreement_status = "Comparison Pending Station Sync"
+
+    comparison = {
+        "is_comparable": bool(imd_obs.get("is_available") and st_max is not None and isinstance(t_max, (int, float))),
+        "station_name": imd_obs.get("station_name"),
+        "station_id": imd_obs.get("station_id"),
+        "station_distance_km": imd_obs.get("distance_km"),
+        "station_obs_timestamp": imd_obs.get("observation_timestamp_ist"),
+        "station_freshness": imd_obs.get("freshness"),
+        "station_temp_max_c": st_max,
+        "station_temp_min_c": st_min,
+        "station_rainfall_24h_mm": st_rain,
+        "station_rh_pct": st_rh,
+        "model_temp_max_c": round(float(t_max), 1) if isinstance(t_max, (int, float)) else None,
+        "model_temp_min_c": round(float(t_min), 1) if isinstance(t_min, (int, float)) else None,
+        "model_current_temp_c": round(float(curr_temp), 1) if isinstance(curr_temp, (int, float)) else None,
+        "model_rainfall_24h_mm": round(float(rain_24h), 1) if isinstance(rain_24h, (int, float)) else None,
+        "model_rh_pct": round(float(rh), 1) if isinstance(rh, (int, float)) else None,
+        "model_timestamp": obs_time_str,
+        "delta_temp_max_c": delta_max,
+        "delta_temp_min_c": delta_min,
+        "delta_rainfall_24h_mm": delta_rain,
+        "agreement_status": agreement_status,
+        "methodology_note": "Comparison preserves independent physical station readings and numerical model predictions separately without blending or averaging.",
+    }
+
     return {
         "status": "ONLINE",
         "city": city["name"],
@@ -228,6 +304,9 @@ async def get_live_weather(
             "soil_moisture_m3_m3": round(float(soil_moist), 3) if soil_moist is not None else "DATA UNAVAILABLE",
         },
         "hourly_forecast": hourly_forecast,
+        "actual_observation": imd_obs,
+        "comparison": comparison,
+        "imd_gateway": imd_obs.get("gateway_status"),
     }
 
 

@@ -202,6 +202,62 @@ export interface RiskGridResponse {
   radar?: boolean
 }
 
+export interface ActualImdObservation {
+  is_available: boolean
+  station_id: string | null
+  station_name: string | null
+  station_lat?: number | null
+  station_lon?: number | null
+  distance_km?: number | null
+  authority?: string
+  station_type?: string
+  observation_date?: string | null
+  observation_timestamp_ist?: string | null
+  age_hours?: number | null
+  freshness?: string
+  data_source?: string
+  message?: string
+  parameters?: {
+    temp_max_c: number | null
+    temp_min_c: number | null
+    prevday_max_c?: number | null
+    rainfall_past_24h_mm: number | null
+    relative_humidity_0830_pct?: number | null
+    relative_humidity_1730_pct?: number | null
+    relative_humidity_pct?: number | null
+    synoptic_forecast?: string
+    sunrise?: string
+    sunset?: string
+    atmospheric_pressure_hpa?: number | null
+    wind_speed_kmh?: number | null
+    wind_direction_deg?: number | null
+  } | null
+}
+
+export interface WeatherComparison {
+  is_comparable: boolean
+  station_name: string | null
+  station_id: string | null
+  station_distance_km: number | null
+  station_obs_timestamp: string | null
+  station_freshness?: string
+  station_temp_max_c: number | null
+  station_temp_min_c: number | null
+  station_rainfall_24h_mm: number | null
+  station_rh_pct: number | null
+  model_temp_max_c: number | null
+  model_temp_min_c: number | null
+  model_current_temp_c: number | null
+  model_rainfall_24h_mm: number | null
+  model_rh_pct: number | null
+  model_timestamp: string | null
+  delta_temp_max_c: number | null
+  delta_temp_min_c: number | null
+  delta_rainfall_24h_mm: number | null
+  agreement_status: string
+  methodology_note: string
+}
+
 export interface HourlyForecastItem {
   time: string
   iso_time: string
@@ -259,6 +315,15 @@ export interface LiveWeatherResponse {
     soil_moisture_m3_m3: number | string
   }
   hourly_forecast?: HourlyForecastItem[]
+  actual_observation?: ActualImdObservation
+  comparison?: WeatherComparison
+  imd_gateway?: {
+    endpoint: string
+    documentation_url: string
+    has_credentials: boolean
+    status: string
+    note: string
+  }
 }
 
 export interface WaterStation {

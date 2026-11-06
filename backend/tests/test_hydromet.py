@@ -36,8 +36,30 @@ def mock_openmeteo(monkeypatch):
     async def fake_get_forecast(*args, **kwargs):
         return FakeForecast()
 
+    async def fake_fetch_imd(*args, **kwargs):
+        return {
+            "is_available": True,
+            "station_id": "42921",
+            "station_name": "Nashik City Observatory",
+            "station_lat": 20.0000,
+            "station_lon": 73.7800,
+            "distance_km": 1.1,
+            "observation_date": "2026-11-06",
+            "observation_timestamp_ist": "2026-11-06 12:30:05",
+            "age_hours": 12.0,
+            "freshness": "Observed 12.0h ago (12:30 IST cycle)",
+            "data_source": "IMD Public Surface Network Service",
+            "parameters": {
+                "temp_max_c": 32.3,
+                "temp_min_c": 17.3,
+                "rainfall_past_24h_mm": 0.0,
+                "relative_humidity_pct": 38.0,
+            },
+        }
+
     monkeypatch.setattr("app.routers.hydromet.openmeteo.get_flood", fake_get_flood)
     monkeypatch.setattr("app.routers.hydromet.openmeteo.get_forecast", fake_get_forecast)
+    monkeypatch.setattr("app.routers.hydromet.fetch_imd_station_observation", fake_fetch_imd)
 
 @pytest.mark.asyncio
 async def test_cities_endpoint():
@@ -91,6 +113,14 @@ async def test_live_weather_endpoint():
         assert "weather_condition" in params
         assert "observation_timestamp" in data
         assert data["is_live"] is True
+        # Actual observation and transparent comparison tests
+        assert "actual_observation" in data
+        assert "comparison" in data
+        assert data["actual_observation"]["station_id"] == "42921"
+        assert data["actual_observation"]["is_available"] is True
+        assert data["comparison"]["station_distance_km"] == 1.1
+        assert data["comparison"]["station_temp_max_c"] == 32.3
+        assert data["comparison"]["delta_temp_max_c"] == -1.7
 
 @pytest.mark.asyncio
 async def test_water_levels_endpoint():

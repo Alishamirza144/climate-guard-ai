@@ -449,12 +449,22 @@ export default function Dashboard() {
               <span className="text-sm font-bold text-[#F3F8FF] font-mono mt-0.5 block">
                 {formatNumber(tempMin)}°C — {formatNumber(tempMax)}°C
               </span>
+              {weatherQuery.data?.actual_observation?.parameters?.temp_max_c && (
+                <span className="text-[9px] text-[#35C58B] block mt-0.5 font-semibold">
+                  IMD Obs: {formatNumber(weatherQuery.data.actual_observation.parameters.temp_min_c)}°C — {formatNumber(weatherQuery.data.actual_observation.parameters.temp_max_c)}°C
+                </span>
+              )}
             </div>
             <div className="bg-[#12385C] rounded-2xl p-3 border border-[#285274]">
-              <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">{t('dashboard.authoritativeFeed', 'Authoritative Feed')}</span>
+              <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">{t('dashboard.authoritativeFeed', 'Authoritative Station')}</span>
               <span className="text-xs font-bold text-[#25C5DC] truncate mt-0.5 block">
-                Open-Meteo IFS Model
+                {weatherQuery.data?.actual_observation?.station_name ? `${weatherQuery.data.actual_observation.station_name} (${typeof weatherQuery.data.comparison?.station_distance_km === 'number' ? `${formatNumber(weatherQuery.data.comparison.station_distance_km, { maximumFractionDigits: 1 })} km` : 'IMD'})` : 'IMD Ground Station'}
               </span>
+              {weatherQuery.data?.comparison?.delta_temp_max_c !== undefined && weatherQuery.data?.comparison?.delta_temp_max_c !== null && (
+                <span className="text-[9px] text-[#F4BC4D] block mt-0.5 font-bold">
+                  Variance: {weatherQuery.data.comparison.delta_temp_max_c > 0 ? '+' : ''}{formatNumber(weatherQuery.data.comparison.delta_temp_max_c, { maximumFractionDigits: 1 })}°C (Unblended)
+                </span>
+              )}
             </div>
           </div>
         </div>
