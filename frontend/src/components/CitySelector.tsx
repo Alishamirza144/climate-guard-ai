@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MapPin, Search, ChevronDown, Check, Compass, X } from 'lucide-react'
 import { useLocationContext } from './LocationProvider'
 import type { CityRegion, CityData } from '../data/cities'
@@ -15,6 +16,7 @@ const REGIONS: CityRegion[] = [
 ]
 
 export default function CitySelector() {
+  const { t } = useTranslation()
   const { location, selectCity, locateMe, cities, currentCity } = useLocationContext()
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -94,9 +96,11 @@ export default function CitySelector() {
           <div className="space-y-3 pb-3 border-b border-[#285274]">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-black text-[#F3F8FF] uppercase tracking-wide">Select Indian City</h4>
+                <h4 className="text-sm font-black text-[#F3F8FF] uppercase tracking-wide">
+                  {t('city.selectCity', 'Select Indian City')}
+                </h4>
                 <p className="text-[11px] text-[#B6C9DC]">
-                  Covering 50+ municipal & river catchment centers across India
+                  {t('city.monitoredCities', 'Covering 50+ municipal & river catchment centers across India')}
                 </p>
               </div>
               <button
@@ -106,7 +110,7 @@ export default function CitySelector() {
                 title="Use browser GPS geolocation"
               >
                 <Compass className="h-3.5 w-3.5" />
-                <span>Locate Me</span>
+                <span>{t('city.currentLocation', 'Locate Me')}</span>
               </button>
             </div>
 
@@ -118,7 +122,7 @@ export default function CitySelector() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search city, state, or river (e.g. Mumbai, Pune, Godavari, Yamuna)..."
+                placeholder={t('city.searchPlaceholder', 'Search city, state, or river (e.g. Mumbai, Pune, Godavari, Yamuna)...')}
                 className="w-full rounded-2xl border border-[#285274] bg-[#12385C] py-2 pl-9 pr-8 text-xs font-bold text-[#F3F8FF] placeholder:text-[#B6C9DC]/60 focus:border-[#2389D7] focus:outline-none focus:ring-1 focus:ring-[#2389D7]"
               />
               {searchTerm && (

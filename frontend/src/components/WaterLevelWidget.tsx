@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Waves, TrendingUp, TrendingDown, Minus, Info } from 'lucide-react'
 import type { WaterLevelsResponse, WaterStation } from '../lib/api'
 
@@ -7,6 +8,7 @@ interface WaterLevelWidgetProps {
 }
 
 export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWidgetProps) {
+  const { t } = useTranslation()
   if (isLoading) {
     return (
       <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-5 shadow-lg animate-pulse space-y-4">
@@ -30,7 +32,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
           <div className="flex items-center gap-2">
             <Waves className="h-5 w-5 text-[#25C5DC]" />
             <h3 className="font-display font-extrabold text-base sm:text-lg text-[#F3F8FF]">
-              River Gauge Monitoring & Calibrated Water-Level
+              {t('dashboard.riverTitle', 'River Gauge Monitoring & Calibrated Water-Level')}
             </h3>
             <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#2389D7]/20 text-[#25C5DC] border border-[#2389D7]/40">
               CWC Benchmarks · GloFAS Coupling

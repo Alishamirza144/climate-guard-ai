@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   AreaChart,
   Area,
@@ -16,6 +17,7 @@ import { api, ReservoirData } from '../lib/api'
 import { useLocationContext } from './LocationProvider'
 
 export default function DamMonitoringWidget() {
+  const { t } = useTranslation()
   const { location } = useLocationContext()
   const [dams, setDams] = useState<ReservoirData[]>([])
   const [selectedDamId, setSelectedDamId] = useState<string>('gangapur')
@@ -79,7 +81,7 @@ export default function DamMonitoringWidget() {
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5 text-[#25C5DC]" />
             <h3 className="font-display font-extrabold text-base sm:text-lg text-[#F3F8FF]">
-              Dam & Reservoir Capacity Monitoring
+              {t('dashboard.reservoirTitle', 'Dam & Reservoir Capacity Monitoring')}
             </h3>
             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#2389D7]/20 text-[#25C5DC] border border-[#2389D7]/40">
               WRD Register · Water-Balance Model

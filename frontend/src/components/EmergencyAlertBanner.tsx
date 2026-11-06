@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { ShieldAlert, ShieldCheck, AlertTriangle, AlertCircle, Clock, Droplets, Waves, Database, Compass } from 'lucide-react'
 import { EmergencyAlert } from '../lib/api'
 
@@ -7,6 +8,7 @@ interface EmergencyAlertBannerProps {
 }
 
 export default function EmergencyAlertBanner({ alert, className = '' }: EmergencyAlertBannerProps) {
+  const { t } = useTranslation()
   if (!alert) return null
 
   const isInsufficient = alert.status === 'INSUFFICIENT_DATA'
@@ -100,7 +102,7 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
         <div className="bg-[#12385C] rounded-xl p-3 border border-[#285274]">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#B6C9DC] uppercase tracking-wider">
             <Droplets className="w-3.5 h-3.5 text-[#25C5DC]" />
-            Rainfall (24h)
+            {t('dashboard.rainfall24h', 'Rainfall (24h)')}
           </div>
           <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono">
             {alert.rainfall_summary || '0.0 mm'}
@@ -110,7 +112,7 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
         <div className="bg-[#12385C] rounded-xl p-3 border border-[#285274]">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#B6C9DC] uppercase tracking-wider">
             <Waves className="w-3.5 h-3.5 text-[#25C5DC]" />
-            River Stage
+            {t('dashboard.riverTitle', 'River Stage')}
           </div>
           <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono">
             {alert.river_level_summary || 'Stable (1.8m)'}
@@ -120,7 +122,7 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
         <div className="bg-[#12385C] rounded-xl p-3 border border-[#285274] col-span-2 sm:col-span-2">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#B6C9DC] uppercase tracking-wider">
             <Database className="w-3.5 h-3.5 text-[#25C5DC]" />
-            Reservoir Status
+            {t('dashboard.reservoirTitle', 'Reservoir Status')}
           </div>
           <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono truncate">
             {alert.reservoir_summary || 'Catchment Reservoir System: Nominal'}
@@ -139,7 +141,7 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
 
         <div className="bg-[#102F50]/90 p-3 rounded-xl border border-[#285274]">
           <span className="font-bold text-[#35C58B] uppercase tracking-wider text-[11px] block mb-1">
-            Precautionary Action Protocol:
+            {t('alerts.actionRequired', 'Precautionary Action Protocol:')}
           </span>
           <p className="text-[#F3F8FF] leading-relaxed font-medium">{alert.recommended_action}</p>
         </div>

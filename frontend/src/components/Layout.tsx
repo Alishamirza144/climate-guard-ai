@@ -24,6 +24,8 @@ import {
 } from 'lucide-react'
 import DataLatencyIndicator from './DataLatencyIndicator'
 import CitySelector from './CitySelector'
+import LanguageSelector from './LanguageSelector'
+import { isRTL } from '../i18n/languages'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -107,9 +109,33 @@ export default function Layout() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
   }, [])
 
-  const setLanguage = (lang: string) => {
-    i18n.changeLanguage(lang)
-    localStorage.setItem('climateguard-lang', lang)
+  const getModuleMeta = (to: string, defaultLabel: string, defaultStatus: string) => {
+    switch (to) {
+      case '/flood':
+        return { label: t('nav.flood', defaultLabel), status: t('dashboard.badgeFlood', defaultStatus) }
+      case '/heat':
+        return { label: t('nav.heat', defaultLabel), status: t('dashboard.badgeHeat', defaultStatus) }
+      case '/fire':
+        return { label: t('nav.fire', defaultLabel), status: t('dashboard.badgeFire', defaultStatus) }
+      case '/crop':
+        return { label: t('nav.crop', defaultLabel), status: t('dashboard.badgeCrop', defaultStatus) }
+      case '/drainage':
+        return { label: t('nav.drainage', defaultLabel), status: t('dashboard.badgeDrainage', defaultStatus) }
+      case '/simulation':
+        return { label: t('nav.simulation', defaultLabel), status: t('dashboard.badgeSimulation', defaultStatus) }
+      default:
+        return { label: defaultLabel, status: defaultStatus }
+    }
+  }
+
+  const getSecondaryLabel = (to: string, defaultLabel: string) => {
+    switch (to) {
+      case '/alerts': return t('nav.alerts', defaultLabel)
+      case '/data-sources': return t('nav.sources', defaultLabel)
+      case '/methodology': return t('nav.methodology', defaultLabel)
+      case '/about': return t('nav.about', defaultLabel)
+      default: return defaultLabel
+    }
   }
 
   return (
@@ -175,7 +201,7 @@ export default function Layout() {
               }
             >
               <LayoutDashboard className="w-3.5 h-3.5 text-[#25C5DC]" />
-              <span>Main Dashboard</span>
+              <span>{t('nav.mainDashboard', 'Main Dashboard')}</span>
             </NavLink>
 
             {/* "More" Intelligence Dropdown */}
@@ -194,7 +220,7 @@ export default function Layout() {
                 aria-expanded={moreDropdownOpen}
                 aria-haspopup="true"
               >
-                <span>Docs</span>
+                <span>{t('app.docs', 'Docs')}</span>
                 <ChevronDown className="w-3 h-3 text-[#25C5DC]" />
               </button>
 
@@ -209,7 +235,7 @@ export default function Layout() {
                         className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-[#B6C9DC] hover:bg-[#12385C] hover:text-[#F3F8FF] rounded-xl transition-colors"
                       >
                         <item.icon className="w-3.5 h-3.5 text-[#25C5DC]" />
-                        <span>{item.label}</span>
+                        <span>{getSecondaryLabel(item.to, item.label)}</span>
                       </Link>
                     ))}
                   </div>
@@ -220,23 +246,11 @@ export default function Layout() {
             {/* Live Operational Status */}
             <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#0B2545] border border-[#285274] text-[#8ED8F5] text-[11px] font-bold">
               <span className="w-2 h-2 rounded-full bg-[#35C58B] animate-pulse" />
-              <span>Telemetry Verified</span>
+              <span>{t('app.telemetryVerified', 'Telemetry Verified')}</span>
             </div>
 
-            {/* Language Switcher */}
-            <label className="flex items-center gap-1 rounded-xl border border-[#285274] bg-[#12385C] px-2 py-1 text-xs text-[#F3F8FF] font-bold">
-              <span className="sr-only">{t('app.language')}</span>
-              <select
-                value={i18n.language}
-                onChange={(event) => setLanguage(event.target.value)}
-                className="bg-transparent text-xs text-[#F3F8FF] font-bold outline-none cursor-pointer"
-                aria-label={t('app.language')}
-              >
-                <option value="en" className="bg-[#0B2545] text-white">EN</option>
-                <option value="hi" className="bg-[#0B2545] text-white">हिं</option>
-                <option value="mr" className="bg-[#0B2545] text-white">मर</option>
-              </select>
-            </label>
+            {/* Language Switcher Modal / Dropdown */}
+            <LanguageSelector />
 
             {/* Mobile Hamburger Button */}
             <button
@@ -314,56 +328,59 @@ export default function Layout() {
             </div>
 
             {/* The 6 AI Modules */}
-            {AI_MODULES.map(({ to, label, icon: Icon, statusText, statusDot, accentColor }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all ${
-                    isActive
-                      ? 'bg-[#12385C] text-white border-2 border-[#2389D7] shadow-glow'
-                      : 'text-[#B6C9DC] hover:bg-[#102F50] hover:text-[#F3F8FF] border border-[#285274]/50'
-                  } ${sidebarCollapsed ? 'justify-center px-2' : ''}`
-                }
-                title={label}
-              >
-                {({ isActive }) => (
-                  <>
-                    {/* Active left indicator bar */}
-                    {isActive && (
-                      <span
-                        className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-[#25C5DC]"
-                        aria-hidden="true"
-                      />
-                    )}
+            {AI_MODULES.map(({ to, label, icon: Icon, statusText, statusDot, accentColor }) => {
+              const { label: localizedLabel, status: localizedStatus } = getModuleMeta(to, label, statusText)
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all ${
+                      isActive
+                        ? 'bg-[#12385C] text-white border-2 border-[#2389D7] shadow-glow'
+                        : 'text-[#B6C9DC] hover:bg-[#102F50] hover:text-[#F3F8FF] border border-[#285274]/50'
+                    } ${sidebarCollapsed ? 'justify-center px-2' : ''}`
+                  }
+                  title={localizedLabel}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {/* Active left indicator bar */}
+                      {isActive && (
+                        <span
+                          className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r bg-[#25C5DC]"
+                          aria-hidden="true"
+                        />
+                      )}
 
-                    <div
-                      className={`relative flex items-center justify-center shrink-0 w-8 h-8 rounded-xl transition-colors ${
-                        isActive ? 'bg-[#2389D7]/20 text-[#25C5DC]' : 'bg-[#0E2B49] text-[#B6C9DC] group-hover:text-[#25C5DC]'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </div>
-
-                    {!sidebarCollapsed && (
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black truncate text-[#F3F8FF] group-hover:text-white">
-                            {label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusDot} shrink-0`} />
-                          <span className="text-[10px] font-semibold text-[#B6C9DC] truncate">
-                            {statusText}
-                          </span>
-                        </div>
+                      <div
+                        className={`relative flex items-center justify-center shrink-0 w-8 h-8 rounded-xl transition-colors ${
+                          isActive ? 'bg-[#2389D7]/20 text-[#25C5DC]' : 'bg-[#0E2B49] text-[#B6C9DC] group-hover:text-[#25C5DC]'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
                       </div>
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ))}
+
+                      {!sidebarCollapsed && (
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black truncate text-[#F3F8FF] group-hover:text-white">
+                              {localizedLabel}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${statusDot} shrink-0`} />
+                            <span className="text-[10px] font-semibold text-[#B6C9DC] truncate">
+                              {localizedStatus}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              )
+            })}
           </nav>
 
           {/* Sidebar Footer */}
@@ -481,9 +498,15 @@ export default function Layout() {
                 </button>
               </div>
 
+              {/* Mobile Language Selector */}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#285274]">
+                <span className="text-xs font-bold text-[#8ED8F5]">{t('app.language', 'Language')}</span>
+                <LanguageSelector compact />
+              </div>
+
               <div className="space-y-1 mb-6">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#25C5DC] px-2 mb-2">
-                  CLIMATE INTELLIGENCE MODULES
+                  {t('nav.sidebarTitle', 'CLIMATE INTELLIGENCE MODULES')}
                 </div>
 
                 <NavLink
@@ -498,37 +521,40 @@ export default function Layout() {
                   }
                 >
                   <LayoutDashboard className="w-4 h-4 shrink-0 text-[#25C5DC]" />
-                  <span>Main Overview</span>
+                  <span>{t('nav.dashboard', 'Main Overview')}</span>
                 </NavLink>
 
-                {AI_MODULES.map(({ to, label, icon: Icon, statusText, statusDot }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                        isActive
-                          ? 'bg-[#12385C] text-white border border-[#2389D7]'
-                          : 'text-[#B6C9DC] hover:bg-[#102F50]'
-                      }`
-                    }
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-4 h-4 shrink-0 text-[#25C5DC]" />
-                      <span>{label}</span>
-                    </div>
-                    <span className="flex items-center gap-1 text-[10px] text-[#B6C9DC]">
-                      <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
-                      {statusText}
-                    </span>
-                  </NavLink>
-                ))}
+                {AI_MODULES.map(({ to, label, icon: Icon, statusText, statusDot }) => {
+                  const { label: localizedLabel, status: localizedStatus } = getModuleMeta(to, label, statusText)
+                  return (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                          isActive
+                            ? 'bg-[#12385C] text-white border border-[#2389D7]'
+                            : 'text-[#B6C9DC] hover:bg-[#102F50]'
+                        }`
+                      }
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-4 h-4 shrink-0 text-[#25C5DC]" />
+                        <span>{localizedLabel}</span>
+                      </div>
+                      <span className="flex items-center gap-1 text-[10px] text-[#B6C9DC]">
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
+                        {localizedStatus}
+                      </span>
+                    </NavLink>
+                  )
+                })}
               </div>
 
               <div className="pt-4 border-t border-[#285274] space-y-1">
                 <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#25C5DC] px-2 mb-2">
-                  Documentation & System
+                  {t('app.docs', 'Documentation & System')}
                 </div>
                 {SECONDARY_NAV.map(({ to, label, icon: Icon }) => (
                   <Link
@@ -538,7 +564,7 @@ export default function Layout() {
                     className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-[#B6C9DC] hover:bg-[#12385C] hover:text-[#F3F8FF]"
                   >
                     <Icon className="w-4 h-4 text-[#25C5DC]" />
-                    <span>{label}</span>
+                    <span>{getSecondaryLabel(to, label)}</span>
                   </Link>
                 ))}
               </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AreaChart,
@@ -50,56 +51,77 @@ import CitySelector from '../components/CitySelector'
 import WaterLevelWidget from '../components/WaterLevelWidget'
 import IndiaRiskMap from '../components/IndiaRiskMap'
 
-const MODULE_META = {
+const MODULE_META: Record<string, {
+  titleKey: string
+  title: string
+  subtitle: string
+  icon: typeof Droplets
+  route: string
+  color: string
+  badgeKey: string
+  badge: string
+}> = {
   flood: {
+    titleKey: 'dashboard.floodRisk',
     title: 'Flood Risk',
     subtitle: 'Flood Guard AI',
     icon: Droplets,
     route: '/flood',
     color: '#2389D7',
+    badgeKey: 'dashboard.badgeFlood',
     badge: 'Hydrology Online',
   },
   heat: {
+    titleKey: 'dashboard.heatRisk',
     title: 'Heat Risk',
     subtitle: 'Heat Guard AI',
     icon: Thermometer,
     route: '/heat',
     color: '#F4BC4D',
+    badgeKey: 'dashboard.badgeHeat',
     badge: 'Thermal Watch',
   },
   fire: {
+    titleKey: 'dashboard.wildfireRisk',
     title: 'Wildfire Risk',
     subtitle: 'Fire Guard AI',
     icon: Flame,
     route: '/fire',
     color: '#F06470',
+    badgeKey: 'dashboard.badgeFire',
     badge: 'FWI Active',
   },
   crop: {
+    titleKey: 'dashboard.cropRisk',
     title: 'Crop Risk',
     subtitle: 'Crop Shield AI',
     icon: Sprout,
     route: '/crop',
     color: '#35C58B',
+    badgeKey: 'dashboard.badgeCrop',
     badge: 'Agri-Vigor',
   },
   drainage: {
+    titleKey: 'dashboard.drainageRisk',
     title: 'Drainage Risk',
     subtitle: 'Drainage Network AI',
     icon: GitBranch,
     route: '/drainage',
     color: '#25C5DC',
+    badgeKey: 'dashboard.badgeDrainage',
     badge: 'IoT Monitored',
   },
   simulation: {
+    titleKey: 'dashboard.scenarioLab',
     title: 'Scenario Lab',
     subtitle: 'Scenario Validation Lab',
     icon: FlaskConical,
     route: '/simulation',
     color: '#8ED8F5',
+    badgeKey: 'dashboard.badgeSimulation',
     badge: 'Simulation Ready',
   },
-} as const
+}
 
 function formatClock(value: Date) {
   return new Intl.DateTimeFormat('en-IN', {
@@ -132,6 +154,7 @@ function getLevelBadgeStyles(level: string) {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation()
   const { location } = useLocationContext()
   const queryClient = useQueryClient()
   const [selectedHazard, setSelectedHazard] = useState<'flood' | 'heat' | 'fire' | 'crop'>('flood')
@@ -287,17 +310,17 @@ export default function Dashboard() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#25C5DC]">
-                NATIONAL RESILIENCE CONSOLE • Live Command Hub
+                {t('dashboard.consoleTitle', 'NATIONAL RESILIENCE CONSOLE')} • {t('dashboard.commandHub', 'Live Command Hub')}
               </span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getLevelBadgeStyles(overallRiskLevel)}`}>
-                Overall: {overallRiskLevel}
+                {t('dashboard.overallLabel', 'Overall')}: {overallRiskLevel}
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-[#F3F8FF] mt-0.5">
               {location.label}
             </h1>
             <p className="text-xs text-[#B6C9DC]">
-              Coordinates: {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E • India Grid Observation
+              {t('dashboard.coordinates', 'Coordinates')}: {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E • {t('dashboard.indiaGrid', 'India Grid Observation')}
             </p>
           </div>
         </div>
@@ -305,11 +328,11 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E2B49] border border-[#285274] text-[#B6C9DC] font-semibold">
             <Clock3 className="w-3.5 h-3.5 text-[#25C5DC]" />
-            <span>Time: {formatClock(now)}</span>
+            <span>{t('app.time', 'Time')}: {formatClock(now)}</span>
           </div>
 
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E2B49] border border-[#285274] text-[#B6C9DC] font-semibold">
-            <span>Cycle:</span>
+            <span>{t('app.cycle', 'Cycle')}:</span>
             <strong className="text-[#F3F8FF]">
               {overviewQuery.dataUpdatedAt ? new Date(overviewQuery.dataUpdatedAt).toLocaleTimeString('en-IN', { timeStyle: 'short' }) : 'Live'}
             </strong>
@@ -321,7 +344,7 @@ export default function Dashboard() {
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#2389D7] hover:bg-[#25C5DC] hover:text-[#071A33] text-white font-bold transition-all shadow-glow"
           >
             <RefreshCcw className="w-3.5 h-3.5" />
-            <span>Sync Live</span>
+            <span>{t('app.syncLive', 'Sync Live')}</span>
           </button>
         </div>
       </div>
@@ -336,7 +359,7 @@ export default function Dashboard() {
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-[#285274]">
               <span className="text-xs font-black uppercase tracking-[0.2em] text-[#25C5DC]">
-                AMBIENT TEMPERATURE
+                {t('dashboard.ambientTemp', 'AMBIENT TEMPERATURE')}
               </span>
               <span className="text-[10px] font-bold text-[#8ED8F5] bg-[#102F50] px-2 py-0.5 rounded-full border border-[#285274]">
                 ECMWF / IMD
@@ -350,7 +373,7 @@ export default function Dashboard() {
               <div className="space-y-1">
                 <span className="text-2xl font-black text-[#F3F8FF]">C</span>
                 <p className="text-xs font-bold text-[#25C5DC]">
-                  Feels like {typeof feelsLike === 'number' ? `${feelsLike.toFixed(1)}°C` : feelsLike}
+                  {t('dashboard.feelsLike', 'Feels like')} {typeof feelsLike === 'number' ? `${feelsLike.toFixed(1)}°C` : feelsLike}
                 </p>
               </div>
             </div>
@@ -363,13 +386,13 @@ export default function Dashboard() {
 
           <div className="mt-6 pt-4 border-t border-[#285274] grid grid-cols-2 gap-3 text-xs">
             <div className="bg-[#12385C] rounded-2xl p-3 border border-[#285274]">
-              <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">Daily Diurnal Range</span>
+              <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">{t('dashboard.dailyDiurnal', 'Daily Diurnal Range')}</span>
               <span className="text-sm font-bold text-[#F3F8FF] font-mono mt-0.5 block">
                 {tempMin}°C — {tempMax}°C
               </span>
             </div>
             <div className="bg-[#12385C] rounded-2xl p-3 border border-[#285274]">
-              <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">Authoritative Feed</span>
+              <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">{t('dashboard.authoritativeFeed', 'Authoritative Feed')}</span>
               <span className="text-xs font-bold text-[#25C5DC] truncate mt-0.5 block">
                 Open-Meteo IFS Model
               </span>
@@ -382,13 +405,13 @@ export default function Dashboard() {
           {/* Humidity */}
           <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
             <div className="flex items-center justify-between text-[#B6C9DC]">
-              <span className="text-[10px] font-bold uppercase tracking-wider">Relative Humidity</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('dashboard.humidity', 'Relative Humidity')}</span>
               <Droplets className="w-4 h-4 text-[#25C5DC]" />
             </div>
             <div className="mt-3">
               <span className="text-3xl font-black font-mono text-[#F3F8FF]">{humidity}%</span>
               <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
-                {Number(humidity) > 70 ? 'Moist Catchment' : Number(humidity) < 30 ? 'Dry Air Deficit' : 'Optimal Balance'}
+                {Number(humidity) > 70 ? t('dashboard.humidityMoist', 'Moist Catchment') : Number(humidity) < 30 ? t('dashboard.humidityDry', 'Dry Air Deficit') : t('dashboard.humidityOpt', 'Optimal Balance')}
               </p>
             </div>
           </div>
@@ -396,13 +419,13 @@ export default function Dashboard() {
           {/* Rainfall */}
           <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
             <div className="flex items-center justify-between text-[#B6C9DC]">
-              <span className="text-[10px] font-bold uppercase tracking-wider">24h Rainfall</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('dashboard.rainfall24h', '24h Rainfall')}</span>
               <CloudRain className="w-4 h-4 text-[#2389D7]" />
             </div>
             <div className="mt-3">
               <span className="text-3xl font-black font-mono text-[#F3F8FF]">{rainfall24h} <span className="text-xs">mm</span></span>
               <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
-                Intensity: {rainfallIntensity} mm/h
+                {t('dashboard.intensity', 'Intensity')}: {rainfallIntensity} mm/h
               </p>
             </div>
           </div>
@@ -410,13 +433,13 @@ export default function Dashboard() {
           {/* Wind Speed */}
           <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
             <div className="flex items-center justify-between text-[#B6C9DC]">
-              <span className="text-[10px] font-bold uppercase tracking-wider">Wind Velocity</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('dashboard.windVelocity', 'Wind Velocity')}</span>
               <Wind className="w-4 h-4 text-[#25C5DC]" />
             </div>
             <div className="mt-3">
               <span className="text-3xl font-black font-mono text-[#F3F8FF]">{windSpeed} <span className="text-xs">km/h</span></span>
               <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
-                Bearing: {windDir}° Vector
+                {t('dashboard.bearing', 'Bearing')}: {windDir}° {t('dashboard.vector', 'Vector')}
               </p>
             </div>
           </div>
@@ -424,13 +447,13 @@ export default function Dashboard() {
           {/* Atmospheric Pressure */}
           <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
             <div className="flex items-center justify-between text-[#B6C9DC]">
-              <span className="text-[10px] font-bold uppercase tracking-wider">Barometric Pressure</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('dashboard.barometricPressure', 'Barometric Pressure')}</span>
               <Gauge className="w-4 h-4 text-[#35C58B]" />
             </div>
             <div className="mt-3">
               <span className="text-3xl font-black font-mono text-[#F3F8FF]">{pressure} <span className="text-xs">hPa</span></span>
               <p className="text-[10px] font-bold text-[#35C58B] mt-1">
-                Stable Gradient
+                {t('dashboard.stableGradient', 'Stable Gradient')}
               </p>
             </div>
           </div>
@@ -438,7 +461,7 @@ export default function Dashboard() {
           {/* Soil Moisture */}
           <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
             <div className="flex items-center justify-between text-[#B6C9DC]">
-              <span className="text-[10px] font-bold uppercase tracking-wider">Root-Zone Soil Moisture</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('dashboard.soilMoisture', 'Root-Zone Soil Moisture')}</span>
               <Layers className="w-4 h-4 text-[#25C5DC]" />
             </div>
             <div className="mt-3">
@@ -446,7 +469,7 @@ export default function Dashboard() {
                 {typeof soilMoisture === 'number' ? soilMoisture.toFixed(2) : soilMoisture} <span className="text-xs">m³/m³</span>
               </span>
               <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
-                0-10cm Topsoil Layer
+                {t('dashboard.topsoilLayer', '0-10cm Topsoil Layer')}
               </p>
             </div>
           </div>
@@ -454,16 +477,16 @@ export default function Dashboard() {
           {/* Status Badge Card */}
           <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-4 shadow-xl flex flex-col justify-between">
             <div className="flex items-center justify-between text-[#B6C9DC]">
-              <span className="text-[10px] font-bold uppercase tracking-wider">Telemetry State</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{t('dashboard.telemetryState', 'Telemetry State')}</span>
               <Activity className="w-4 h-4 text-[#35C58B]" />
             </div>
             <div className="mt-3">
               <div className="flex items-center gap-1.5 text-base font-black text-[#35C58B]">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#35C58B] animate-pulse" />
-                <span>Verified Online</span>
+                <span>{t('dashboard.verifiedOnline', 'Verified Online')}</span>
               </div>
               <p className="text-[10px] font-bold text-[#B6C9DC] mt-1 truncate">
-                Updated {new Date().toLocaleTimeString('en-IN', { timeStyle: 'short' })}
+                {t('dashboard.updatedAt', 'Updated')} {new Date().toLocaleTimeString('en-IN', { timeStyle: 'short' })}
               </p>
             </div>
           </div>
@@ -477,12 +500,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-between pb-3 border-b border-[#285274]">
             <div>
               <h3 className="text-sm font-black uppercase tracking-wider text-[#F3F8FF]">
-                24-Hour Temperature &amp; Heat Trend (°C)
+                {t('dashboard.tempChartTitle', '24-Hour Temperature & Heat Trend (°C)')}
               </h3>
-              <p className="text-xs text-[#B6C9DC]">Diurnal atmospheric solar curve and apparent feels-like</p>
+              <p className="text-xs text-[#B6C9DC]">{t('dashboard.tempChartSubtitle', 'Diurnal atmospheric solar curve and apparent feels-like')}</p>
             </div>
             <span className="text-[10px] font-bold text-[#25C5DC] bg-[#0E2B49] px-2.5 py-1 rounded-xl border border-[#285274]">
-              ECMWF Hourly
+              {t('dashboard.hourlyModel', 'ECMWF Hourly')}
             </span>
           </div>
 
@@ -515,12 +538,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-between pb-3 border-b border-[#285274]">
             <div>
               <h3 className="text-sm font-black uppercase tracking-wider text-[#F3F8FF]">
-                Multi-Hazard Trajectory Outlook (0-72h)
+                {t('dashboard.multiHazardChartTitle', 'Multi-Hazard Trajectory Outlook (0-72h)')}
               </h3>
-              <p className="text-xs text-[#B6C9DC]">Continuous risk index trajectory across 5 AI prediction engines</p>
+              <p className="text-xs text-[#B6C9DC]">{t('dashboard.multiHazardChartSubtitle', 'Continuous risk index trajectory across 5 AI prediction engines')}</p>
             </div>
             <span className="text-[10px] font-bold text-[#35C58B] bg-[#0E2B49] px-2.5 py-1 rounded-xl border border-[#285274]">
-              Ensemble Verified
+              {t('dashboard.ensembleVerified', 'Ensemble Verified')}
             </span>
           </div>
 
@@ -549,9 +572,9 @@ export default function Dashboard() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-black uppercase tracking-[0.2em] text-[#25C5DC]">
-            AUTONOMOUS CLIMATE INTELLIGENCE ENGINES
+            {t('dashboard.modulesTitle', 'AUTONOMOUS CLIMATE INTELLIGENCE ENGINES')}
           </h2>
-          <span className="text-xs text-[#B6C9DC]">Select a module to open full analytical dashboard</span>
+          <span className="text-xs text-[#B6C9DC]">{t('dashboard.modulesSubtitle', 'Select a module to open full analytical dashboard')}</span>
         </div>
 
         <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -582,18 +605,18 @@ export default function Dashboard() {
                       <Icon className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-bold text-[#8ED8F5] bg-[#0E2B49] px-2 py-0.5 rounded-full border border-[#285274]">
-                      {meta.badge}
+                      {t(meta.badgeKey, meta.badge)}
                     </span>
                   </div>
 
                   <h3 className="font-bold text-sm text-[#F3F8FF] mt-3 group-hover:text-[#25C5DC] transition-colors">
-                    {meta.title}
+                    {t(meta.titleKey, meta.title)}
                   </h3>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-[#285274]/60 flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-[#B6C9DC]">
-                    Risk: <strong className="text-[#F3F8FF]">{score}/100</strong>
+                    {t('dashboard.riskPrefix', 'Risk')}: <strong className="text-[#F3F8FF]">{score}/100</strong>
                   </span>
                   <ChevronRight className="w-4 h-4 text-[#25C5DC] group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -608,15 +631,15 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#285274]">
           <div>
             <h3 className="font-display font-black text-base sm:text-lg text-[#F3F8FF]">
-              Geospatial Risk Overlay
+              {t('dashboard.geospatialTitle', 'Geospatial Risk Overlay')}
             </h3>
             <p className="text-xs text-[#B6C9DC]">
-              Interactive geographic map of 50+ monitored municipalities and river basins across India.
+              {t('dashboard.geospatialSubtitle', 'Interactive geographic map of 50+ monitored municipalities and river basins across India.')}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-[#8ED8F5] bg-[#0E2B49] px-3 py-1 rounded-xl border border-[#285274]">
-              Click any node to change city
+              {t('dashboard.clickNode', 'Click any node to change city')}
             </span>
           </div>
         </div>

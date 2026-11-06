@@ -19,7 +19,7 @@ from app.config import get_settings
 from app.engines.alerts import start_scheduler
 from app.middleware.security import SecurityHeadersMiddleware, limiter
 from app.ml import get_model_status
-from app.routers import alerts, crop, dams, data_sources, demo, drainage, fire, health, heat, hydromet, iot, location, ml, notifications, raw, risk, simulation, validation
+from app.routers import alerts, crop, dams, data_sources, demo, drainage, fire, health, heat, hydromet, iot, location, ml, notifications, raw, risk, simulation, translate, validation
 
 # ---------------------------------------------------------------------------
 # Structured logging
@@ -118,6 +118,7 @@ app.include_router(simulation.router, prefix="/api")
 app.include_router(demo.router, prefix="/api")
 app.include_router(validation.router, prefix="/api")
 app.include_router(ml.router, prefix="/api")
+app.include_router(translate.router, prefix="/api")
 
 
 # ---------------------------------------------------------------------------
