@@ -259,20 +259,20 @@ export default function Dashboard() {
 
   const temperature = hasLiveWeather && typeof weatherParams?.temperature_c === 'number'
     ? weatherParams.temperature_c
-    : 28.5
-  const feelsLike = hasLiveWeather && weatherParams?.temperature_c !== undefined
-    ? Number(weatherParams.temperature_c) + 1.8
-    : 30.2
-  const tempMin = weatherParams?.temp_min_c ?? 22.0
-  const tempMax = weatherParams?.temp_max_c ?? 34.0
-  const humidity = weatherParams?.relative_humidity_pct ?? 54
-  const rainfall24h = weatherParams?.rainfall_past_24h_mm ?? 0.0
-  const rainfallIntensity = weatherParams?.precipitation_intensity_mm_h ?? 0.0
-  const windSpeed = weatherParams?.wind_speed_kmh ?? 12.0
-  const windDir = weatherParams?.wind_direction_deg ?? 240
-  const pressure = weatherParams?.surface_pressure_hpa ?? 1012
-  const soilMoisture = weatherParams?.soil_moisture_m3_m3 ?? 0.24
-  const condition = weatherParams?.weather_condition || 'Partly Cloudy'
+    : null
+  const feelsLike = hasLiveWeather && typeof weatherParams?.feels_like_c === 'number'
+    ? weatherParams.feels_like_c
+    : (hasLiveWeather && typeof weatherParams?.temperature_c === 'number' ? weatherParams.temperature_c : null)
+  const tempMin = typeof weatherParams?.temp_min_c === 'number' ? weatherParams.temp_min_c : null
+  const tempMax = typeof weatherParams?.temp_max_c === 'number' ? weatherParams.temp_max_c : null
+  const humidity = typeof weatherParams?.relative_humidity_pct === 'number' ? weatherParams.relative_humidity_pct : null
+  const rainfall24h = typeof weatherParams?.rainfall_past_24h_mm === 'number' ? weatherParams.rainfall_past_24h_mm : 0.0
+  const rainfallIntensity = typeof weatherParams?.precipitation_intensity_mm_h === 'number' ? weatherParams.precipitation_intensity_mm_h : 0.0
+  const windSpeed = typeof weatherParams?.wind_speed_kmh === 'number' ? weatherParams.wind_speed_kmh : null
+  const windDir = typeof weatherParams?.wind_direction_deg === 'number' ? weatherParams.wind_direction_deg : null
+  const pressure = typeof weatherParams?.surface_pressure_hpa === 'number' ? weatherParams.surface_pressure_hpa : null
+  const soilMoisture = typeof weatherParams?.soil_moisture_m3_m3 === 'number' ? weatherParams.soil_moisture_m3_m3 : null
+  const condition = weatherParams?.weather_condition || (weatherQuery.isLoading ? '...' : 'Clear sky')
 
   // Risk status summary
   const hazards = overviewQuery.data?.hazards ?? {}
@@ -292,22 +292,23 @@ export default function Dashboard() {
     ? 'Moderate'
     : 'Low'
 
-  // Synthetic hourly trends for charts
+  // Real hourly forecast from Open-Meteo NWP model
   const weatherTrends = useMemo(() => {
-    const hours = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00']
-    const baseTemp = Number(temperature) || 28
-    return hours.map((hour, idx) => {
-      const solarCycle = Math.sin(((idx - 2) / 8) * Math.PI) * 5.5
-      const tempVal = roundVal(baseTemp + solarCycle)
-      const rainVal = idx === 4 || idx === 5 ? roundVal(rainfallIntensity * 1.5) : 0
-      return {
-        time: hour,
-        temperature: tempVal,
-        feelsLike: roundVal(tempVal + 2.1),
-        rainfall: rainVal,
-      }
-    })
-  }, [temperature, rainfallIntensity])
+    const hourly = weatherQuery.data?.hourly_forecast
+    if (hourly && hourly.length > 0) {
+      const sampled = hourly.filter((_, idx) => idx % 3 === 0 || idx === hourly.length - 1).slice(0, 8)
+      return sampled.map((item) => ({
+        time: item.time,
+        temperature: item.temperature_c ?? 0,
+        feelsLike: item.feels_like_c ?? item.temperature_c ?? 0,
+        rainfall: item.precipitation_mm ?? 0,
+      }))
+    }
+    if (typeof temperature === 'number') {
+      return [{ time: 'Now', temperature, feelsLike: feelsLike ?? temperature, rainfall: rainfallIntensity }]
+    }
+    return []
+  }, [weatherQuery.data?.hourly_forecast, temperature, feelsLike, rainfallIntensity])
 
   function roundVal(n: number) {
     return Math.round(n * 10) / 10

@@ -51,7 +51,20 @@ async def fire_risk(
             "timestamp": now_iso,
         }
 
+    current = getattr(forecast, "current", {}) or {}
     hourly = getattr(forecast, "hourly", {}) or {}
+    obs_time_str = current.get("time") or now_iso
+    hourly_times = hourly.get("time", [])
+    curr_idx = -1
+    if obs_time_str and hourly_times:
+        prefix = obs_time_str[:13] + ":00"
+        if prefix in hourly_times:
+            curr_idx = hourly_times.index(prefix)
+        elif obs_time_str in hourly_times:
+            curr_idx = hourly_times.index(obs_time_str)
+    if curr_idx < 0 and hourly_times:
+        curr_idx = min(len(hourly_times) - 1, max(0, 72 if len(hourly_times) >= 73 else 0))
+
     raw_temps = hourly.get("temperature_2m", [])
     raw_rh = hourly.get("relative_humidity_2m", [])
     raw_winds = hourly.get("wind_speed_10m", [])
@@ -76,11 +89,25 @@ async def fire_risk(
     if not rain_values:
         rain_values = [0.0]
 
-    current_temp = temps[-1]
-    temp_max = max(temps)
-    current_rh = rh_values[-1]
-    current_wind = median(wind_values) if wind_values else 10.0
-    current_rain = sum(rain_values[-24:]) if rain_values else 0.0
+    curr_temp_raw = current.get("temperature_2m")
+    current_temp = float(curr_temp_raw) if curr_temp_raw is not None else (temps[curr_idx] if 0 <= curr_idx < len(temps) else temps[0])
+
+    curr_rh_raw = current.get("relative_humidity_2m")
+    current_rh = float(curr_rh_raw) if curr_rh_raw is not None else (rh_values[curr_idx] if 0 <= curr_idx < len(rh_values) else rh_values[0])
+
+    curr_wind_raw = current.get("wind_speed_10m")
+    current_wind = float(curr_wind_raw) if curr_wind_raw is not None else (wind_values[curr_idx] if 0 <= curr_idx < len(wind_values) else 10.0)
+
+    if rain_values and curr_idx >= 0:
+        current_rain = sum(rain_values[max(0, curr_idx - 23) : curr_idx + 1])
+    elif rain_values:
+        current_rain = sum(rain_values[:24])
+    else:
+        current_rain = 0.0
+
+    trend_slice = temps[curr_idx : curr_idx + 24] if (curr_idx >= 0 and curr_idx + 24 <= len(temps)) else temps[:24]
+    temp_max = max(trend_slice) if trend_slice else current_temp
+    soil_slice = soil_values[max(0, curr_idx - 9) : curr_idx + 1] if (soil_values and curr_idx >= 0) else soil_values[-10:]
     normal_tmax = median(normals.get("temperature_2m_max", [current_temp])) if normals.get("temperature_2m_max") else current_temp
 
     # Scientifically derived confidence based on data completeness and multi-year climatological baseline
@@ -95,16 +122,16 @@ async def fire_risk(
         rh=current_rh,
         wind_kmh=current_wind,
         rain_24h_mm=current_rain,
-        soil_moisture_top_layers=soil_values[-10:],
+        soil_moisture_top_layers=soil_slice,
         temp_normal_30d_c=normal_tmax,
-        wind_direction_deg=225.0,
+        wind_direction_deg=float(current.get("wind_direction_10m", 225.0) or 225.0),
     )
     payload["city_name"] = city_name
     payload["state_name"] = state_name
     payload["location_name"] = location_name
     payload["hourly_temperature_trend"] = [
-        {"hour": idx + 1, "temperature_c": float(value), "predicted_peak": idx + 1 == max(1, min(12, len(temps)))}
-        for idx, value in enumerate(temps[:24])
+        {"hour": idx + 1, "temperature_c": float(value), "predicted_peak": idx + 1 == max(1, min(12, len(trend_slice)))}
+        for idx, value in enumerate(trend_slice)
     ]
     payload["peak_temperature_c"] = round(max(temp_max, current_temp), 2)
     payload["current_temperature_c"] = round(current_temp, 1)

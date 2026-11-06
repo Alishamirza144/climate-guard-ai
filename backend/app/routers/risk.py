@@ -159,9 +159,29 @@ async def flood_risk(
     forecast_data = getattr(forecast, "hourly", None) if not isinstance(forecast, dict) else forecast.get("hourly", {})
     hourly = forecast_data or {}
     forecast_current = getattr(forecast, "current", None) if not isinstance(forecast, dict) else forecast.get("current", {})
-    past_precip = [float(value) for value in hourly.get("precipitation", []) if value is not None]
-    rainfall_accum = compute_rainfall_accumulations(past_precip)
-    rainfall_24h = rainfall_accum.get("24h", 0.0)
+    
+    obs_time_str = (forecast_current or {}).get("time")
+    hourly_times = hourly.get("time", [])
+    curr_idx = -1
+    if obs_time_str and hourly_times:
+        prefix = obs_time_str[:13] + ":00"
+        if prefix in hourly_times:
+            curr_idx = hourly_times.index(prefix)
+        elif obs_time_str in hourly_times:
+            curr_idx = hourly_times.index(obs_time_str)
+    if curr_idx < 0 and hourly_times:
+        curr_idx = min(len(hourly_times) - 1, max(0, 72 if len(hourly_times) >= 73 else len(hourly_times) - 1))
+
+    all_precip = [float(value) for value in hourly.get("precipitation", []) if value is not None]
+    if curr_idx >= 0 and curr_idx < len(all_precip):
+        past_precip = all_precip[:curr_idx + 1]
+        forecast_precip = all_precip[curr_idx + 1:]
+    else:
+        past_precip = all_precip[:24] if all_precip else []
+        forecast_precip = all_precip[24:] if all_precip else []
+
+    rainfall_accum = compute_rainfall_accumulations(past_precip, forecast_precip)
+    rainfall_24h = rainfall_accum.get("past_24h", 0.0)
 
     soil_layers = []
     for key in (

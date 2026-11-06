@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, Query
 
-from app.data.cities import find_nearest_city, CITY_BY_ID
+from app.data.cities import find_nearest_city, CITY_BY_ID, get_reference_station
 from app.services import openmeteo
 
 router = APIRouter(prefix="", tags=["hydromet"])
@@ -50,67 +50,143 @@ async def get_live_weather(
     """Retrieve accurate live weather telemetry for the selected city coordinates."""
     city = find_nearest_city(lat, lon)
     now_utc = datetime.now(timezone.utc)
+    ref_station = get_reference_station(city)
 
     try:
-        forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
+        forecast = await openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
     except Exception as exc:
-        fallback_data = openmeteo._build_climatological_fallback_forecast(lat, lon, past_days=1, forecast_days=2)
+        fallback_data = openmeteo._build_climatological_fallback_forecast(lat, lon, past_days=3, forecast_days=3)
         forecast = openmeteo.ForecastResponse.model_validate(fallback_data)
 
     current = getattr(forecast, "current", {}) or {}
     daily = getattr(forecast, "daily", {}) or {}
     hourly = getattr(forecast, "hourly", {}) or {}
 
-    # 1. Temperature
+    obs_time_str = current.get("time")
+    if not obs_time_str:
+        obs_time_str = now_utc.strftime("%Y-%m-%dT%H:%M")
+
+    # Determine current hour index in hourly series
+    hourly_times = hourly.get("time", [])
+    curr_idx = -1
+    if obs_time_str and hourly_times:
+        target_prefix = obs_time_str[:13] + ":00"
+        if target_prefix in hourly_times:
+            curr_idx = hourly_times.index(target_prefix)
+        elif obs_time_str in hourly_times:
+            curr_idx = hourly_times.index(obs_time_str)
+
+    if curr_idx < 0 and hourly_times:
+        # Fallback to middle/72 if multi-day or closest
+        curr_idx = min(len(hourly_times) - 1, max(0, 72 if len(hourly_times) >= 73 else len(hourly_times) - 1))
+
+    # Determine today's index in daily series for proper daily max/min
+    daily_times = daily.get("time", [])
+    today_str = obs_time_str[:10] if obs_time_str else now_utc.strftime("%Y-%m-%d")
+    today_idx = daily_times.index(today_str) if today_str in daily_times else (len(daily_times) // 2 if daily_times else -1)
+
+    # 1. Current Temperature
     curr_temp = current.get("temperature_2m")
-    # 2. Min/Max Temperature
+
+    # 2. Feels-like (apparent) Temperature
+    feels_like = current.get("apparent_temperature")
+    if feels_like is None and curr_temp is not None:
+        feels_like = curr_temp
+
+    # 3. Min/Max Temperature for today
     max_temps = daily.get("temperature_2m_max", [])
     min_temps = daily.get("temperature_2m_min", [])
-    t_max = max_temps[0] if max_temps and max_temps[0] is not None else curr_temp
-    t_min = min_temps[0] if min_temps and min_temps[0] is not None else curr_temp
+    if today_idx >= 0 and today_idx < len(max_temps) and max_temps[today_idx] is not None:
+        t_max = max_temps[today_idx]
+    elif max_temps and max_temps[0] is not None:
+        t_max = max_temps[0]
+    else:
+        t_max = curr_temp
 
-    # 3. Relative Humidity
+    if today_idx >= 0 and today_idx < len(min_temps) and min_temps[today_idx] is not None:
+        t_min = min_temps[today_idx]
+    elif min_temps and min_temps[0] is not None:
+        t_min = min_temps[0]
+    else:
+        t_min = curr_temp
+
+    # 4. Relative Humidity
     rh = current.get("relative_humidity_2m")
 
-    # 4. Rainfall (past 24h sum)
-    precip_sums = daily.get("precipitation_sum", [])
+    # 5. Rainfall (past 24h sum ending at current observation hour)
     past_hourly_precip = hourly.get("precipitation", [])
-    rain_24h = (
-        sum(float(v) for v in past_hourly_precip[:24] if v is not None)
-        if past_hourly_precip
-        else (precip_sums[0] if precip_sums and precip_sums[0] is not None else 0.0)
-    )
+    if past_hourly_precip and curr_idx >= 0:
+        start_24h = max(0, curr_idx - 23)
+        rain_24h = sum(float(v) for v in past_hourly_precip[start_24h : curr_idx + 1] if v is not None)
+    elif today_idx >= 0 and daily.get("precipitation_sum") and today_idx < len(daily["precipitation_sum"]):
+        rain_24h = daily["precipitation_sum"][today_idx] or 0.0
+    else:
+        rain_24h = 0.0
 
-    # 5. Precipitation intensity
+    # 6. Precipitation intensity
     precip_intensity = current.get("precipitation", current.get("rain", 0.0))
 
-    # 6. Wind Speed
+    # 7. Wind Speed, Gusts & Direction
     wind_spd = current.get("wind_speed_10m")
-
-    # 7. Wind Direction
+    wind_gusts = current.get("wind_gusts_10m")
     wind_dir = current.get("wind_direction_10m")
 
-    # 8. Atmospheric Pressure
+    # 8. Atmospheric Pressure & Cloud Cover
     pressure = current.get("surface_pressure")
+    cloud_cover = current.get("cloud_cover")
 
     # 9. Weather condition
     wmo_code = current.get("weather_code")
     condition_text = WMO_CODE_MAP.get(int(wmo_code), "Fair") if wmo_code is not None else "Clear sky"
 
-    # 10. Soil Moisture
+    # 10. Soil Moisture at current observation hour
     soil_0_1 = hourly.get("soil_moisture_0_to_1cm", [])
-    soil_moist = soil_0_1[-1] if soil_0_1 and soil_0_1[-1] is not None else None
+    if soil_0_1 and 0 <= curr_idx < len(soil_0_1):
+        soil_moist = soil_0_1[curr_idx]
+    elif soil_0_1:
+        soil_moist = soil_0_1[0]
+    else:
+        soil_moist = None
 
-    # Freshness calculation
-    freshness = "LIVE"
-    obs_time_str = current.get("time")
-    if not obs_time_str:
-        obs_time_str = now_utc.strftime("%Y-%m-%dT%H:%M")
+    # Build real 24-hour hourly forecast from high-resolution NWP model
+    hourly_forecast = []
+    if hourly_times and curr_idx >= 0:
+        end_idx = min(len(hourly_times), curr_idx + 25)
+        for i in range(curr_idx + 1, end_idx):
+            step_time = hourly_times[i]
+            time_label = step_time[-5:] if len(step_time) >= 5 else step_time
+            t_val = hourly.get("temperature_2m", [])[i] if i < len(hourly.get("temperature_2m", [])) else None
+            app_val = hourly.get("apparent_temperature", [])[i] if i < len(hourly.get("apparent_temperature", [])) else t_val
+            pr_val = hourly.get("precipitation", [])[i] if i < len(hourly.get("precipitation", [])) else 0.0
+            rh_val = hourly.get("relative_humidity_2m", [])[i] if i < len(hourly.get("relative_humidity_2m", [])) else None
+            cc_val = hourly.get("cloud_cover", [])[i] if i < len(hourly.get("cloud_cover", [])) else 0
+            w_val = hourly.get("wind_speed_10m", [])[i] if i < len(hourly.get("wind_speed_10m", [])) else None
+            w_code = hourly.get("weather_code", [])[i] if i < len(hourly.get("weather_code", [])) else None
+            cond = WMO_CODE_MAP.get(int(w_code)) if w_code is not None else (
+                "Rain" if (pr_val or 0) > 0.4 else ("Cloudy" if (cc_val or 0) > 50 else "Clear")
+            )
+
+            hourly_forecast.append({
+                "time": time_label,
+                "iso_time": step_time,
+                "temperature_c": round(float(t_val), 1) if t_val is not None else None,
+                "feels_like_c": round(float(app_val), 1) if app_val is not None else None,
+                "precipitation_mm": round(float(pr_val), 2) if pr_val is not None else 0.0,
+                "humidity_pct": round(float(rh_val), 1) if rh_val is not None else None,
+                "cloud_cover_pct": round(float(cc_val), 1) if cc_val is not None else 0,
+                "wind_speed_kmh": round(float(w_val), 1) if w_val is not None else None,
+                "condition": cond,
+            })
 
     is_fallback = getattr(forecast, "is_climatological_fallback", False)
-    source_label = "IMD Climatology Baseline (NWP rate-limited)" if is_fallback else "Open-Meteo NWP & IMD Numerical Forecast Grid"
+    source_label = "IMD Climatology Baseline (NWP rate-limited)" if is_fallback else "Open-Meteo High-Resolution NWP (ECMWF IFS / GFS) & IMD Reference"
     data_type_label = "Climatological Seasonal Normal Estimate" if is_fallback else "Numerical Weather Model Output (ECMWF IFS & IMD Assimilation)"
     freshness_label = "Seasonal Climatology Baseline" if is_fallback else "NWP Assimilation Cycle"
+
+    grid_lat = getattr(forecast, "latitude", lat)
+    grid_lon = getattr(forecast, "longitude", lon)
+    elevation_m = getattr(forecast, "elevation", None)
+    tz_name = getattr(forecast, "timezone", "Asia/Kolkata") or "Asia/Kolkata"
 
     return {
         "status": "ONLINE",
@@ -118,11 +194,17 @@ async def get_live_weather(
         "state": city["state"],
         "lat": lat,
         "lon": lon,
+        "grid_lat": round(float(grid_lat), 4) if grid_lat is not None else lat,
+        "grid_lon": round(float(grid_lon), 4) if grid_lon is not None else lon,
+        "elevation_m": round(float(elevation_m), 1) if elevation_m is not None else None,
+        "timezone": tz_name,
         "source": source_label,
         "data_type": data_type_label,
         "model_provider": "IMD Climatology / ECMWF" if is_fallback else "ECMWF IFS / IMD High-Resolution Assimilation",
+        "measurement_type": "model_estimate",
         "is_direct_sensor_wire": False,
         "is_model_output": True,
+        "reference_station": ref_station,
         "observation_time": obs_time_str,
         "observation_timestamp": obs_time_str,
         "fetched_at": now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -130,18 +212,22 @@ async def get_live_weather(
         "is_live": not is_fallback,
         "parameters": {
             "temperature_c": round(float(curr_temp), 1) if curr_temp is not None else "DATA UNAVAILABLE",
+            "feels_like_c": round(float(feels_like), 1) if feels_like is not None else "DATA UNAVAILABLE",
             "temp_min_c": round(float(t_min), 1) if t_min is not None else "DATA UNAVAILABLE",
             "temp_max_c": round(float(t_max), 1) if t_max is not None else "DATA UNAVAILABLE",
             "relative_humidity_pct": round(float(rh), 1) if rh is not None else "DATA UNAVAILABLE",
             "rainfall_past_24h_mm": round(float(rain_24h), 1) if rain_24h is not None else 0.0,
             "precipitation_intensity_mm_h": round(float(precip_intensity), 2) if precip_intensity is not None else 0.0,
             "wind_speed_kmh": round(float(wind_spd), 1) if wind_spd is not None else "DATA UNAVAILABLE",
+            "wind_gusts_kmh": round(float(wind_gusts), 1) if wind_gusts is not None else "DATA UNAVAILABLE",
             "wind_direction_deg": int(wind_dir) if wind_dir is not None else "DATA UNAVAILABLE",
             "surface_pressure_hpa": round(float(pressure), 1) if pressure is not None else "DATA UNAVAILABLE",
+            "cloud_cover_pct": round(float(cloud_cover), 1) if cloud_cover is not None else "DATA UNAVAILABLE",
             "weather_condition": condition_text,
             "weather_code": wmo_code,
             "soil_moisture_m3_m3": round(float(soil_moist), 3) if soil_moist is not None else "DATA UNAVAILABLE",
         },
+        "hourly_forecast": hourly_forecast,
     }
 
 

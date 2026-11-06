@@ -202,31 +202,63 @@ export interface RiskGridResponse {
   radar?: boolean
 }
 
+export interface HourlyForecastItem {
+  time: string
+  iso_time: string
+  temperature_c: number | null
+  feels_like_c: number | null
+  precipitation_mm: number
+  humidity_pct: number | null
+  cloud_cover_pct: number
+  wind_speed_kmh: number | null
+  condition: string
+}
+
 export interface LiveWeatherResponse {
   status: string
   city: string
   state: string
   lat: number
   lon: number
+  grid_lat?: number
+  grid_lon?: number
+  elevation_m?: number | null
+  timezone?: string
   source: string
+  data_type?: string
+  model_provider?: string
+  measurement_type?: string
+  is_direct_sensor_wire?: boolean
+  is_model_output?: boolean
+  reference_station?: {
+    name: string
+    wmo_id?: string
+    station_type?: string
+    authority?: string
+  }
   observation_time: string
+  observation_timestamp?: string
   fetched_at: string
   freshness: string
-  is_observation: boolean
+  is_live?: boolean
   parameters: {
     temperature_c: number | string
+    feels_like_c?: number | string
     temp_min_c: number | string
     temp_max_c: number | string
     relative_humidity_pct: number | string
     rainfall_past_24h_mm: number | string
     precipitation_intensity_mm_h: number | string
     wind_speed_kmh: number | string
+    wind_gusts_kmh?: number | string
     wind_direction_deg: number | string
     surface_pressure_hpa: number | string
+    cloud_cover_pct?: number | string
     weather_condition: string
     weather_code?: number
     soil_moisture_m3_m3: number | string
   }
+  hourly_forecast?: HourlyForecastItem[]
 }
 
 export interface WaterStation {

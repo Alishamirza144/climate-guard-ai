@@ -97,14 +97,61 @@ async def heat_risk(
             "timestamp": now_iso,
         }
 
-    tmax = max(temperature_values)
-    tmin = min(temperature_values)
-    avg_temp = sum(temperature_values) / len(temperature_values)
-    humidity = median(humidity_values) if humidity_values else 50.0
-    wind = median(wind_values) if wind_values else 10.0
-    solar = median(solar_values) if solar_values else 200.0
-    current_temp = temperature_values[-1] if temperature_values else avg_temp
-    feels_like = apparent_temps[-1] if apparent_temps else current_temp
+    current = getattr(forecast, "current", {}) or {}
+    daily = getattr(forecast, "daily", {}) or {}
+
+    obs_time_str = current.get("time") or now_iso
+    hourly_times = hourly.get("time", [])
+    curr_idx = -1
+    if obs_time_str and hourly_times:
+        prefix = obs_time_str[:13] + ":00"
+        if prefix in hourly_times:
+            curr_idx = hourly_times.index(prefix)
+        elif obs_time_str in hourly_times:
+            curr_idx = hourly_times.index(obs_time_str)
+    if curr_idx < 0 and hourly_times:
+        curr_idx = min(len(hourly_times) - 1, max(0, 72 if len(hourly_times) >= 73 else 0))
+
+    daily_times = daily.get("time", [])
+    today_str = obs_time_str[:10]
+    today_idx = daily_times.index(today_str) if today_str in daily_times else (len(daily_times) // 2 if daily_times else -1)
+
+    curr_temp = current.get("temperature_2m")
+    if curr_temp is None and temperature_values:
+        curr_temp = temperature_values[curr_idx] if 0 <= curr_idx < len(temperature_values) else temperature_values[0]
+
+    curr_feels_like = current.get("apparent_temperature")
+    if curr_feels_like is None:
+        curr_feels_like = apparent_temps[curr_idx] if 0 <= curr_idx < len(apparent_temps) else curr_temp
+
+    max_temps = daily.get("temperature_2m_max", [])
+    min_temps = daily.get("temperature_2m_min", [])
+    if today_idx >= 0 and today_idx < len(max_temps) and max_temps[today_idx] is not None:
+        tmax = float(max_temps[today_idx])
+    elif max_temps and max_temps[0] is not None:
+        tmax = float(max_temps[0])
+    elif temperature_values:
+        tmax = max(temperature_values[max(0, curr_idx - 12) : min(len(temperature_values), curr_idx + 13)])
+    else:
+        tmax = float(curr_temp) if curr_temp is not None else 30.0
+
+    if today_idx >= 0 and today_idx < len(min_temps) and min_temps[today_idx] is not None:
+        tmin = float(min_temps[today_idx])
+    elif min_temps and min_temps[0] is not None:
+        tmin = float(min_temps[0])
+    elif temperature_values:
+        tmin = min(temperature_values[max(0, curr_idx - 12) : min(len(temperature_values), curr_idx + 13)])
+    else:
+        tmin = float(curr_temp) if curr_temp is not None else 20.0
+
+    curr_rh = current.get("relative_humidity_2m")
+    humidity = float(curr_rh) if curr_rh is not None else (median(humidity_values) if humidity_values else 50.0)
+    curr_wind = current.get("wind_speed_10m")
+    wind = float(curr_wind) if curr_wind is not None else (median(wind_values) if wind_values else 10.0)
+    solar = float(solar_values[curr_idx]) if (0 <= curr_idx < len(solar_values) and solar_values[curr_idx] is not None) else (median(solar_values) if solar_values else 200.0)
+    avg_temp = (tmax + tmin) / 2.0
+    current_temp = float(curr_temp) if curr_temp is not None else avg_temp
+    feels_like = float(curr_feels_like) if curr_feels_like is not None else current_temp
 
     normal_tmax = median(normals.get("temperature_2m_max", [tmax])) if normals.get("temperature_2m_max") else tmax
     normal_tmin = max(tmin, 24.0)
@@ -116,6 +163,8 @@ async def heat_risk(
     uncertainty_pct = round((1.0 - confidence) * 100.0, 1)
 
     duration_days = max(1, len([value for value in temperature_values if value >= 40.0]))
+    trend_24h = temperature_values[curr_idx : curr_idx + 24] if (curr_idx >= 0 and curr_idx + 24 <= len(temperature_values)) else temperature_values[:24]
+
     result = score_heat_risk(
         tmax_c=tmax,
         tmin_c=tmin,
@@ -126,7 +175,7 @@ async def heat_risk(
         tmax_normal_c=normal_tmax,
         tmin_normal_c=normal_tmin,
         location_name=location_name,
-        hourly_trend=temperature_values[:24],
+        hourly_trend=trend_24h,
         duration_days=duration_days,
     )
 

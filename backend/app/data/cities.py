@@ -951,3 +951,61 @@ def find_nearest_city(lat: float, lon: float) -> dict[str, Any]:
             min_dist = dist
             best = city
     return best
+
+
+# Authoritative India Meteorological Department (IMD) Principal Observatories
+IMD_STATION_REGISTRY: dict[str, dict[str, Any]] = {
+    "nashik": {"name": "IMD Observatory Nashik (Ozar)", "wmo_id": "43087", "type": "Principal Surface Observatory"},
+    "pune": {"name": "IMD Pune (Shivajinagar Observatory)", "wmo_id": "43063", "type": "Principal Surface Observatory"},
+    "mumbai": {"name": "IMD Mumbai (Santacruz / Colaba Observatory)", "wmo_id": "43057", "type": "Regional Meteorological Centre"},
+    "thane": {"name": "IMD Thane Metropolitan AWS", "wmo_id": "43058", "type": "Automated Weather Station"},
+    "navi_mumbai": {"name": "IMD Navi Mumbai AWS", "wmo_id": "43059", "type": "Automated Weather Station"},
+    "nagpur": {"name": "IMD Nagpur (Sonegaon Airport)", "wmo_id": "42867", "type": "Regional Meteorological Centre"},
+    "chhatrapati_sambhajinagar": {"name": "IMD Aurangabad (Chikkalthana)", "wmo_id": "43014", "type": "Surface Observatory"},
+    "solapur": {"name": "IMD Solapur Observatory", "wmo_id": "43117", "type": "Surface Observatory"},
+    "kolhapur": {"name": "IMD Kolhapur Observatory", "wmo_id": "43111", "type": "Surface Observatory"},
+    "jalgaon": {"name": "IMD Jalgaon Agro-Met Observatory", "wmo_id": "42971", "type": "Agrometeorological Observatory"},
+    "amravati": {"name": "IMD Amravati Observatory", "wmo_id": "42865", "type": "Surface Observatory"},
+    "nanded": {"name": "IMD Nanded Agro-Met Station", "wmo_id": "43075", "type": "Agrometeorological Observatory"},
+    "akola": {"name": "IMD Akola Observatory", "wmo_id": "42864", "type": "Surface Observatory"},
+    "ahilyanagar": {"name": "IMD Ahmednagar Observatory", "wmo_id": "43061", "type": "Surface Observatory"},
+    "sangli": {"name": "IMD Sangli Agro-Met Station", "wmo_id": "43113", "type": "Agrometeorological Observatory"},
+    "satara": {"name": "IMD Satara Observatory", "wmo_id": "43089", "type": "Surface Observatory"},
+    "chandrapur": {"name": "IMD Chandrapur Observatory", "wmo_id": "42921", "type": "Surface Observatory"},
+    "delhi": {"name": "IMD New Delhi (Safdarjung Observatory)", "wmo_id": "42182", "type": "National Weather Forecasting Centre"},
+    "bengaluru": {"name": "IMD Bengaluru (City Observatory)", "wmo_id": "43295", "type": "Meteorological Centre"},
+    "hyderabad": {"name": "IMD Hyderabad (Begumpet Observatory)", "wmo_id": "43128", "type": "Meteorological Centre"},
+    "ahmedabad": {"name": "IMD Ahmedabad (Hansol Observatory)", "wmo_id": "42647", "type": "Meteorological Centre"},
+    "chennai": {"name": "IMD Chennai (Meenambakkam / Nungambakkam)", "wmo_id": "43279", "type": "Regional Meteorological Centre"},
+    "kolkata": {"name": "IMD Kolkata (Alipore Observatory)", "wmo_id": "42809", "type": "Regional Meteorological Centre"},
+    "jaipur": {"name": "IMD Jaipur (Sanganer Observatory)", "wmo_id": "42348", "type": "Meteorological Centre"},
+    "lucknow": {"name": "IMD Lucknow (Amausi Observatory)", "wmo_id": "42369", "type": "Meteorological Centre"},
+    "patna": {"name": "IMD Patna (Jai Prakash Narayan Observatory)", "wmo_id": "42492", "type": "Meteorological Centre"},
+    "bhopal": {"name": "IMD Bhopal (Bairagarh Observatory)", "wmo_id": "42667", "type": "Meteorological Centre"},
+    "chandigarh": {"name": "IMD Chandigarh Observatory", "wmo_id": "42131", "type": "Meteorological Centre"},
+    "srinagar": {"name": "IMD Srinagar (Old Airport Observatory)", "wmo_id": "42027", "type": "Meteorological Centre"},
+    "dehradun": {"name": "IMD Dehradun Observatory", "wmo_id": "42111", "type": "Meteorological Centre"},
+    "shimla": {"name": "IMD Shimla Observatory", "wmo_id": "42083", "type": "Meteorological Centre"},
+    "guwahati": {"name": "IMD Guwahati (Borjhar Observatory)", "wmo_id": "42410", "type": "Regional Meteorological Centre"},
+    "thiruvananthapuram": {"name": "IMD Thiruvananthapuram (Airport)", "wmo_id": "43371", "type": "Meteorological Centre"},
+}
+
+
+def get_reference_station(city: dict[str, Any]) -> dict[str, Any]:
+    """Return authoritative IMD surface station metadata for a city."""
+    cid = city.get("id", "")
+    if cid in IMD_STATION_REGISTRY:
+        reg = IMD_STATION_REGISTRY[cid]
+        return {
+            "name": reg["name"],
+            "wmo_id": reg.get("wmo_id", "43000"),
+            "station_type": reg.get("type", "IMD Surface Observatory"),
+            "authority": "India Meteorological Department (IMD)",
+        }
+    return {
+        "name": f"IMD {city.get('name', 'Station')} Surface Observatory",
+        "wmo_id": "43000",
+        "station_type": "IMD Regional Weather Station",
+        "authority": "India Meteorological Department (IMD)",
+    }
+

@@ -40,30 +40,39 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#285274]">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Radio className="h-5 w-5 text-[#25C5DC] animate-pulse" />
             <h3 className="font-display font-extrabold text-base sm:text-lg text-[#F3F8FF]">
               Atmospheric Telemetry & Model Assimilation
             </h3>
             <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-[#2389D7]/20 text-[#25C5DC] border border-[#2389D7]/40">
-              ECMWF IFS & IMD Assimilation
+              ECMWF IFS & IMD Reference
+            </span>
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-[#F4BC4D]/15 text-[#F4BC4D] border border-[#F4BC4D]/30">
+              Model Estimate
             </span>
           </div>
-          <p className="text-xs text-[#B6C9DC] mt-0.5">
-            Coordinates: {weather ? formatCoordinates(weather.lat, weather.lon) : ''} •{' '}
+          <p className="text-xs text-[#B6C9DC] mt-1">
+            Station: <span className="font-bold text-[#F3F8FF]">{weather?.reference_station?.name || `IMD ${weather?.city || ''} Observatory`}</span>
+            {weather?.reference_station?.wmo_id ? ` (WMO: ${weather.reference_station.wmo_id})` : ''} •{' '}
             <span className="font-semibold text-[#8ED8F5]">
               {weather?.city ? localizeCity(weather.city, lang) : ''}, {weather?.state ? localizeState(weather.state, lang) : ''}
             </span>
+          </p>
+          <p className="text-[11px] text-[#8ED8F5]/80 mt-0.5">
+            Coord: {weather ? formatCoordinates(weather.lat, weather.lon) : ''}
+            {weather?.grid_lat && weather?.grid_lon ? ` • Grid: ${formatCoordinates(weather.grid_lat, weather.grid_lon)}` : ''}
+            {weather?.elevation_m ? ` • ${formatNumber(weather.elevation_m)} m ASL` : ''}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[#B6C9DC]">
           <span className="flex items-center gap-1 rounded-xl bg-[#0E2B49] px-2.5 py-1 border border-[#285274]">
             <Clock className="h-3.5 w-3.5 text-[#25C5DC]" />
-            Model Cycle: {weather?.observation_time ? formatDigits(weather.observation_time.replace('T', ' '), lang) : 'Current'}
+            Cycle: {weather?.observation_time ? formatDigits(weather.observation_time.replace('T', ' '), lang) : 'Current'} ({weather?.timezone || 'IST'})
           </span>
           <span className="rounded-xl bg-[#0E2B49] px-2.5 py-1 border border-[#285274] text-[10px] text-[#25C5DC] font-bold">
-            Open-Meteo Numerical Grid
+            ECMWF High-Res NWP
           </span>
         </div>
       </div>
@@ -86,7 +95,10 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
               <div className="text-2xl font-black text-[#F3F8FF]">
                 {typeof params.temperature_c === 'number' ? `${formatNumber(params.temperature_c, { maximumFractionDigits: 1 })}°C` : params.temperature_c}
               </div>
-              <p className="text-[10px] font-bold text-[#8ED8F5] mt-0.5">
+              <p className="text-[10px] font-bold text-[#25C5DC] mt-0.5">
+                Feels like: {typeof params.feels_like_c === 'number' ? `${formatNumber(params.feels_like_c, { maximumFractionDigits: 1 })}°C` : (typeof params.temperature_c === 'number' ? `${formatNumber(params.temperature_c, { maximumFractionDigits: 1 })}°C` : '—')}
+              </p>
+              <p className="text-[10px] font-bold text-[#8ED8F5]">
                 Min: {formatNumber(params.temp_min_c, { maximumFractionDigits: 1 })}°C • Max: {formatNumber(params.temp_max_c, { maximumFractionDigits: 1 })}°C
               </p>
             </div>
@@ -144,8 +156,8 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
                   ? `${formatNumber(params.wind_speed_kmh, { maximumFractionDigits: 1 })} km/h`
                   : params.wind_speed_kmh}
               </div>
-              <p className="text-[10px] font-bold text-[#B6C9DC] mt-0.5">
-                Bearing: {formatNumber(params.wind_direction_deg)}° (Vector)
+              <p className="text-[10px] font-bold text-[#8ED8F5] mt-0.5">
+                Bearing: {formatNumber(params.wind_direction_deg)}° • Gusts: {typeof params.wind_gusts_kmh === 'number' ? `${formatNumber(params.wind_gusts_kmh, { maximumFractionDigits: 1 })} km/h` : '—'}
               </p>
             </div>
           </div>
@@ -153,7 +165,7 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
           {/* 5. Pressure & Soil Moisture */}
           <div className="rounded-2xl border border-[#285274] bg-[#0E2B49] p-3.5 flex flex-col justify-between">
             <div className="flex items-center justify-between text-xs font-bold text-[#B6C9DC]">
-              <span>Pressure & Soil</span>
+              <span>Pressure & Clouds</span>
               <Gauge className="h-4 w-4 text-[#35C58B]" />
             </div>
             <div className="mt-2">
@@ -161,8 +173,10 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
                 {params.weather_condition || 'Fair'}
               </div>
               <p className="text-[10px] font-bold text-[#B6C9DC] mt-0.5">
-                {formatNumber(params.surface_pressure_hpa)} hPa • Soil:{' '}
-                {typeof params.soil_moisture_m3_m3 === 'number'
+                {formatNumber(params.surface_pressure_hpa)} hPa • Clouds: {typeof params.cloud_cover_pct === 'number' ? `${formatNumber(params.cloud_cover_pct)}%` : '—'}
+              </p>
+              <p className="text-[10px] font-bold text-[#35C58B]">
+                Soil: {typeof params.soil_moisture_m3_m3 === 'number'
                   ? `${formatNumber(params.soil_moisture_m3_m3, { minimumFractionDigits: 2, maximumFractionDigits: 3 })} m³/m³`
                   : 'N/A'}
               </p>

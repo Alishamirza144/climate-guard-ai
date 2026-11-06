@@ -194,6 +194,8 @@ def _build_climatological_fallback_forecast(
             "surface_pressure": 1012.0,
             "wind_speed_10m": 12.0,
             "wind_direction_10m": 240,
+            "cloud_cover": 20,
+            "wind_gusts_10m": 16.0,
         },
         "daily": {
             "temperature_2m_max": t_max_list,
@@ -249,7 +251,7 @@ async def get_forecast(
                 "longitude": point.longitude,
                 "hourly": ",".join(HOURLY_VARIABLES),
                 "daily": ",".join(DAILY_VARIABLES),
-                "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m",
+                "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,cloud_cover,wind_gusts_10m",
                 "timezone": "auto",
                 "past_days": canonical_past,
                 "forecast_days": canonical_forecast,
@@ -274,7 +276,7 @@ async def get_forecast_multi(
             "longitude": longitudes,
             "hourly": ",".join(HOURLY_VARIABLES),
             "daily": ",".join(DAILY_VARIABLES),
-            "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m",
+            "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,cloud_cover,wind_gusts_10m",
             "timezone": "auto",
         },
     )

@@ -93,24 +93,53 @@ async def _process_crop_risk(
             "timestamp": now_iso,
         }
 
+    current = getattr(forecast, "current", {}) or {}
     hourly = getattr(forecast, "hourly", {}) or {}
+    obs_time_str = current.get("time") or now_iso
+    hourly_times = hourly.get("time", [])
+    curr_idx = -1
+    if obs_time_str and hourly_times:
+        prefix = obs_time_str[:13] + ":00"
+        if prefix in hourly_times:
+            curr_idx = hourly_times.index(prefix)
+        elif obs_time_str in hourly_times:
+            curr_idx = hourly_times.index(obs_time_str)
+    if curr_idx < 0 and hourly_times:
+        curr_idx = min(len(hourly_times) - 1, max(0, 72 if len(hourly_times) >= 73 else 0))
+
     temps = [float(v) for v in hourly.get("temperature_2m", []) if v is not None]
     rh_vals = [float(v) for v in hourly.get("relative_humidity_2m", []) if v is not None]
     rain_vals = [float(v) for v in hourly.get("precipitation", []) if v is not None]
 
+    def _layer_val(key: str, default: float) -> float:
+        vals = hourly.get(key, [])
+        if vals and 0 <= curr_idx < len(vals) and vals[curr_idx] is not None:
+            return float(vals[curr_idx])
+        elif vals and vals[0] is not None:
+            return float(vals[0])
+        return default
+
     soil_layers = {
-        "soil_moisture_0_to_1cm": float(hourly.get("soil_moisture_0_to_1cm", [0.22])[0] or 0.22),
-        "soil_moisture_1_to_3cm": float(hourly.get("soil_moisture_1_to_3cm", [0.24])[0] or 0.24),
-        "soil_moisture_3_to_9cm": float(hourly.get("soil_moisture_3_to_9cm", [0.25])[0] or 0.25),
-        "soil_moisture_9_to_27cm": float(hourly.get("soil_moisture_9_to_27cm", [0.26])[0] or 0.26),
-        "soil_moisture_27_to_81cm": float(hourly.get("soil_moisture_27_to_81cm", [0.27])[0] or 0.27),
+        "soil_moisture_0_to_1cm": _layer_val("soil_moisture_0_to_1cm", 0.22),
+        "soil_moisture_1_to_3cm": _layer_val("soil_moisture_1_to_3cm", 0.24),
+        "soil_moisture_3_to_9cm": _layer_val("soil_moisture_3_to_9cm", 0.25),
+        "soil_moisture_9_to_27cm": _layer_val("soil_moisture_9_to_27cm", 0.26),
+        "soil_moisture_27_to_81cm": _layer_val("soil_moisture_27_to_81cm", 0.27),
     }
 
     avg_soil_moisture = sum(soil_layers.values()) / len(soil_layers)
-    rain_24h = sum(rain_vals[:24]) if rain_vals else 0.0
-    rain_7d = sum(rain_vals) if rain_vals else 0.0
-    curr_temp = temps[-1] if temps else 27.0
-    curr_rh = rh_vals[-1] if rh_vals else 55.0
+    if rain_vals and curr_idx >= 0:
+        rain_24h = sum(rain_vals[max(0, curr_idx - 23) : curr_idx + 1])
+    elif rain_vals:
+        rain_24h = sum(rain_vals[:24])
+    else:
+        rain_24h = 0.0
+
+    rain_7d = sum(rain_vals[curr_idx : min(len(rain_vals), curr_idx + 168)]) if (rain_vals and curr_idx >= 0) else (sum(rain_vals) if rain_vals else 0.0)
+    curr_temp_raw = current.get("temperature_2m")
+    curr_temp = float(curr_temp_raw) if curr_temp_raw is not None else (temps[curr_idx] if (0 <= curr_idx < len(temps)) else (temps[0] if temps else 27.0))
+    curr_rh_raw = current.get("relative_humidity_2m")
+    curr_rh = float(curr_rh_raw) if curr_rh_raw is not None else (rh_vals[curr_idx] if (0 <= curr_idx < len(rh_vals)) else (rh_vals[0] if rh_vals else 55.0))
 
     # If crop is specified, run engine
     if crop and sowing_date:
