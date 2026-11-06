@@ -6,6 +6,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, Tooltip } from 'react-l
 import { MapPin, Navigation, Info } from 'lucide-react'
 import { useLocationContext } from './LocationProvider'
 import type { CityData } from '../data/cities'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeCity, localizeState } from '../i18n/locations'
 
 // Fix standard Leaflet default icon issues in bundled React
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -53,6 +55,7 @@ interface IndiaRiskMapProps {
 export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapProps) {
   const { t } = useTranslation()
   const { location, selectCity, cities, currentCity } = useLocationContext()
+  const { formatCoordinates, lang } = useLocaleFormatter()
 
   return (
     <div className="relative h-[360px] w-full overflow-hidden rounded-3xl border border-[#285274] shadow-2xl bg-[#071A33]">
@@ -87,20 +90,20 @@ export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapP
             >
               <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
                 <div className="text-xs font-bold text-white bg-[#071A33] px-2 py-1 rounded border border-[#285274]">
-                  {city.name} ({city.state})
+                  {localizeCity(city.id, lang)} ({localizeState(city.state, lang)})
                 </div>
               </Tooltip>
 
               <Popup>
                 <div className="p-1 space-y-1.5 text-xs text-white min-w-[160px] bg-[#0E2B49] rounded-xl">
                   <div className="flex items-center justify-between gap-2 border-b border-[#285274] pb-1">
-                    <span className="font-extrabold text-sm text-[#25C5DC]">{city.name}</span>
+                    <span className="font-extrabold text-sm text-[#25C5DC]">{localizeCity(city.id, lang)}</span>
                     <span className="text-[10px] bg-[#102F50] text-[#8ED8F5] px-1.5 py-0.5 rounded font-bold border border-[#285274]">
-                      {city.state}
+                      {localizeState(city.state, lang)}
                     </span>
                   </div>
                   <div className="text-[11px] text-[#B6C9DC]">
-                    {t('common.coordinates', 'Coordinates')}: {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
+                    {t('common.coordinates', 'Coordinates')}: {formatCoordinates(city.lat, city.lon)}
                   </div>
                   {city.rivers.length > 0 && (
                     <div className="text-[11px] text-[#8ED8F5]">

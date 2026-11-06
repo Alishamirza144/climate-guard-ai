@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Activity, AlertTriangle, CheckCircle2, RefreshCw, XCircle } from 'lucide-react'
 import { getLatencyMetric, subscribeLatency, LatencyMetric } from '../lib/latency'
 import { translateLatencyStatus } from '../i18n/dynamic'
+import { useLocaleFormatter } from '../i18n/formatters'
 
 export default function DataLatencyIndicator() {
   const { t } = useTranslation()
+  const { formatNumber, formatDigits, lang } = useLocaleFormatter()
   const [metric, setMetric] = useState<LatencyMetric>(getLatencyMetric())
   const [collapsed, setCollapsed] = useState(false)
 
@@ -61,7 +63,7 @@ export default function DataLatencyIndicator() {
           <div className="flex items-center gap-1.5">
             {metric.isFetching && <RefreshCw className="w-3 h-3 text-[#25C5DC] animate-spin" />}
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${statusColor}`}>
-              {metric.totalClientSeconds}s
+              {formatNumber(metric.totalClientSeconds, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}s
             </span>
           </div>
         </div>
@@ -86,19 +88,19 @@ export default function DataLatencyIndicator() {
             <div className="space-y-1.5 font-medium">
               <div className="flex justify-between items-center text-[#B6C9DC]">
                 <span>{t('latency.weatherApi', 'Weather API')}:</span>
-                <span className="font-mono font-semibold text-[#8ED8F5]">{metric.weatherApiSeconds} s</span>
+                <span className="font-mono font-semibold text-[#8ED8F5]">{formatNumber(metric.weatherApiSeconds, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s</span>
               </div>
               <div className="flex justify-between items-center text-[#B6C9DC]">
                 <span>{t('latency.riskEngine', 'Risk Engine')}:</span>
-                <span className="font-mono font-semibold text-[#8ED8F5]">{metric.riskEngineSeconds} s</span>
+                <span className="font-mono font-semibold text-[#8ED8F5]">{formatNumber(metric.riskEngineSeconds, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s</span>
               </div>
               <div className="flex justify-between items-center text-[#B6C9DC]">
                 <span>{t('latency.backendResponse', 'Backend Response')}:</span>
-                <span className="font-mono font-semibold text-[#8ED8F5]">{metric.backendSeconds} s</span>
+                <span className="font-mono font-semibold text-[#8ED8F5]">{formatNumber(metric.backendSeconds, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s</span>
               </div>
               <div className="pt-1.5 border-t border-[#285274]/60 flex justify-between items-center text-[10px]">
                 <span className="text-[#B6C9DC]">{t('latency.lastUpdated', 'Last Updated')}:</span>
-                <span className="font-mono text-[#F3F8FF] font-bold">{metric.lastUpdated}</span>
+                <span className="font-mono text-[#F3F8FF] font-bold">{formatDigits(metric.lastUpdated, lang)}</span>
               </div>
               <div className="flex justify-between items-center text-[10px]">
                 <span className="text-[#B6C9DC]">{t('latency.status', 'Status')}:</span>

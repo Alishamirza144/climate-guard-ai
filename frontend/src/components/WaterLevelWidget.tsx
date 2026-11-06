@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Waves, TrendingUp, TrendingDown, Minus, Info } from 'lucide-react'
 import type { WaterLevelsResponse, WaterStation } from '../lib/api'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeCity, localizeState } from '../i18n/locations'
 
 interface WaterLevelWidgetProps {
   waterData: WaterLevelsResponse | undefined
@@ -9,6 +11,7 @@ interface WaterLevelWidgetProps {
 
 export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWidgetProps) {
   const { t } = useTranslation()
+  const { formatNumber, formatDigits, lang } = useLocaleFormatter()
   if (isLoading) {
     return (
       <div className="rounded-3xl border border-[#285274] bg-[#12385C] p-5 shadow-lg animate-pulse space-y-4">
@@ -41,13 +44,13 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
           <p className="text-xs text-[#B6C9DC] mt-0.5">
             {t('water.activeChannels', 'Active river channels, tidal stations, and hydrometric gauges for')}{' '}
             <span className="font-semibold text-[#8ED8F5]">
-              {waterData?.city}, {waterData?.state}
+              {waterData?.city ? localizeCity(waterData.city, lang) : ''}, {waterData?.state ? localizeState(waterData.state, lang) : ''}
             </span>
           </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-semibold text-[#B6C9DC]">
-          <span>{t('water.modelCycle', 'Model Cycle')}: {waterData?.timestamp || t('common.live', 'Live')}</span>
+          <span>{t('water.modelCycle', 'Model Cycle')}: {waterData?.timestamp ? formatDigits(waterData.timestamp, lang) : t('common.live', 'Live')}</span>
         </div>
       </div>
 
@@ -101,7 +104,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
                   <div className="mt-3 flex items-baseline justify-between">
                     <div>
                       <span className="text-2xl font-black font-mono text-[#F3F8FF]">
-                        {st.current_water_level_m} {st.unit}
+                        {formatNumber(st.current_water_level_m, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} {st.unit}
                       </span>
                       <span className="block text-[10px] font-bold text-[#B6C9DC] uppercase tracking-wider">
                         {t('water.calibratedStage', 'Calibrated River Stage')}
@@ -112,11 +115,11 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
                       <div className="flex items-center gap-1 text-xs font-bold">
                         {st.water_level_change_3h_m > 0 ? (
                           <span className="flex items-center text-[#F06470]">
-                            <TrendingUp className="h-3.5 w-3.5 mr-0.5" />+{st.water_level_change_3h_m}m
+                            <TrendingUp className="h-3.5 w-3.5 mr-0.5" />+{formatNumber(st.water_level_change_3h_m, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}m
                           </span>
                         ) : st.water_level_change_3h_m < 0 ? (
                           <span className="flex items-center text-[#35C58B]">
-                            <TrendingDown className="h-3.5 w-3.5 mr-0.5" />{st.water_level_change_3h_m}m
+                            <TrendingDown className="h-3.5 w-3.5 mr-0.5" />{formatNumber(st.water_level_change_3h_m, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}m
                           </span>
                         ) : (
                           <span className="flex items-center text-[#B6C9DC]">
@@ -126,7 +129,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
                       </div>
                       <span className="text-[10px] text-[#B6C9DC] font-semibold">
                         {st.rate_of_change_m_per_hour >= 0 ? '+' : ''}
-                        {st.rate_of_change_m_per_hour} m/h
+                        {formatNumber(st.rate_of_change_m_per_hour, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} m/h
                       </span>
                     </div>
                   </div>
@@ -136,8 +139,8 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
                 <div>
                   <div className="flex items-center justify-between text-[10px] font-bold text-[#B6C9DC] mb-1">
                     <span>{t('common.normalFlow', 'Normal Flow')}</span>
-                    <span>{t('risk.warning', 'Warning')}: {st.warning_threshold_m}m</span>
-                    <span className="text-[#F06470]">{t('risk.critical', 'Danger')}: {st.danger_threshold_m}m</span>
+                    <span>{t('risk.warning', 'Warning')}: {formatNumber(st.warning_threshold_m, { minimumFractionDigits: 1 })}m</span>
+                    <span className="text-[#F06470]">{t('risk.critical', 'Danger')}: {formatNumber(st.danger_threshold_m, { minimumFractionDigits: 1 })}m</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-[#102F50] overflow-hidden">
                     <div

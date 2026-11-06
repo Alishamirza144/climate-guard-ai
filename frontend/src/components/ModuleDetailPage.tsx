@@ -17,6 +17,8 @@ import { useLocationContext } from './LocationProvider'
 import { DataSourceBadge } from './ui/DataSourceBadge'
 import { RiskGauge } from './ui/RiskGauge'
 import { api } from '../lib/api'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeCity, localizeLocationLabel } from '../i18n/locations'
 
 export type ModuleAudience = 'Citizen' | 'Authority' | 'Farmer'
 export type ModuleKey = 'flood' | 'heat' | 'fire' | 'crop'
@@ -71,6 +73,7 @@ export default function ModuleDetailPage({
 }: ModuleDetailPageProps) {
   const { t } = useTranslation()
   const { location } = useLocationContext()
+  const { formatNumber, formatDigits, lang } = useLocaleFormatter()
   const [audience, setAudience] = useState<ModuleAudience>('Citizen')
   const [tab, setTab] = useState('Overview')
   const [addedRainMm, setAddedRainMm] = useState(25)
@@ -121,26 +124,26 @@ export default function ModuleDetailPage({
     return [
       {
         label: t('risk.score', 'Risk score'),
-        value: isInsufficient ? 'N/A' : `${Math.round(riskScore)}/100`,
+        value: isInsufficient ? 'N/A' : `${formatDigits(Math.round(riskScore), lang)}/${formatDigits(100, lang)}`,
         icon: Gauge,
       },
       {
         label: t('risk.confidence', 'Model Confidence'),
-        value: isInsufficient ? '0%' : `${Math.min(99, Math.round(normalizePercent(payload.confidence ?? payload.probability ?? 0.90)))}%`,
+        value: isInsufficient ? `${formatDigits(0, lang)}%` : `${formatDigits(Math.min(99, Math.round(normalizePercent(payload.confidence ?? payload.probability ?? 0.90))), lang)}%`,
         icon: ShieldCheck,
       },
       {
         label: t('dashboard.cycle', 'Lead time'),
-        value: `${Math.max(0, Math.round(asNumber(payload.lead_time_hours ?? 24)))}h`,
+        value: `${formatDigits(Math.max(0, Math.round(asNumber(payload.lead_time_hours ?? 24))), lang)}h`,
         icon: ClockIcon,
       },
       {
         label: t('city.currentLocation', 'Catchment'),
-        value: String(payload.city_name ? `${payload.city_name}` : location.label.split(',')[0]),
+        value: String(payload.city_name ? localizeCity(payload.city_name as string, lang) : localizeLocationLabel(location.label.split(',')[0], lang)),
         icon: MapPinned,
       },
     ]
-  }, [payload, riskScore, isInsufficient, location.label, t])
+  }, [payload, riskScore, isInsufficient, location.label, t, lang, formatDigits])
 
   const tabDefs = useMemo(() => [
     { key: 'Overview', label: t('common.overview', 'Overview') },
@@ -218,7 +221,7 @@ export default function ModuleDetailPage({
             <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">
               {t('common.analyticalNarrative', 'Analytical Narrative')}
             </p>
-            <p className="text-xs text-[#8ED8F5] font-semibold">{t('dashboard.updatedAt', 'Updated')} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <p className="text-xs text-[#8ED8F5] font-semibold">{t('dashboard.updatedAt', 'Updated')} {formatDigits(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), lang)}</p>
           </div>
           <p className="mt-2 text-sm leading-6 text-[#B6C9DC]">
             {String(payload.explanation ?? payload.summary ?? 'Atmospheric and physical parameters remain within normal parameters with continuous automated sensor polling.')}
@@ -281,7 +284,7 @@ export default function ModuleDetailPage({
         {trend.slice(0, 8).map((point: any, index: number) => (
           <div key={index} className="flex items-center gap-3 rounded-2xl border border-[#285274] bg-[#12385C] px-3.5 py-2 text-xs text-[#F3F8FF]">
             <Activity className="h-4 w-4 text-[#25C5DC]" />
-            <span className="w-12 text-[#B6C9DC] font-bold">+{point.hour ?? index + 1}h</span>
+            <span className="w-12 text-[#B6C9DC] font-bold">+{formatDigits(point.hour ?? index + 1, lang)}h</span>
             <div className="flex-1 h-2 rounded-full bg-[#102F50]">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#2389D7] to-[#25C5DC]"
@@ -289,7 +292,7 @@ export default function ModuleDetailPage({
               />
             </div>
             <span className="text-xs font-mono font-bold text-[#8ED8F5]">
-              {point.temperature_c ? `${point.temperature_c}°C` : point.rain_mm_h ? `${point.rain_mm_h} mm` : 'Stable'}
+              {point.temperature_c ? `${formatNumber(point.temperature_c, { maximumFractionDigits: 1 })}°C` : point.rain_mm_h ? `${formatNumber(point.rain_mm_h, { maximumFractionDigits: 1 })} mm` : t('common.stable', 'Stable')}
             </span>
           </div>
         ))}
@@ -303,7 +306,7 @@ export default function ModuleDetailPage({
         <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">Model Confidence &amp; Physics</p>
         <div className="mt-4 flex items-end gap-3">
           <span className="text-4xl font-black text-[#25C5DC] font-mono">
-            {isInsufficient ? '0%' : '92%'}
+            {isInsufficient ? `${formatDigits(0, lang)}%` : `${formatDigits(92, lang)}%`}
           </span>
           <span className="mb-1 text-xs font-bold text-[#B6C9DC]">Deterministic &amp; Calibrated</span>
         </div>
@@ -315,9 +318,9 @@ export default function ModuleDetailPage({
       <div className="rounded-3xl border border-[#285274] bg-[#0E2B49] p-5 shadow-xl text-[#F3F8FF]">
         <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">Reference Performance</p>
         <div className="mt-4 space-y-3 text-xs text-[#F3F8FF]">
-          <div className="flex items-center justify-between pb-1.5 border-b border-[#285274]"><span className="text-[#B6C9DC]">AUC-ROC</span><strong className="text-[#25C5DC]">0.88</strong></div>
-          <div className="flex items-center justify-between pb-1.5 border-b border-[#285274]"><span className="text-[#B6C9DC]">Precision</span><strong className="text-[#25C5DC]">0.86</strong></div>
-          <div className="flex items-center justify-between"><span className="text-[#B6C9DC]">Recall</span><strong className="text-[#25C5DC]">0.84</strong></div>
+          <div className="flex items-center justify-between pb-1.5 border-b border-[#285274]"><span className="text-[#B6C9DC]">AUC-ROC</span><strong className="text-[#25C5DC]">{formatDigits('0.88', lang)}</strong></div>
+          <div className="flex items-center justify-between pb-1.5 border-b border-[#285274]"><span className="text-[#B6C9DC]">Precision</span><strong className="text-[#25C5DC]">{formatDigits('0.86', lang)}</strong></div>
+          <div className="flex items-center justify-between"><span className="text-[#B6C9DC]">Recall</span><strong className="text-[#25C5DC]">{formatDigits('0.84', lang)}</strong></div>
         </div>
       </div>
     </div>
@@ -365,7 +368,7 @@ export default function ModuleDetailPage({
 
           <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#F3F8FF]">
             <div className="rounded-full border border-[#285274] bg-[#0E2B49] px-3.5 py-1.5 shadow-sm text-[#8ED8F5]">
-              {location.label}
+              {localizeLocationLabel(location.label, lang)}
             </div>
             <div
               className={`rounded-full border px-3.5 py-1.5 shadow-sm ${
@@ -380,7 +383,7 @@ export default function ModuleDetailPage({
                   : 'bg-[#35C58B]/20 text-[#35C58B] border-[#35C58B]/40'
               }`}
             >
-              {level} {t('common.riskTier', 'Risk Tier')}
+              {t('risk.' + level.toLowerCase().replace(/\s+/g, '_'), level)} {t('common.riskTier', 'Risk Tier')}
             </div>
           </div>
         </div>

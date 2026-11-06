@@ -15,10 +15,13 @@ import {
 import { Database, Waves, ArrowDownRight, ArrowUpRight, ShieldCheck, AlertTriangle, Layers, Info } from 'lucide-react'
 import { api, ReservoirData } from '../lib/api'
 import { useLocationContext } from './LocationProvider'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeLocationLabel } from '../i18n/locations'
 
 export default function DamMonitoringWidget() {
   const { t } = useTranslation()
   const { location } = useLocationContext()
+  const { formatNumber, formatDigits, lang } = useLocaleFormatter()
   const [dams, setDams] = useState<ReservoirData[]>([])
   const [selectedDamId, setSelectedDamId] = useState<string>('gangapur')
   const [dam, setDam] = useState<ReservoirData | null>(null)
@@ -88,7 +91,7 @@ export default function DamMonitoringWidget() {
             </span>
           </div>
           <p className="text-xs text-[#B6C9DC] mt-0.5">
-            {dam.location} • {dam.river} {t('reservoir.retentionSubtitle', 'flood retention & controlled spillway discharge (Model Balance Estimate)')}
+            {localizeLocationLabel(dam.location, lang)} • {dam.river} {t('reservoir.retentionSubtitle', 'flood retention & controlled spillway discharge (Model Balance Estimate)')}
           </p>
         </div>
 
@@ -105,7 +108,7 @@ export default function DamMonitoringWidget() {
           >
             {dams.map((d) => (
               <option key={d.id} value={d.id} className="bg-[#0B2545] text-white">
-                {d.name} ({d.storage_percentage}%)
+                {d.name} ({formatDigits(d.storage_percentage, lang)}%)
               </option>
             ))}
           </select>
@@ -138,7 +141,7 @@ export default function DamMonitoringWidget() {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-black font-mono text-[#F3F8FF]">{dam.storage_percentage}%</span>
+              <span className="text-2xl font-black font-mono text-[#F3F8FF]">{formatDigits(dam.storage_percentage, lang)}%</span>
               <span className="text-[10px] text-[#8ED8F5] font-bold">{t('reservoir.filled', 'FILLED')}</span>
             </div>
           </div>
@@ -159,14 +162,14 @@ export default function DamMonitoringWidget() {
               <Waves className="w-4 h-4 text-[#25C5DC]" />
             </div>
             <div className="text-2xl font-black font-mono text-[#F3F8FF] mt-2">
-              {dam.current_storage_mcm} <span className="text-xs font-bold text-[#8ED8F5]">MCM</span>
+              {formatNumber(dam.current_storage_mcm)} <span className="text-xs font-bold text-[#8ED8F5]">MCM</span>
             </div>
             <div className="text-xs font-medium text-[#B6C9DC] mt-0.5">
-              {dam.current_storage_tmc} {t('reservoir.tmcEquivalent', 'TMC equivalent')}
+              {formatNumber(dam.current_storage_tmc)} {t('reservoir.tmcEquivalent', 'TMC equivalent')}
             </div>
           </div>
           <div className="pt-2 border-t border-[#285274]/60 text-[11px] text-[#B6C9DC]">
-            {t('reservoir.totalGross', 'Total Gross:')} <span className="font-bold text-[#F3F8FF]">{dam.total_capacity_mcm} MCM</span> ({dam.total_capacity_tmc} TMC)
+            {t('reservoir.totalGross', 'Total Gross:')} <span className="font-bold text-[#F3F8FF]">{formatNumber(dam.total_capacity_mcm)} MCM</span> ({formatNumber(dam.total_capacity_tmc)} TMC)
           </div>
         </div>
 
@@ -178,14 +181,14 @@ export default function DamMonitoringWidget() {
               <Layers className="w-4 h-4 text-[#35C58B]" />
             </div>
             <div className="text-2xl font-black font-mono text-[#35C58B] mt-2">
-              {dam.available_storage_mcm} <span className="text-xs font-bold text-[#B6C9DC]">MCM</span>
+              {formatNumber(dam.available_storage_mcm)} <span className="text-xs font-bold text-[#B6C9DC]">MCM</span>
             </div>
             <div className="text-xs font-medium text-[#B6C9DC] mt-0.5">
-              {dam.available_storage_tmc} {t('reservoir.tmcRemaining', 'TMC remaining capacity')}
+              {formatNumber(dam.available_storage_tmc)} {t('reservoir.tmcRemaining', 'TMC remaining capacity')}
             </div>
           </div>
           <div className="pt-2 border-t border-[#285274]/60 text-[11px] text-[#B6C9DC]">
-            {t('reservoir.frl', 'Full Reservoir Level:')} <span className="font-bold text-[#F3F8FF]">{dam.frl_m} m</span> ({t('dashboard.ambientLabel', 'Current')}: {dam.current_water_level_m} m)
+            {t('reservoir.frl', 'Full Reservoir Level:')} <span className="font-bold text-[#F3F8FF]">{formatNumber(dam.frl_m)} m</span> ({t('dashboard.ambientLabel', 'Current')}: {formatNumber(dam.current_water_level_m)} m)
           </div>
         </div>
 
@@ -205,18 +208,18 @@ export default function DamMonitoringWidget() {
                 <span className="flex items-center gap-1 text-[#B6C9DC]">
                   <ArrowDownRight className="w-3.5 h-3.5 text-[#35C58B]" /> {t('reservoir.inflowRate', 'Inflow')}:
                 </span>
-                <span className="font-mono font-bold text-[#F3F8FF]">{dam.inflow_cusecs.toLocaleString()} cusecs</span>
+                <span className="font-mono font-bold text-[#F3F8FF]">{formatNumber(dam.inflow_cusecs)} cusecs</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="flex items-center gap-1 text-[#B6C9DC]">
                   <ArrowUpRight className="w-3.5 h-3.5 text-[#25C5DC]" /> {t('reservoir.outflowSpillway', 'Outflow')}:
                 </span>
-                <span className="font-mono font-bold text-[#F3F8FF]">{dam.outflow_cusecs.toLocaleString()} cusecs</span>
+                <span className="font-mono font-bold text-[#F3F8FF]">{formatNumber(dam.outflow_cusecs)} cusecs</span>
               </div>
             </div>
           </div>
           <div className="pt-2 border-t border-[#285274]/60 text-[11px] text-[#B6C9DC]">
-            {t('risk.warning', 'Warning')}: <span className="font-bold text-[#F4BC4D]">{dam.downstream_warning_discharge_cusecs.toLocaleString()} cusecs</span>
+            {t('risk.warning', 'Warning')}: <span className="font-bold text-[#F4BC4D]">{formatNumber(dam.downstream_warning_discharge_cusecs)} cusecs</span>
           </div>
         </div>
       </div>
@@ -227,7 +230,7 @@ export default function DamMonitoringWidget() {
         <div className="bg-[#0E2B49] border border-[#285274] rounded-2xl p-4">
           <div className="text-xs font-bold text-[#F3F8FF] uppercase tracking-wider mb-2 flex items-center justify-between">
             <span>7-Day Reservoir Storage Trend (% Capacity)</span>
-            <span className="text-[10px] text-[#B6C9DC]">Updated: {dam.last_updated}</span>
+            <span className="text-[10px] text-[#B6C9DC]">Updated: {formatDigits(dam.last_updated, lang)}</span>
           </div>
           <div className="h-44 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -240,10 +243,10 @@ export default function DamMonitoringWidget() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#285274" />
                 <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#B6C9DC' }} />
-                <YAxis domain={[40, 100]} tick={{ fontSize: 10, fill: '#B6C9DC' }} />
+                <YAxis domain={[40, 100]} tick={{ fontSize: 10, fill: '#B6C9DC' }} tickFormatter={(val: number) => formatDigits(val, lang)} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#071A33', borderColor: '#285274', borderRadius: '12px', fontSize: '11px', color: '#F3F8FF' }}
-                  formatter={(val: number) => [`${val}%`, 'Storage']}
+                  formatter={(val: number) => [`${formatDigits(val, lang)}%`, 'Storage']}
                 />
                 <Area type="monotone" dataKey="storage_pct" stroke="#25C5DC" strokeWidth={2.5} fillOpacity={1} fill="url(#storageGrad)" />
               </AreaChart>
@@ -255,17 +258,17 @@ export default function DamMonitoringWidget() {
         <div className="bg-[#0E2B49] border border-[#285274] rounded-2xl p-4">
           <div className="text-xs font-bold text-[#F3F8FF] uppercase tracking-wider mb-2 flex items-center justify-between">
             <span>Inflow vs Spillway Outflow Discharge (cusecs)</span>
-            <span className="text-[10px] text-[#8ED8F5]">{dam.spillway_gates} Radial Spillway Gates</span>
+            <span className="text-[10px] text-[#8ED8F5]">{formatDigits(dam.spillway_gates, lang)} Radial Spillway Gates</span>
           </div>
           <div className="h-44 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dam.inflow_outflow_trend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#285274" />
-                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#B6C9DC' }} />
-                <YAxis tick={{ fontSize: 10, fill: '#B6C9DC' }} />
+                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#B6C9DC' }} tickFormatter={(val: string) => formatDigits(val, lang)} />
+                <YAxis tick={{ fontSize: 10, fill: '#B6C9DC' }} tickFormatter={(val: number) => formatDigits(val, lang)} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#071A33', borderColor: '#285274', borderRadius: '12px', fontSize: '11px', color: '#F3F8FF' }}
-                  formatter={(val: number) => [`${val.toLocaleString()} cusecs`]}
+                  formatter={(val: number) => [`${formatNumber(val)} cusecs`]}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
                 <Bar dataKey="inflow_cusecs" name="Inflow (cusecs)" fill="#35C58B" radius={[4, 4, 0, 0]} />

@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { ShieldAlert, ShieldCheck, AlertTriangle, AlertCircle, Clock, Droplets, Waves, Database, Compass } from 'lucide-react'
 import { EmergencyAlert } from '../lib/api'
 import { translateAlertTitle, translateAlertReason, translateRecommendedAction } from '../i18n/dynamic'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeCity, localizeState } from '../i18n/locations'
 
 interface EmergencyAlertBannerProps {
   alert?: EmergencyAlert | null
@@ -10,6 +12,7 @@ interface EmergencyAlertBannerProps {
 
 export default function EmergencyAlertBanner({ alert, className = '' }: EmergencyAlertBannerProps) {
   const { t } = useTranslation()
+  const { formatDigits, lang } = useLocaleFormatter()
   if (!alert) return null
 
   const isInsufficient = alert.status === 'INSUFFICIENT_DATA'
@@ -101,14 +104,14 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
             </div>
             <p className="text-xs text-[#B6C9DC] font-medium mt-0.5 flex items-center gap-1.5">
               <Compass className="w-3.5 h-3.5 text-[#25C5DC]" />
-              <span>{t('common.catchment', 'Catchment')}: {alert.city_name ? `${alert.city_name} ${t('common.region', 'Region')} (${alert.state_name || 'India'})` : 'Regional Municipal Catchment'}</span>
+              <span>{t('common.catchment', 'Catchment')}: {alert.city_name ? `${localizeCity(alert.city_name, lang)} ${t('common.region', 'Region')} (${localizeState(alert.state_name || 'India', lang)})` : 'Regional Municipal Catchment'}</span>
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 self-start lg:self-center text-xs font-semibold text-[#8ED8F5] bg-[#071A33]/80 px-3 py-1.5 rounded-xl border border-[#285274]">
           <Clock className="w-3.5 h-3.5 text-[#25C5DC]" />
-          <span>{t('common.issued', 'Issued')}: {alert.timestamp}</span>
+          <span>{t('common.issued', 'Issued')}: {formatDigits(alert.timestamp, lang)}</span>
         </div>
       </div>
 
@@ -120,7 +123,7 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
             {t('dashboard.rainfall24h', 'Rainfall (24h)')}
           </div>
           <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono">
-            {alert.rainfall_summary || '0.0 mm'}
+            {alert.rainfall_summary ? formatDigits(alert.rainfall_summary, lang) : formatDigits('0.0 mm', lang)}
           </div>
         </div>
 
@@ -130,7 +133,7 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
             {t('dashboard.riverTitle', 'River Stage')}
           </div>
           <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono">
-            {alert.river_level_summary || 'Stable (1.8m)'}
+            {alert.river_level_summary ? formatDigits(alert.river_level_summary, lang) : formatDigits('Stable (1.8m)', lang)}
           </div>
         </div>
 
@@ -140,7 +143,7 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
             {t('dashboard.reservoirTitle', 'Reservoir Status')}
           </div>
           <div className="text-sm sm:text-base font-extrabold text-[#F3F8FF] mt-1 font-mono truncate">
-            {alert.reservoir_summary || 'Catchment Reservoir System: Nominal'}
+            {alert.reservoir_summary ? formatDigits(alert.reservoir_summary, lang) : 'Catchment Reservoir System: Nominal'}
           </div>
         </div>
       </div>

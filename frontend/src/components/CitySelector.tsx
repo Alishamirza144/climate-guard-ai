@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { MapPin, Search, ChevronDown, Check, Compass, X } from 'lucide-react'
 import { useLocationContext } from './LocationProvider'
 import type { CityRegion, CityData } from '../data/cities'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeCity, localizeState } from '../i18n/locations'
 
 const REGIONS: CityRegion[] = [
   'All',
@@ -16,8 +18,10 @@ const REGIONS: CityRegion[] = [
 ]
 
 export default function CitySelector() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { location, selectCity, locateMe, cities, currentCity } = useLocationContext()
+  const { lang, formatNumber, formatDigits, formatCoordinates } = useLocaleFormatter()
+
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedRegion, setSelectedRegion] = useState<CityRegion>('All')
@@ -41,20 +45,30 @@ export default function CitySelector() {
     return cities.filter((city) => {
       const matchesRegion = selectedRegion === 'All' || city.region === selectedRegion
       const query = searchTerm.toLowerCase().trim()
+      if (!query) return matchesRegion
+
+      const locCityName = localizeCity(city.id || city.name, lang).toLowerCase()
+      const locStateName = localizeState(city.state, lang).toLowerCase()
+
       const matchesSearch =
-        !query ||
         city.name.toLowerCase().includes(query) ||
         city.state.toLowerCase().includes(query) ||
+        locCityName.includes(query) ||
+        locStateName.includes(query) ||
         city.rivers.some((r) => r.river.toLowerCase().includes(query) || r.station.toLowerCase().includes(query))
+
       return matchesRegion && matchesSearch
     })
-  }, [cities, selectedRegion, searchTerm])
+  }, [cities, selectedRegion, searchTerm, lang])
 
   const handleSelect = (city: CityData) => {
     selectCity(city.id)
     setIsOpen(false)
     setSearchTerm('')
   }
+
+  const currentCityName = localizeCity(currentCity?.id || currentCity?.name || location.label.split(',')[0], lang)
+  const currentCityState = localizeState(currentCity?.state || location.state, lang)
 
   return (
     <div className="relative min-w-0 w-full" ref={dropdownRef}>
@@ -73,14 +87,14 @@ export default function CitySelector() {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="truncate text-sm font-extrabold text-[#F3F8FF]">
-                {currentCity?.name || location.label.split(',')[0]}
+                {currentCityName}
               </span>
               <span className="rounded-full bg-[#102F50] border border-[#285274] px-2 py-0.2 text-[10px] font-bold text-[#8ED8F5]">
-                {currentCity?.state || 'India'}
+                {currentCityState || 'India'}
               </span>
             </div>
             <p className="truncate text-[10px] font-semibold text-[#B6C9DC]">
-              {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E • {currentCity?.region || 'Monitored'}
+              {formatCoordinates(location.lat, location.lon)} • {currentCity?.region || 'Monitored'}
             </p>
           </div>
         </div>
@@ -122,14 +136,14 @@ export default function CitySelector() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={t('city.searchPlaceholder', 'Search city, state, or river (e.g. Mumbai, Pune, Godavari, Yamuna)...')}
-                className="w-full rounded-2xl border border-[#285274] bg-[#12385C] py-2 pl-9 pr-8 text-xs font-bold text-[#F3F8FF] placeholder:text-[#B6C9DC]/60 focus:border-[#2389D7] focus:outline-none focus:ring-1 focus:ring-[#2389D7]"
+                placeholder={t('city.searchPlaceholder', 'Search 50+ Indian cities, states, rivers...')}
+                className="w-full rounded-2xl border border-[#285274] bg-[#12385C] py-2 pl-9 pr-9 text-xs text-[#F3F8FF] placeholder-[#B6C9DC]/60 focus:border-[#2389D7] focus:outline-none focus:ring-1 focus:ring-[#2389D7]"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#B6C9DC] hover:text-[#F3F8FF]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#B6C9DC] hover:text-white"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -143,13 +157,13 @@ export default function CitySelector() {
                   key={region}
                   type="button"
                   onClick={() => setSelectedRegion(region)}
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider transition ${
+                  className={`rounded-xl px-2.5 py-1 text-[10px] font-bold transition-all ${
                     selectedRegion === region
-                      ? 'bg-[#2389D7] text-white shadow-glow border border-[#8ED8F5]/30'
-                      : 'border border-[#285274] bg-[#12385C] text-[#B6C9DC] hover:bg-[#102F50] hover:text-[#F3F8FF]'
+                      ? 'bg-[#2389D7] text-white shadow-glow'
+                      : 'bg-[#12385C] text-[#B6C9DC] hover:bg-[#102F50] hover:text-[#F3F8FF] border border-[#285274]/50'
                   }`}
                 >
-                  {region === 'All' ? t('city.allIndia', 'All') : region}
+                  {region === 'All' ? t('city.allIndia', 'All') : region === 'Maharashtra' ? localizeState('Maharashtra', lang) : region}
                 </button>
               ))}
             </div>
@@ -164,6 +178,9 @@ export default function CitySelector() {
             ) : (
               filteredCities.map((city) => {
                 const isSelected = currentCity?.id === city.id
+                const locName = localizeCity(city.id || city.name, lang)
+                const locState = localizeState(city.state, lang)
+
                 return (
                   <button
                     key={city.id}
@@ -177,7 +194,10 @@ export default function CitySelector() {
                   >
                     <div className="min-w-0 pr-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-sm">{city.name}</span>
+                        <span className="font-extrabold text-sm">{locName}</span>
+                        {locName !== city.name && (
+                          <span className="text-[11px] text-[#B6C9DC]/70">({city.name})</span>
+                        )}
                         <span
                           className={`rounded-full px-2 py-0.2 text-[9px] font-bold ${
                             isSelected
@@ -185,7 +205,7 @@ export default function CitySelector() {
                               : 'bg-[#102F50] text-[#8ED8F5] border border-[#285274]'
                           }`}
                         >
-                          {city.state}
+                          {locState}
                         </span>
                       </div>
                       <div
@@ -199,7 +219,7 @@ export default function CitySelector() {
                           </span>
                         )}
                         <span>
-                          📍 {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
+                          📍 {formatDigits(`${city.lat.toFixed(2)}°N, ${city.lon.toFixed(2)}°E`, lang)}
                         </span>
                       </div>
                     </div>
@@ -212,7 +232,7 @@ export default function CitySelector() {
 
           {/* Footer stats */}
           <div className="mt-3 pt-2.5 border-t border-[#285274] flex items-center justify-between text-[10px] font-bold text-[#B6C9DC]">
-            <span>Showing {filteredCities.length} of {cities.length} Indian cities</span>
+            <span>Showing {formatNumber(filteredCities.length)} of {formatNumber(cities.length)} Indian cities</span>
             <span className="text-[#25C5DC]">{t('dashboard.verifiedOnline', 'Live Telemetry Driven')}</span>
           </div>
         </div>

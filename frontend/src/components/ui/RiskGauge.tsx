@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getRiskLevelFromScore, type RiskLevel } from '../../lib/risk'
+import { useLocaleFormatter } from '../../i18n/formatters'
 
 export interface RiskGaugeProps {
   score: number // 0 - 100
@@ -20,6 +22,8 @@ export function RiskGauge({
   showScore = true,
   className = '',
 }: RiskGaugeProps) {
+  const { t } = useTranslation()
+  const { formatDigits } = useLocaleFormatter()
   const [animateGauge, setAnimateGauge] = useState(false)
 
   useEffect(() => {
@@ -123,7 +127,7 @@ export function RiskGauge({
               className="font-display font-black leading-none tracking-tight text-[#F3F8FF] font-mono"
               style={{ fontSize: size * 0.28 }}
             >
-              {clampedScore}
+              {formatDigits(clampedScore)}
             </span>
           )}
 
@@ -132,7 +136,7 @@ export function RiskGauge({
               className={`font-black tracking-wider uppercase mt-1 ${current.textClass}`}
               style={{ fontSize: Math.max(10, size * 0.08) }}
             >
-              {current.label}
+              {t('risk.' + level, current.label)}
             </span>
           )}
         </div>

@@ -44,6 +44,8 @@ import { Link, NavLink } from 'react-router-dom'
 import { useLocationContext } from '../components/LocationProvider'
 import { api, type RiskGridResponse, type RiskOverviewResponse } from '../lib/api'
 import { translateWeatherCondition } from '../i18n/dynamic'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeLocationLabel } from '../i18n/locations'
 import { RiskGauge } from '../components/ui/RiskGauge'
 import { DataSourceBadge } from '../components/ui/DataSourceBadge'
 import EmergencyAlertBanner from '../components/EmergencyAlertBanner'
@@ -157,6 +159,7 @@ function getLevelBadgeStyles(level: string) {
 export default function Dashboard() {
   const { t } = useTranslation()
   const { location } = useLocationContext()
+  const { lang, formatNumber, formatPercent, formatDigits, formatCoordinates, formatClock, formatTime } = useLocaleFormatter()
   const queryClient = useQueryClient()
   const [selectedHazard, setSelectedHazard] = useState<'flood' | 'heat' | 'fire' | 'crop'>('flood')
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
@@ -318,10 +321,10 @@ export default function Dashboard() {
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-[#F3F8FF] mt-0.5">
-              {location.label}
+              {localizeLocationLabel(location.label, lang)}
             </h1>
             <p className="text-xs text-[#B6C9DC]">
-              {t('dashboard.coordinates', 'Coordinates')}: {location.lat.toFixed(4)}°N, {location.lon.toFixed(4)}°E • {t('dashboard.indiaGrid', 'India Grid Observation')}
+              {t('dashboard.coordinates', 'Coordinates')}: {formatCoordinates(location.lat, location.lon)} • {t('dashboard.indiaGrid', 'India Grid Observation')}
             </p>
           </div>
         </div>
@@ -335,7 +338,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0E2B49] border border-[#285274] text-[#B6C9DC] font-semibold">
             <span>{t('app.cycle', 'Cycle')}:</span>
             <strong className="text-[#F3F8FF]">
-              {overviewQuery.dataUpdatedAt ? new Date(overviewQuery.dataUpdatedAt).toLocaleTimeString('en-IN', { timeStyle: 'short' }) : 'Live'}
+              {overviewQuery.dataUpdatedAt ? formatTime(overviewQuery.dataUpdatedAt, { timeStyle: 'short' }) : t('dashboard.liveStatus', 'Live')}
             </strong>
           </div>
 
@@ -369,12 +372,12 @@ export default function Dashboard() {
 
             <div className="mt-5 flex items-baseline gap-4">
               <span className="text-6xl sm:text-7xl font-black font-mono tracking-tighter text-[#8ED8F5]">
-                {typeof temperature === 'number' ? `${temperature}°` : temperature}
+                {typeof temperature === 'number' ? `${formatNumber(temperature, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}°` : formatDigits(temperature)}
               </span>
               <div className="space-y-1">
                 <span className="text-2xl font-black text-[#F3F8FF]">C</span>
                 <p className="text-xs font-bold text-[#25C5DC]">
-                  {t('dashboard.feelsLike', 'Feels like')} {typeof feelsLike === 'number' ? `${feelsLike.toFixed(1)}°C` : feelsLike}
+                  {t('dashboard.feelsLike', 'Feels like')} {typeof feelsLike === 'number' ? `${formatNumber(feelsLike, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}°C` : formatDigits(feelsLike)}
                 </p>
               </div>
             </div>
@@ -389,7 +392,7 @@ export default function Dashboard() {
             <div className="bg-[#12385C] rounded-2xl p-3 border border-[#285274]">
               <span className="text-[10px] text-[#B6C9DC] font-bold uppercase block">{t('dashboard.dailyDiurnal', 'Daily Diurnal Range')}</span>
               <span className="text-sm font-bold text-[#F3F8FF] font-mono mt-0.5 block">
-                {tempMin}°C — {tempMax}°C
+                {formatNumber(tempMin)}°C — {formatNumber(tempMax)}°C
               </span>
             </div>
             <div className="bg-[#12385C] rounded-2xl p-3 border border-[#285274]">
@@ -410,7 +413,7 @@ export default function Dashboard() {
               <Droplets className="w-4 h-4 text-[#25C5DC]" />
             </div>
             <div className="mt-3">
-              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{humidity}%</span>
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{formatDigits(humidity)}%</span>
               <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
                 {Number(humidity) > 70 ? t('dashboard.humidityMoist', 'Moist Catchment') : Number(humidity) < 30 ? t('dashboard.humidityDry', 'Dry Air Deficit') : t('dashboard.humidityOpt', 'Optimal Balance')}
               </p>
@@ -424,9 +427,9 @@ export default function Dashboard() {
               <CloudRain className="w-4 h-4 text-[#2389D7]" />
             </div>
             <div className="mt-3">
-              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{rainfall24h} <span className="text-xs">mm</span></span>
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{formatDigits(rainfall24h)} <span className="text-xs">mm</span></span>
               <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
-                {t('dashboard.intensity', 'Intensity')}: {rainfallIntensity} mm/h
+                {t('dashboard.intensity', 'Intensity')}: {formatNumber(rainfallIntensity, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mm/h
               </p>
             </div>
           </div>
@@ -438,9 +441,9 @@ export default function Dashboard() {
               <Wind className="w-4 h-4 text-[#25C5DC]" />
             </div>
             <div className="mt-3">
-              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{windSpeed} <span className="text-xs">km/h</span></span>
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{formatDigits(windSpeed)} <span className="text-xs">km/h</span></span>
               <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
-                {t('dashboard.bearing', 'Bearing')}: {windDir}° {t('dashboard.vector', 'Vector')}
+                {t('dashboard.bearing', 'Bearing')}: {formatDigits(windDir)}° {t('dashboard.vector', 'Vector')}
               </p>
             </div>
           </div>
@@ -452,7 +455,7 @@ export default function Dashboard() {
               <Gauge className="w-4 h-4 text-[#35C58B]" />
             </div>
             <div className="mt-3">
-              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{pressure} <span className="text-xs">hPa</span></span>
+              <span className="text-3xl font-black font-mono text-[#F3F8FF]">{formatDigits(pressure)} <span className="text-xs">hPa</span></span>
               <p className="text-[10px] font-bold text-[#35C58B] mt-1">
                 {t('dashboard.stableGradient', 'Stable Gradient')}
               </p>
@@ -467,7 +470,7 @@ export default function Dashboard() {
             </div>
             <div className="mt-3">
               <span className="text-3xl font-black font-mono text-[#F3F8FF]">
-                {typeof soilMoisture === 'number' ? soilMoisture.toFixed(2) : soilMoisture} <span className="text-xs">m³/m³</span>
+                {typeof soilMoisture === 'number' ? formatNumber(soilMoisture, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : formatDigits(soilMoisture)} <span className="text-xs">m³/m³</span>
               </span>
               <p className="text-[10px] font-bold text-[#8ED8F5] mt-1">
                 {t('dashboard.topsoilLayer', '0-10cm Topsoil Layer')}
@@ -520,11 +523,11 @@ export default function Dashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#285274" opacity={0.6} />
-                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#B6C9DC' }} />
-                <YAxis domain={['dataMin - 2', 'dataMax + 2']} tick={{ fontSize: 10, fill: '#B6C9DC' }} />
+                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#B6C9DC' }} tickFormatter={(val) => formatDigits(val)} />
+                <YAxis domain={['dataMin - 2', 'dataMax + 2']} tick={{ fontSize: 10, fill: '#B6C9DC' }} tickFormatter={(val) => formatNumber(val)} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#071A33', borderColor: '#285274', borderRadius: '12px', fontSize: '11px', color: '#F3F8FF' }}
-                  formatter={(val: number) => [`${val}°C`]}
+                  formatter={(val: number) => [`${formatNumber(val, { minimumFractionDigits: 1 })}°C`]}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
                 <Area type="monotone" dataKey="temperature" name="Ambient (°C)" stroke="#25C5DC" strokeWidth={2.5} fillOpacity={1} fill="url(#tempGlow)" />
@@ -552,10 +555,11 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={multiHazardTrajectory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#285274" opacity={0.6} />
-                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#B6C9DC' }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#B6C9DC' }} />
+                <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#B6C9DC' }} tickFormatter={(val) => formatDigits(val)} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#B6C9DC' }} tickFormatter={(val) => formatNumber(val)} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#071A33', borderColor: '#285274', borderRadius: '12px', fontSize: '11px', color: '#F3F8FF' }}
+                  formatter={(val: number) => [`${formatPercent(val)}`]}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
                 <Line type="monotone" dataKey="flood" name={t('nav.flood', 'Flood')} stroke="#2389D7" strokeWidth={2.5} dot={{ r: 3 }} />
@@ -617,7 +621,7 @@ export default function Dashboard() {
 
                 <div className="mt-4 pt-3 border-t border-[#285274]/60 flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-[#B6C9DC]">
-                    {t('dashboard.riskPrefix', 'Risk')}: <strong className="text-[#F3F8FF]">{score}/100</strong>
+                    {t('dashboard.riskPrefix', 'Risk')}: <strong className="text-[#F3F8FF]">{formatNumber(score)}/{formatNumber(100)}</strong>
                   </span>
                   <ChevronRight className="w-4 h-4 text-[#25C5DC] group-hover:translate-x-1 transition-transform" />
                 </div>

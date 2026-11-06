@@ -5,6 +5,8 @@ import 'leaflet.heat'
 import { LayersControl, MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { LocateFixed, MapPinned, Search } from 'lucide-react'
 import { useLocationContext } from './LocationProvider'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeLocationLabel } from '../i18n/locations'
 
 const heatGradient = ['#2dd4bf', '#84cc16', '#facc15', '#f97316', '#ef4444']
 
@@ -57,6 +59,7 @@ export default function RiskMap() {
     presets,
   } = useLocationContext()
 
+  const { formatCoordinates, lang } = useLocaleFormatter()
   const [selectedPreset, setSelectedPreset] = useState('Pune')
 
   const heatPoints = useMemo<Array<[number, number, number]>>(
@@ -107,7 +110,7 @@ export default function RiskMap() {
                   : 'border-white/10 bg-white/5 text-slate-200 hover:border-white/20'
               }`}
             >
-              {preset.label}
+              {localizeLocationLabel(preset.label, lang)}
             </button>
           ))}
         </div>
@@ -186,9 +189,9 @@ export default function RiskMap() {
           })}>
             <Popup>
               <div className="text-sm font-medium text-slate-900">
-                <div className="font-bold">{location.label}</div>
+                <div className="font-bold">{localizeLocationLabel(location.label, lang)}</div>
                 <div className="text-xs text-slate-600">
-                  {location.lat.toFixed(4)}, {location.lon.toFixed(4)}
+                  {formatCoordinates(location.lat, location.lon)}
                 </div>
               </div>
             </Popup>
@@ -217,7 +220,7 @@ export default function RiskMap() {
 
       <div className="mt-2 flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-xs text-slate-300">
         <MapPinned className="h-4 w-4 text-lime" aria-hidden="true" />
-        <span>{location.label}</span>
+        <span>{localizeLocationLabel(location.label, lang)}</span>
       </div>
     </div>
   )

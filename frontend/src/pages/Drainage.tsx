@@ -15,10 +15,13 @@ import {
 } from 'lucide-react'
 import { useLocationContext } from '../components/LocationProvider'
 import { api } from '../lib/api'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeCity } from '../i18n/locations'
 
 export default function Drainage() {
   const { t } = useTranslation()
   const { location } = useLocationContext()
+  const { formatNumber, formatDigits, lang } = useLocaleFormatter()
   const [simulated, setSimulated] = useState(false)
 
   const drainageQuery = useQuery({
@@ -36,21 +39,21 @@ export default function Drainage() {
   const readings = [
     {
       label: t('dashboard.riverTitle', 'Water Level'),
-      value: `${telemetry.water_level_m ?? 0.42} m`,
+      value: `${formatNumber(telemetry.water_level_m ?? 0.42, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} m`,
       status: telemetry.water_level_trend ?? t('drainage.clearanceNominal', 'Stable nominal baseflow'),
       color: isCritical ? 'text-[#F06470]' : 'text-[#35C58B]',
       icon: Droplets,
     },
     {
       label: t('drainage.flowVelocity', 'Flow Velocity'),
-      value: `${telemetry.flow_velocity_mps ?? 2.6} m/s`,
+      value: `${formatNumber(telemetry.flow_velocity_mps ?? 2.6, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} m/s`,
       status: telemetry.flow_status ?? 'Optimal (Free-surface flow)',
       color: isCritical ? 'text-[#F4BC4D]' : 'text-[#25C5DC]',
       icon: Activity,
     },
     {
       label: t('drainage.conduitStatus', 'Conduit Surcharge'),
-      value: `${telemetry.conduit_surcharge_pct ?? 18}%`,
+      value: `${formatNumber(telemetry.conduit_surcharge_pct ?? 18)}%`,
       status: telemetry.surcharge_status ?? t('drainage.clearanceNominal', 'Nominal — Full clearance'),
       color: isCritical ? 'text-[#F06470]' : 'text-[#35C58B]',
       icon: Gauge,
@@ -79,7 +82,7 @@ export default function Drainage() {
               {t('nav.drainage', 'DRAINAGE NETWORK AI')}
             </span>
             <span className="rounded-full bg-[#102F50] border border-[#285274] px-2.5 py-0.5 text-[10px] font-bold text-[#8ED8F5]">
-              {data.city_name || location.label.split(',')[0]} Catchment
+              {localizeCity(data.city_name || location.label.split(',')[0], lang)} Catchment
             </span>
             {isSimulated && (
               <span className="inline-flex items-center gap-1 rounded-full border border-[#F4BC4D]/40 bg-[#F4BC4D]/20 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#F4BC4D]">
@@ -174,20 +177,20 @@ export default function Drainage() {
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div className="p-3 rounded-xl bg-[#12385C] border border-[#285274]">
             <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">{t('dashboard.rainfall24h', 'Rainfall (24h)')}</span>
-            <span className="text-sm font-black text-[#F3F8FF] font-mono">{data.rainfall_24h_mm ?? 0} mm</span>
+            <span className="text-sm font-black text-[#F3F8FF] font-mono">{formatNumber(data.rainfall_24h_mm ?? 0, { maximumFractionDigits: 1 })} mm</span>
           </div>
           <div className="p-3 rounded-xl bg-[#12385C] border border-[#285274]">
             <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">{t('dashboard.intensity', 'Rainfall Intensity')}</span>
-            <span className="text-sm font-black text-[#F3F8FF] font-mono">{data.rainfall_intensity_mm_h ?? 0} mm/h</span>
+            <span className="text-sm font-black text-[#F3F8FF] font-mono">{formatNumber(data.rainfall_intensity_mm_h ?? 0, { maximumFractionDigits: 1 })} mm/h</span>
           </div>
           <div className="p-3 rounded-xl bg-[#12385C] border border-[#285274]">
             <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">SCS Surface Runoff</span>
-            <span className="text-sm font-black text-[#25C5DC] font-mono">{data.runoff_depth_mm ?? 0} mm</span>
+            <span className="text-sm font-black text-[#25C5DC] font-mono">{formatNumber(data.runoff_depth_mm ?? 0, { maximumFractionDigits: 1 })} mm</span>
           </div>
           <div className="p-3 rounded-xl bg-[#12385C] border border-[#285274]">
             <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">{t('risk.headline', 'Risk Assessment')}</span>
             <span className={`text-sm font-black ${isCritical ? 'text-[#F06470]' : 'text-[#35C58B]'}`}>
-              {data.level ? t(`risk.${String(data.level).toLowerCase()}`, String(data.level)) : t('risk.low', 'Low')} ({data.risk_score ?? 15}/100)
+              {data.level ? t(`risk.${String(data.level).toLowerCase()}`, String(data.level)) : t('risk.low', 'Low')} ({formatDigits(data.risk_score ?? 15, lang)}/{formatDigits(100, lang)})
             </span>
           </div>
         </div>
@@ -217,7 +220,7 @@ export default function Drainage() {
                         : 'bg-[#35C58B]/20 text-[#35C58B] border border-[#35C58B]/40'
                     }`}
                   >
-                    {hs.capacity_pct}% Surcharge
+                    {formatDigits(hs.capacity_pct, lang)}% Surcharge
                   </span>
                 </div>
               ))}

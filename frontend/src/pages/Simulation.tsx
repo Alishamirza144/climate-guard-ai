@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
 import { FlaskConical, Play, History, CheckCircle2, FileText, ChevronRight, RotateCcw } from 'lucide-react'
+import { useLocaleFormatter } from '../i18n/formatters'
+import { localizeLocationLabel } from '../i18n/locations'
 
 const defaultLat = 19.9975
 const defaultLon = 73.7898
 
 export default function Simulation() {
   const { t } = useTranslation()
+  const { formatDigits, lang } = useLocaleFormatter()
   const [selectedScenarioId, setSelectedScenarioId] = useState('cloudburst')
   const [lat, setLat] = useState(defaultLat)
   const [lon, setLon] = useState(defaultLon)
@@ -88,7 +91,7 @@ export default function Simulation() {
                 >
                   <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#25C5DC]">{String(scenario.hazard)}</div>
                   <div className="mt-1 text-base font-extrabold text-[#F3F8FF]">{String(scenario.title)}</div>
-                  <div className="mt-1 text-xs text-[#B6C9DC]">{locationName}</div>
+                  <div className="mt-1 text-xs text-[#B6C9DC]">{localizeLocationLabel(locationName, lang)}</div>
                 </button>
               )
             })}
@@ -146,14 +149,14 @@ export default function Simulation() {
                   {t('simulation.simulatedTelemetry', 'Simulated Disaster Telemetry')}
                 </span>
                 <span className="text-xs font-mono font-bold text-[#25C5DC]">
-                  Score: {String((scenarioData.summary as Record<string, unknown>)?.score ?? '85')} / 100
+                  Score: {formatDigits(String((scenarioData.summary as Record<string, unknown>)?.score ?? '85'), lang)} / {formatDigits(100, lang)}
                 </span>
               </div>
               <div className="text-xl font-black text-[#F3F8FF]">
                 Level: {String((scenarioData.summary as Record<string, unknown>)?.level ?? 'Critical Warning')}
               </div>
               <p className="text-xs text-[#B6C9DC]">
-                Probability index: {String((scenarioData.summary as Record<string, unknown>)?.probability ?? '0.85')}
+                Probability index: {formatDigits(String((scenarioData.summary as Record<string, unknown>)?.probability ?? '0.85'), lang)}
               </p>
 
               <div className="space-y-2 pt-2">
@@ -198,10 +201,10 @@ export default function Simulation() {
               <div className="rounded-xl border border-[#285274] bg-[#071A33] p-3.5 text-xs text-[#B6C9DC] space-y-2">
                 <span className="font-bold text-[#8ED8F5] block">Hindcast Accuracy (MAE / RMSE):</span>
                 <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                  <div>Temp MAE: {String((backtest.metrics as Record<string, unknown>)?.temperature_mae_c ?? '0.42')}°C</div>
-                  <div>Temp RMSE: {String((backtest.metrics as Record<string, unknown>)?.temperature_rmse_c ?? '0.58')}°C</div>
-                  <div>Rain MAE: {String((backtest.metrics as Record<string, unknown>)?.precipitation_mae_mm ?? '2.1')} mm</div>
-                  <div>Rain RMSE: {String((backtest.metrics as Record<string, unknown>)?.precipitation_rmse_mm ?? '3.4')} mm</div>
+                  <div>Temp MAE: {formatDigits(String((backtest.metrics as Record<string, unknown>)?.temperature_mae_c ?? '0.42'), lang)}°C</div>
+                  <div>Temp RMSE: {formatDigits(String((backtest.metrics as Record<string, unknown>)?.temperature_rmse_c ?? '0.58'), lang)}°C</div>
+                  <div>Rain MAE: {formatDigits(String((backtest.metrics as Record<string, unknown>)?.precipitation_mae_mm ?? '2.1'), lang)} mm</div>
+                  <div>Rain RMSE: {formatDigits(String((backtest.metrics as Record<string, unknown>)?.precipitation_rmse_mm ?? '3.4'), lang)} mm</div>
                 </div>
               </div>
             )}
@@ -216,11 +219,11 @@ export default function Simulation() {
                 <div key={hazard} className="rounded-xl border border-[#285274] bg-[#0E2B49] p-3 text-xs text-[#F3F8FF]">
                   <div className="flex items-center justify-between font-bold text-[#25C5DC] uppercase">
                     <span>{hazard}</span>
-                    <span className="text-[#35C58B]">ROC-AUC: {String(item.roc_auc ?? '0.88')}</span>
+                    <span className="text-[#35C58B]">ROC-AUC: {formatDigits(String(item.roc_auc ?? '0.88'), lang)}</span>
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[11px] text-[#B6C9DC]">
-                    <span>Precision: {String(item.precision ?? '0.84')}</span>
-                    <span>Recall: {String(item.recall ?? '0.82')}</span>
+                    <span>Precision: {formatDigits(String(item.precision ?? '0.84'), lang)}</span>
+                    <span>Recall: {formatDigits(String(item.recall ?? '0.82'), lang)}</span>
                   </div>
                 </div>
               ))}

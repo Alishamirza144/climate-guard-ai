@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import { Badge } from '../components/ui/Badge'
 import { GlassCard } from '../components/ui/GlassCard'
+import { localizeLocationLabel } from '../i18n/locations'
 
 const team = [
   { name: 'Umesh R Jadhav', role: 'Team Leader', expertise: 'System architecture and risk orchestration' },
@@ -10,6 +12,7 @@ const team = [
 ]
 
 export default function About() {
+  const { i18n } = useTranslation()
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-8 text-center">
@@ -22,7 +25,7 @@ export default function About() {
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-lime">Institution</p>
             <h2 className="mt-3 text-2xl font-black text-white">K K Wagh Institute of Engineering Education & Research</h2>
-            <p className="mt-3 text-slate-200">Nashik, Maharashtra</p>
+            <p className="mt-3 text-slate-200">{localizeLocationLabel('Nashik, Maharashtra', i18n.language)}</p>
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-lime">Hackathon context</p>
