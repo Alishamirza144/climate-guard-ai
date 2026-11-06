@@ -35,18 +35,18 @@ def _cache_key(url: str, params: dict[str, Any] | None) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Retry decorator: 3 attempts, exponential back-off 1 s → 4 s
+# Retry decorator: 2 attempts, quick back-off 0.5 s → 1.5 s
 # ---------------------------------------------------------------------------
 _RETRY = retry(
     retry=retry_if_exception_type((httpx.TimeoutException, httpx.NetworkError)),
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=4),
+    stop=stop_after_attempt(2),
+    wait=wait_exponential(multiplier=0.5, min=0.5, max=1.5),
     reraise=True,
 )
 
 
 class HttpClient:
-    """Thin wrapper around httpx.AsyncClient.
+    """Thin wrapper around httpx.AsyncClient with connection pooling.
 
     Usage::
 
@@ -68,6 +68,20 @@ class HttpClient:
         # Per-instance cache with custom TTL
         self._cache: TTLCache[str, Any] = TTLCache(maxsize=256, ttl=ttl)
         self._stale_cache: dict[str, tuple[float, Any]] = {}
+        self._client: httpx.AsyncClient | None = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(
+                timeout=self._timeout,
+                headers=self._headers,
+                limits=httpx.Limits(max_keepalive_connections=20, max_connections=50, keepalive_expiry=60.0),
+            )
+        return self._client
+
+    async def aclose(self) -> None:
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
 
     async def get(
         self,
@@ -128,29 +142,29 @@ class HttpClient:
     @_RETRY
     async def _fetch(self, url: str, params: dict[str, Any] | None) -> Any:
         t0 = time.perf_counter()
-        async with httpx.AsyncClient(timeout=self._timeout, headers=self._headers) as client:
-            resp = await client.get(url, params=params)
-            resp.raise_for_status()
-            elapsed = time.perf_counter() - t0
-            log.info(
-                "http_response",
-                host=resp.url.host,
-                status=resp.status_code,
-                elapsed_s=round(elapsed, 3),
-            )
-            return resp.json()
+        client = await self._get_client()
+        resp = await client.get(url, params=params)
+        resp.raise_for_status()
+        elapsed = time.perf_counter() - t0
+        log.info(
+            "http_response",
+            host=resp.url.host,
+            status=resp.status_code,
+            elapsed_s=round(elapsed, 3),
+        )
+        return resp.json()
 
     @_RETRY
     async def _fetch_text(self, url: str, params: dict[str, Any] | None) -> str:
         t0 = time.perf_counter()
-        async with httpx.AsyncClient(timeout=self._timeout, headers=self._headers) as client:
-            resp = await client.get(url, params=params)
-            resp.raise_for_status()
-            elapsed = time.perf_counter() - t0
-            log.info(
-                "http_response",
-                host=resp.url.host,
-                status=resp.status_code,
-                elapsed_s=round(elapsed, 3),
-            )
-            return resp.text
+        client = await self._get_client()
+        resp = await client.get(url, params=params)
+        resp.raise_for_status()
+        elapsed = time.perf_counter() - t0
+        log.info(
+            "http_response",
+            host=resp.url.host,
+            status=resp.status_code,
+            elapsed_s=round(elapsed, 3),
+        )
+        return resp.text

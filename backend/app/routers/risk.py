@@ -19,9 +19,27 @@ from app.engines.flood import (
 )
 from app.engines.grid import build_grid
 from app.engines.overview import build_overview_snapshot
+from app.data.cities import find_nearest_city
 from app.services import openmeteo, overpass
 
 router = APIRouter(tags=["risk"])
+
+
+async def _safe_waterways(lat: float, lon: float) -> dict[str, Any]:
+    try:
+        return await asyncio.wait_for(overpass.query_waterways(lat, lon, radius_km=3.0), timeout=1.8)
+    except Exception:
+        nearest = find_nearest_city(lat, lon)
+        rivers = nearest.get("rivers", [])
+        features = [
+            {
+                "type": "Feature",
+                "properties": {"name": r.get("river", "River"), "waterway": "river"},
+                "geometry": {"type": "Point", "coordinates": [lon, lat]},
+            }
+            for r in rivers
+        ]
+        return {"type": "FeatureCollection", "features": features}
 
 
 class FloodWhatIfRequest(BaseModel):
@@ -120,22 +138,23 @@ async def flood_risk(
     lon: float = Query(..., description="Longitude"),
 ) -> dict[str, Any]:
     """Return a flood-risk assessment for a point built from forecast, flood, and terrain inputs."""
-    try:
-        forecast = await openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
-    except Exception:
-        forecast = {}
-    try:
-        flood = await openmeteo.get_flood(lat, lon, past_days=3, forecast_days=3)
-    except Exception:
-        flood = {}
-    try:
-        elevation = await openmeteo.elevation([(lat, lon)])
-    except Exception:
-        elevation = {}
-    try:
-        waterways = await overpass.query_waterways(lat, lon, radius_km=3.0)
-    except Exception:
-        waterways = {"type": "FeatureCollection", "features": []}
+    forecast_task = openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
+    flood_task = openmeteo.get_flood(lat, lon, past_days=3, forecast_days=3)
+    elevation_task = openmeteo.elevation([(lat, lon)])
+    waterways_task = _safe_waterways(lat, lon)
+
+    results = await asyncio.gather(
+        forecast_task,
+        flood_task,
+        elevation_task,
+        waterways_task,
+        return_exceptions=True,
+    )
+
+    forecast = results[0] if not isinstance(results[0], Exception) else {}
+    flood = results[1] if not isinstance(results[1], Exception) else {}
+    elevation = results[2] if not isinstance(results[2], Exception) else {}
+    waterways = results[3] if not isinstance(results[3], Exception) else {"type": "FeatureCollection", "features": []}
 
     forecast_data = getattr(forecast, "hourly", None) if not isinstance(forecast, dict) else forecast.get("hourly", {})
     hourly = forecast_data or {}

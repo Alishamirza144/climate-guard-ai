@@ -81,6 +81,7 @@ export default function ModuleDetailPage({
   const riskQuery = useQuery({
     queryKey: ['module-detail', moduleKey, location.lat, location.lon],
     queryFn: () => fetchData(location.lat, location.lon),
+    placeholderData: (prev) => prev,
     staleTime: 60_000,
     retry: 1,
   })
@@ -88,6 +89,7 @@ export default function ModuleDetailPage({
   const metricsQuery = useQuery({
     queryKey: ['module-metrics'],
     queryFn: api.mlMetrics,
+    placeholderData: (prev) => prev,
     staleTime: 300_000,
     retry: 1,
   })
@@ -95,6 +97,7 @@ export default function ModuleDetailPage({
   const gridQuery = useQuery({
     queryKey: ['module-grid', moduleKey, location.lat, location.lon],
     queryFn: () => api.grid(location.lat, location.lon, moduleKey),
+    placeholderData: (prev) => prev,
     staleTime: 120_000,
     retry: 1,
   })
@@ -103,6 +106,7 @@ export default function ModuleDetailPage({
     queryKey: ['module-whatif', moduleKey, location.lat, location.lon, addedRainMm],
     enabled: moduleKey === 'flood',
     queryFn: () => api.riskFloodWhatIf(location.lat, location.lon, addedRainMm),
+    placeholderData: (prev) => prev,
     staleTime: 120_000,
     retry: 1,
   })

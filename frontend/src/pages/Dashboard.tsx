@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -39,6 +39,7 @@ import {
   MapPin,
   ShieldAlert,
   ShieldCheck,
+  RefreshCw,
 } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 import { useLocationContext } from '../components/LocationProvider'
@@ -49,10 +50,35 @@ import { localizeLocationLabel } from '../i18n/locations'
 import { RiskGauge } from '../components/ui/RiskGauge'
 import { DataSourceBadge } from '../components/ui/DataSourceBadge'
 import EmergencyAlertBanner from '../components/EmergencyAlertBanner'
-import DamMonitoringWidget from '../components/DamMonitoringWidget'
 import CitySelector from '../components/CitySelector'
 import WaterLevelWidget from '../components/WaterLevelWidget'
-import IndiaRiskMap from '../components/IndiaRiskMap'
+import { setCachedTelemetry, getCachedTelemetry } from '../lib/cache'
+
+const IndiaRiskMap = lazy(() => import('../components/IndiaRiskMap'))
+const DamMonitoringWidget = lazy(() => import('../components/DamMonitoringWidget'))
+
+function MapSkeleton() {
+  return (
+    <div className="relative h-[360px] w-full overflow-hidden rounded-3xl border border-[#285274] bg-[#071A33] animate-pulse flex flex-col items-center justify-center text-[#B6C9DC] text-xs">
+      <div className="h-8 w-8 rounded-full border-2 border-[#25C5DC] border-t-transparent animate-spin mb-2" />
+      <span>Loading India Monitoring Grid & Map Tiles...</span>
+    </div>
+  )
+}
+
+function DamSkeleton() {
+  return (
+    <div className="bg-[#12385C] border-2 border-[#285274] rounded-3xl p-6 text-center text-[#B6C9DC] animate-pulse space-y-3">
+      <div className="h-6 w-48 bg-[#0E2B49] rounded-xl mx-auto" />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="h-28 bg-[#0E2B49] rounded-2xl" />
+        <div className="h-28 bg-[#0E2B49] rounded-2xl" />
+        <div className="h-28 bg-[#0E2B49] rounded-2xl" />
+        <div className="h-28 bg-[#0E2B49] rounded-2xl" />
+      </div>
+    </div>
+  )
+}
 
 const MODULE_META: Record<string, {
   titleKey: string
@@ -170,9 +196,17 @@ export default function Dashboard() {
     return () => window.clearInterval(id)
   }, [])
 
+  const overviewCacheKey = `overview_${location.lat}_${location.lon}`
+  const weatherCacheKey = `weather_${location.lat}_${location.lon}`
+
   const overviewQuery = useQuery({
     queryKey: ['dashboard-overview', location.lat, location.lon],
-    queryFn: () => api.riskOverview(location.lat, location.lon),
+    queryFn: async () => {
+      const res = await api.riskOverview(location.lat, location.lon)
+      setCachedTelemetry(overviewCacheKey, res)
+      return res
+    },
+    placeholderData: (prev) => prev ?? getCachedTelemetry<RiskOverviewResponse>(overviewCacheKey)?.data,
     staleTime: 60_000,
     refetchInterval: 5 * 60 * 1000,
     retry: 1,
@@ -181,6 +215,7 @@ export default function Dashboard() {
   const alertsQuery = useQuery({
     queryKey: ['dashboard-alerts'],
     queryFn: api.listAlerts,
+    placeholderData: (prev) => prev,
     staleTime: 60_000,
     refetchInterval: 5 * 60 * 1000,
     retry: 1,
@@ -188,7 +223,12 @@ export default function Dashboard() {
 
   const weatherQuery = useQuery({
     queryKey: ['dashboard-weather', location.lat, location.lon],
-    queryFn: () => api.liveWeather(location.lat, location.lon),
+    queryFn: async () => {
+      const res = await api.liveWeather(location.lat, location.lon)
+      setCachedTelemetry(weatherCacheKey, res, res.observation_time)
+      return res
+    },
+    placeholderData: (prev) => prev ?? getCachedTelemetry<any>(weatherCacheKey)?.data,
     staleTime: 60_000,
     refetchInterval: 5 * 60 * 1000,
     retry: 1,
@@ -197,6 +237,7 @@ export default function Dashboard() {
   const waterLevelsQuery = useQuery({
     queryKey: ['dashboard-water', location.lat, location.lon, location.cityId],
     queryFn: () => api.waterLevels(location.lat, location.lon, location.cityId),
+    placeholderData: (prev) => prev,
     staleTime: 60_000,
     refetchInterval: 5 * 60 * 1000,
     retry: 1,
@@ -205,6 +246,7 @@ export default function Dashboard() {
   const drainageQuery = useQuery({
     queryKey: ['dashboard-drainage', location.lat, location.lon],
     queryFn: () => api.riskDrainage(location.lat, location.lon, false),
+    placeholderData: (prev) => prev,
     staleTime: 60_000,
     refetchInterval: 5 * 60 * 1000,
     retry: 1,
@@ -341,6 +383,18 @@ export default function Dashboard() {
               {overviewQuery.dataUpdatedAt ? formatTime(overviewQuery.dataUpdatedAt, { timeStyle: 'short' }) : t('dashboard.liveStatus', 'Live')}
             </strong>
           </div>
+
+          {weatherQuery.isFetching ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#2389D7]/20 border border-[#2389D7]/40 text-[#25C5DC] text-[11px] font-bold animate-pulse">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              <span>{t('dashboard.syncing', 'Updating live...')}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#35C58B]/20 border border-[#35C58B]/40 text-[#35C58B] text-[11px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#35C58B] animate-pulse" />
+              <span>{t('dashboard.liveNwp', 'Live Assimilated')}</span>
+            </div>
+          )}
 
           <button
             type="button"
@@ -649,7 +703,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <IndiaRiskMap selectedHazard={selectedHazard} />
+        <Suspense fallback={<MapSkeleton />}>
+          <IndiaRiskMap selectedHazard={selectedHazard} />
+        </Suspense>
       </section>
 
       {/* ── SECTION: HYDROLOGICAL & RESERVOIR MONITORING ── */}
@@ -658,7 +714,9 @@ export default function Dashboard() {
         <WaterLevelWidget waterData={waterLevelsQuery.data} isLoading={waterLevelsQuery.isLoading} />
 
         {/* Dam & Reservoir Capacity Monitoring */}
-        <DamMonitoringWidget />
+        <Suspense fallback={<DamSkeleton />}>
+          <DamMonitoringWidget />
+        </Suspense>
       </section>
     </div>
   )

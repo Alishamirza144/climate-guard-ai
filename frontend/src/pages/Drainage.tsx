@@ -27,6 +27,7 @@ export default function Drainage() {
   const drainageQuery = useQuery({
     queryKey: ['drainage-risk', location.lat, location.lon, simulated],
     queryFn: () => api.riskDrainage(location.lat, location.lon, simulated),
+    placeholderData: (prev) => prev,
     staleTime: 30_000,
   })
 

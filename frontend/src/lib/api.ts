@@ -23,32 +23,57 @@ export interface HealthResponse {
   platform: string
 }
 
+const inFlightRequests = new Map<string, Promise<any>>()
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const isGet = !init || !init.method || init.method.toUpperCase() === 'GET'
   const url = `${API_BASE_URL}${path}`
+
+  if (isGet && inFlightRequests.has(url)) {
+    return inFlightRequests.get(url)! as Promise<T>
+  }
+
   notifyFetchStart()
   const start = performance.now()
 
-  try {
-    const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json' },
-      ...init,
-    })
-    const elapsedSec = (performance.now() - start) / 1000
-    const serverProcessTime = parseFloat(res.headers.get('x-process-time') || '0') || null
+  const promise = (async () => {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 18000)
 
-    if (!res.ok) {
-      recordLatency(elapsedSec, serverProcessTime, true, `HTTP ${res.status}: ${res.statusText}`)
-      throw new Error(`API ${res.status}: ${res.statusText} [${path}]`)
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        ...init,
+      })
+      clearTimeout(timeoutId)
+      const elapsedSec = (performance.now() - start) / 1000
+      const serverProcessTime = parseFloat(res.headers.get('x-process-time') || '0') || null
+
+      if (!res.ok) {
+        recordLatency(elapsedSec, serverProcessTime, true, `HTTP ${res.status}: ${res.statusText}`)
+        throw new Error(`API ${res.status}: ${res.statusText} [${path}]`)
+      }
+
+      recordLatency(elapsedSec, serverProcessTime, false)
+      return (await res.json()) as T
+    } catch (err: unknown) {
+      const elapsedSec = (performance.now() - start) / 1000
+      const msg = err instanceof Error ? err.message : String(err)
+      recordLatency(elapsedSec, null, true, msg)
+      throw err
+    } finally {
+      if (isGet) {
+        inFlightRequests.delete(url)
+      }
     }
+  })()
 
-    recordLatency(elapsedSec, serverProcessTime, false)
-    return (await res.json()) as T
-  } catch (err: unknown) {
-    const elapsedSec = (performance.now() - start) / 1000
-    const msg = err instanceof Error ? err.message : String(err)
-    recordLatency(elapsedSec, null, true, msg)
-    throw err
+  if (isGet) {
+    inFlightRequests.set(url, promise)
   }
+
+  return promise
 }
 
 export interface LocationSearchResponse {

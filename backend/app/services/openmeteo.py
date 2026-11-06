@@ -238,6 +238,9 @@ async def get_forecast(
         raise ValueError("forecast_days must be between 0 and 16")
     # Round coordinate to ~1.1km grid to share cache across modules and dashboard widgets
     point = GeoPoint(latitude=round(float(lat), 2), longitude=round(float(lon), 2))
+    # Standardize canonical past and forecast days so all modules and widgets hit the exact same cache entry
+    canonical_past = max(3, past_days)
+    canonical_forecast = max(3, forecast_days)
     try:
         payload = await _forecast_client.get(
             "/v1/forecast",
@@ -248,13 +251,13 @@ async def get_forecast(
                 "daily": ",".join(DAILY_VARIABLES),
                 "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m",
                 "timezone": "auto",
-                "past_days": past_days,
-                "forecast_days": forecast_days,
+                "past_days": canonical_past,
+                "forecast_days": canonical_forecast,
             },
         )
     except Exception as exc:
         log.warning("openmeteo_forecast_fallback_climatology", lat=lat, lon=lon, error=str(exc))
-        payload = _build_climatological_fallback_forecast(lat, lon, past_days, forecast_days)
+        payload = _build_climatological_fallback_forecast(lat, lon, canonical_past, canonical_forecast)
 
     return ForecastResponse.model_validate(payload)
 

@@ -52,7 +52,12 @@ export default function DamMonitoringWidget() {
 
   const handleSelectDam = (damId: string) => {
     setSelectedDamId(damId)
-    setLoading(true)
+    const existing = dams.find((d) => d.id === damId)
+    if (existing) {
+      setDam(existing)
+    } else {
+      setLoading(true)
+    }
     api.getDam(damId)
       .then((data) => {
         setDam(data)
