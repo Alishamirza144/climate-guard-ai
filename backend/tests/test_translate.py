@@ -15,11 +15,27 @@ def test_resolve_translation_hindi():
     assert "बाढ़ जोखिम" in res
     assert engine == "dictionary"
 
+    res_no_threat, eng_no_threat = _resolve_translation("NO ACTIVE FLOOD THREAT", "en", "hi")
+    assert "सक्रिय बाढ़ खतरा नहीं" in res_no_threat
+    assert eng_no_threat == "dictionary"
+
+    res_latency, _ = _resolve_translation("DATA LATENCY", "en", "hi")
+    assert "विलंबता" in res_latency
+
 
 def test_resolve_translation_marathi():
     res, engine = _resolve_translation("Live Command Hub", "en", "mr")
     assert "नियंत्रण कक्ष" in res
     assert engine == "dictionary"
+
+    res_no_threat, _ = _resolve_translation("NO ACTIVE FLOOD THREAT", "en", "mr")
+    assert "पूर धोका नाही" in res_no_threat
+
+    res_routine, _ = _resolve_translation("Routine civic monitoring", "en", "mr")
+    assert "देखरेख" in res_routine
+
+    res_weather, _ = _resolve_translation("Mainly clear", "en", "mr")
+    assert "स्वच्छ" in res_weather
 
 
 def test_resolve_translation_cache():
@@ -43,12 +59,14 @@ def test_endpoint_translate_text():
 
 def test_endpoint_translate_batch():
     req = BatchTranslateRequest(
-        texts=["Flood Risk", "Heat Risk", "Drainage Risk"],
+        texts=["Flood Risk", "Heat Risk", "Drainage Risk", "DATA LATENCY", "Backend Response"],
         target_lang="gu",
     )
     resp = translate_batch(req)
     assert "Flood Risk" in resp.translations
     assert "પૂર જોખમ" in resp.translations["Flood Risk"]
+    assert "DATA LATENCY" in resp.translations
+    assert "ડેટા લેટન્સી" in resp.translations["DATA LATENCY"]
 
 
 def test_endpoint_translate_status():

@@ -43,6 +43,7 @@ import {
 import { Link, NavLink } from 'react-router-dom'
 import { useLocationContext } from '../components/LocationProvider'
 import { api, type RiskGridResponse, type RiskOverviewResponse } from '../lib/api'
+import { translateWeatherCondition } from '../i18n/dynamic'
 import { RiskGauge } from '../components/ui/RiskGauge'
 import { DataSourceBadge } from '../components/ui/DataSourceBadge'
 import EmergencyAlertBanner from '../components/EmergencyAlertBanner'
@@ -380,7 +381,7 @@ export default function Dashboard() {
 
             <div className="mt-3 flex items-center gap-2 text-sm font-extrabold text-[#F3F8FF]">
               <Sun className="w-4 h-4 text-[#F4BC4D]" />
-              <span>{condition}</span>
+              <span>{translateWeatherCondition(condition, t)}</span>
             </div>
           </div>
 
@@ -557,11 +558,11 @@ export default function Dashboard() {
                   contentStyle={{ backgroundColor: '#071A33', borderColor: '#285274', borderRadius: '12px', fontSize: '11px', color: '#F3F8FF' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
-                <Line type="monotone" dataKey="flood" name="Flood" stroke="#2389D7" strokeWidth={2.5} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="heat" name="Heat" stroke="#F4BC4D" strokeWidth={2.5} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="fire" name="Fire" stroke="#F06470" strokeWidth={2.5} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="crop" name="Crop" stroke="#35C58B" strokeWidth={2.5} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="drainage" name="Drainage" stroke="#25C5DC" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="flood" name={t('nav.flood', 'Flood')} stroke="#2389D7" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="heat" name={t('nav.heat', 'Heat')} stroke="#F4BC4D" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="fire" name={t('nav.fire', 'Fire')} stroke="#F06470" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="crop" name={t('nav.crop', 'Crop')} stroke="#35C58B" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="drainage" name={t('nav.drainage', 'Drainage')} stroke="#25C5DC" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>

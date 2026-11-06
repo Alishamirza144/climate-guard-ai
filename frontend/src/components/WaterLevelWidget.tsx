@@ -35,11 +35,11 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
               {t('dashboard.riverTitle', 'River Gauge Monitoring & Calibrated Water-Level')}
             </h3>
             <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#2389D7]/20 text-[#25C5DC] border border-[#2389D7]/40">
-              CWC Benchmarks · GloFAS Coupling
+              {t('water.cwcBenchmarks', 'CWC Benchmarks · GloFAS Coupling')}
             </span>
           </div>
           <p className="text-xs text-[#B6C9DC] mt-0.5">
-            Active river channels, tidal stations, and hydrometric gauges for{' '}
+            {t('water.activeChannels', 'Active river channels, tidal stations, and hydrometric gauges for')}{' '}
             <span className="font-semibold text-[#8ED8F5]">
               {waterData?.city}, {waterData?.state}
             </span>
@@ -47,7 +47,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
         </div>
 
         <div className="flex items-center gap-2 text-xs font-semibold text-[#B6C9DC]">
-          <span>Model Cycle: {waterData?.timestamp || 'Live'}</span>
+          <span>{t('water.modelCycle', 'Model Cycle')}: {waterData?.timestamp || t('common.live', 'Live')}</span>
         </div>
       </div>
 
@@ -56,13 +56,12 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
           <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#2389D7]/20 text-[#25C5DC]">
             <Info className="h-5 w-5" />
           </div>
-          <h4 className="text-sm font-extrabold text-[#F3F8FF]">RIVER GAUGE DATA INDEXED VIA RUNOFF MODEL</h4>
+          <h4 className="text-sm font-extrabold text-[#F3F8FF]">{t('water.indexedRunoff', 'RIVER GAUGE DATA INDEXED VIA RUNOFF MODEL')}</h4>
           <p className="text-xs text-[#B6C9DC] max-w-md mx-auto">
-            {waterData?.message ||
-              `No active Central Water Commission (CWC) river gauges currently indexed for this municipality. Urban runoff and micro-drainage are computed via hydrologic model.`}
+            {waterData?.message || t('water.noCwcGauges', 'No active Central Water Commission (CWC) river gauges currently indexed for this municipality. Urban runoff and micro-drainage are computed via hydrologic model.')}
           </p>
           <p className="text-[10px] text-[#25C5DC] font-bold uppercase tracking-wider">
-            Source: Central Water Commission (CWC) Hydro-telemetry Network & Copernicus GloFAS
+            {t('water.hydroSource', 'Source: Central Water Commission (CWC) Hydro-telemetry Network & Copernicus GloFAS')}
           </p>
         </div>
       ) : (
@@ -105,7 +104,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
                         {st.current_water_level_m} {st.unit}
                       </span>
                       <span className="block text-[10px] font-bold text-[#B6C9DC] uppercase tracking-wider">
-                        Calibrated River Stage
+                        {t('water.calibratedStage', 'Calibrated River Stage')}
                       </span>
                     </div>
 
@@ -121,7 +120,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
                           </span>
                         ) : (
                           <span className="flex items-center text-[#B6C9DC]">
-                            <Minus className="h-3.5 w-3.5 mr-0.5" />Stable
+                            <Minus className="h-3.5 w-3.5 mr-0.5" />{t('common.stable', 'Stable')}
                           </span>
                         )}
                       </div>
@@ -136,9 +135,9 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
                 {/* Progress bar vs warning/danger thresholds */}
                 <div>
                   <div className="flex items-center justify-between text-[10px] font-bold text-[#B6C9DC] mb-1">
-                    <span>Normal Flow</span>
-                    <span>Warning: {st.warning_threshold_m}m</span>
-                    <span className="text-[#F06470]">Danger: {st.danger_threshold_m}m</span>
+                    <span>{t('common.normalFlow', 'Normal Flow')}</span>
+                    <span>{t('risk.warning', 'Warning')}: {st.warning_threshold_m}m</span>
+                    <span className="text-[#F06470]">{t('risk.critical', 'Danger')}: {st.danger_threshold_m}m</span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-[#102F50] overflow-hidden">
                     <div
@@ -152,8 +151,8 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
 
                 {/* Station metadata footer */}
                 <div className="pt-2 border-t border-[#285274]/60 flex items-center justify-between text-[9px] font-semibold text-[#B6C9DC]">
-                  <span>Thresholds: CWC Benchmark</span>
-                  <span className="text-[#25C5DC] font-bold">● {st.freshness || 'Calibrated Model'}</span>
+                  <span>{t('water.thresholdsBenchmark', 'Thresholds: CWC Benchmark')}</span>
+                  <span className="text-[#25C5DC] font-bold">● {st.freshness || t('water.calibratedStage', 'Calibrated Model')}</span>
                 </div>
               </div>
             )
@@ -165,7 +164,7 @@ export default function WaterLevelWidget({ waterData, isLoading }: WaterLevelWid
         <div className="rounded-xl border border-[#285274] bg-[#0E2B49] px-3.5 py-2 text-[11px] text-[#B6C9DC] flex items-center gap-2">
           <Info className="h-4 w-4 shrink-0 text-[#25C5DC]" />
           <span>
-            <strong>Hydrological Note:</strong> Warning/danger thresholds represent official CWC / State WRD standards. Current river stages are calibrated hydrological estimates derived from Copernicus GloFAS river discharge and station cross-sections.
+            {t('water.hydroNote', 'Warning/danger thresholds represent official CWC / State WRD standards. Current river stages are calibrated hydrological estimates derived from Copernicus GloFAS river discharge and station cross-sections.')}
           </span>
         </div>
       )}

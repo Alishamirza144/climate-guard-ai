@@ -149,7 +149,7 @@ export default function CitySelector() {
                       : 'border border-[#285274] bg-[#12385C] text-[#B6C9DC] hover:bg-[#102F50] hover:text-[#F3F8FF]'
                   }`}
                 >
-                  {region}
+                  {region === 'All' ? t('city.allIndia', 'All') : region}
                 </button>
               ))}
             </div>
@@ -213,7 +213,7 @@ export default function CitySelector() {
           {/* Footer stats */}
           <div className="mt-3 pt-2.5 border-t border-[#285274] flex items-center justify-between text-[10px] font-bold text-[#B6C9DC]">
             <span>Showing {filteredCities.length} of {cities.length} Indian cities</span>
-            <span className="text-[#25C5DC]">Live Telemetry Driven</span>
+            <span className="text-[#25C5DC]">{t('dashboard.verifiedOnline', 'Live Telemetry Driven')}</span>
           </div>
         </div>
       )}

@@ -174,7 +174,7 @@ export default function Simulation() {
             <div className="flex items-center gap-2 text-[#25C5DC]">
               <History className="w-5 h-5" />
               <h2 className="text-base font-black uppercase tracking-wider text-[#F3F8FF]">
-                Archive Historical Back-Test
+                {t('simulation.title', 'Archive Historical Back-Test')}
               </h2>
             </div>
             <label className="block text-xs font-bold text-[#B6C9DC]">
@@ -191,7 +191,7 @@ export default function Simulation() {
               onClick={runBacktest}
               className="w-full rounded-xl bg-[#0E2B49] hover:bg-[#102F50] border border-[#285274] px-4 py-2.5 text-xs font-bold text-[#25C5DC] transition"
             >
-              Run Observation vs. Model Comparison
+              {t('simulation.runScenario', 'Run Observation vs. Model Comparison')}
             </button>
 
             {backtest && (

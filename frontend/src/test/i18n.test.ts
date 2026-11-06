@@ -1,6 +1,13 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 import i18n, { changeAppLanguage } from '../i18n'
 import { SUPPORTED_LANGUAGES, RTL_LANGUAGES, isRTL, getLanguageMeta } from '../i18n/languages'
+import {
+  translateAlertTitle,
+  translateAlertReason,
+  translateRecommendedAction,
+  translateWeatherCondition,
+  translateLatencyStatus,
+} from '../i18n/dynamic'
 
 describe('Indian Multilingual System (23 Languages)', () => {
   beforeEach(() => {
@@ -74,10 +81,68 @@ describe('Indian Multilingual System (23 Languages)', () => {
     changeAppLanguage('hi')
     expect(i18n.t('nav.dashboard')).toContain('डैशबोर्ड')
     expect(i18n.t('risk.critical')).toContain('गंभीर')
+    expect(i18n.t('latency.title')).toContain('डेटा विलंबता')
+    expect(i18n.t('common.causalReason')).toContain('कारणात्मक विश्लेषण')
 
     changeAppLanguage('mr')
     expect(i18n.t('nav.dashboard')).toContain('डॅशबोर्ड')
     expect(i18n.t('risk.critical')).toContain('गंभीर')
+    expect(i18n.t('latency.title')).toContain('माहिती विलंबता')
+    expect(i18n.t('common.causalReason')).toContain('कारणात्मक विश्लेषण')
+  })
+
+  it('translates dynamic backend alerts and descriptions in Hindi and Marathi', () => {
+    // Test Hindi
+    changeAppLanguage('hi')
+    const tHi = i18n.t.bind(i18n)
+
+    const hiTitle = translateAlertTitle('✅ NO ACTIVE FLOOD THREAT – MUMBAI REGION', tHi)
+    expect(hiTitle).toContain('कोई सक्रिय बाढ़ खतरा नहीं')
+    expect(hiTitle).toContain('MUMBAI')
+
+    const hiReason = translateAlertReason(
+      'No significant rainfall recorded in Mumbai (Maharashtra). River water level and runoff remain within nominal limits.',
+      tHi,
+      'Mumbai',
+      'Maharashtra'
+    )
+    expect(hiReason).toContain('में कोई उल्लेखनीय वर्षा दर्ज नहीं की गई')
+
+    const hiAction = translateRecommendedAction(
+      'Routine civic monitoring. Follow official DDMA/Mumbai Municipal advisories.',
+      tHi,
+      'Mumbai'
+    )
+    expect(hiAction).toContain('नियमित नागरिक निगरानी')
+
+    const hiWeather = translateWeatherCondition('Mainly clear', tHi)
+    expect(hiWeather).toContain('मुख्यतः साफ')
+
+    // Test Marathi
+    changeAppLanguage('mr')
+    const tMr = i18n.t.bind(i18n)
+
+    const mrTitle = translateAlertTitle('✅ NO ACTIVE FLOOD THREAT – MUMBAI REGION', tMr)
+    expect(mrTitle).toContain('कोणताही सक्रिय पूर धोका नाही')
+    expect(mrTitle).toContain('MUMBAI')
+
+    const mrReason = translateAlertReason(
+      'No significant rainfall recorded in Mumbai (Maharashtra). River water level and runoff remain within nominal limits.',
+      tMr,
+      'Mumbai',
+      'Maharashtra'
+    )
+    expect(mrReason).toContain('कोणताही लक्षणीय पाऊस नोंदवला गेला नाही')
+
+    const mrAction = translateRecommendedAction(
+      'Routine civic monitoring. Follow official DDMA/Mumbai Municipal advisories.',
+      tMr,
+      'Mumbai'
+    )
+    expect(mrAction).toContain('नियमित नागरी देखरेख')
+
+    const mrWeather = translateWeatherCondition('Mainly clear', tMr)
+    expect(mrWeather).toContain('मुख्यतः स्वच्छ')
   })
 
   it('provides valid metadata for each language with native name and region', () => {

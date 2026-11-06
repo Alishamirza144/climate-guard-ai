@@ -142,7 +142,13 @@ export default function ModuleDetailPage({
     ]
   }, [payload, riskScore, isInsufficient, location.label, t])
 
-  const tabs = ['Overview', 'Contributing Factors', 'History & Forecast', 'Scientific Model', 'Authoritative Sources']
+  const tabDefs = useMemo(() => [
+    { key: 'Overview', label: t('common.overview', 'Overview') },
+    { key: 'Contributing Factors', label: t('common.contributingFactors', 'Contributing Factors') },
+    { key: 'History & Forecast', label: t('common.historyForecast', 'History & Forecast') },
+    { key: 'Scientific Model', label: t('common.scientificModel', 'Scientific Model') },
+    { key: 'Authoritative Sources', label: t('common.authoritativeSources', 'Authoritative Sources') },
+  ], [t])
 
   const actionList = recommendations[audience] ?? recommendations.Citizen
   const trend = Array.isArray(payload.hourly_trend)
@@ -172,7 +178,9 @@ export default function ModuleDetailPage({
       <div className="rounded-3xl border border-[#285274] bg-[#0E2B49] p-5 shadow-xl text-[#F3F8FF]">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-[#25C5DC] font-bold">Key Intelligence Signal</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-[#25C5DC] font-bold">
+              {t('common.keySignal', 'Key Intelligence Signal')}
+            </p>
             <h3 className="mt-1 text-xl font-bold text-[#F3F8FF]">
               {String(payload.headline ?? payload.summary ?? `${title} Operational Status`)}
             </h3>
@@ -186,7 +194,7 @@ export default function ModuleDetailPage({
             <CalendarCheck2 className="h-4 w-4 shrink-0 text-[#25C5DC] mt-0.5" />
             <div>
               <span className="font-bold uppercase tracking-wider text-[#25C5DC] mr-1">
-                {seasonalBaseline ? `${seasonalBaseline} Baseline:` : 'Baseline Rationale:'}
+                {seasonalBaseline ? `${seasonalBaseline} Baseline:` : t('common.causalReason', 'Causal Reason:')}
               </span>
               <span className="text-[#B6C9DC]">{causalReason}</span>
             </div>
@@ -207,8 +215,10 @@ export default function ModuleDetailPage({
 
         <div className="mt-5 rounded-2xl border border-[#285274] bg-[#12385C] p-4">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">Analytical Narrative</p>
-            <p className="text-xs text-[#8ED8F5] font-semibold">Updated {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">
+              {t('common.analyticalNarrative', 'Analytical Narrative')}
+            </p>
+            <p className="text-xs text-[#8ED8F5] font-semibold">{t('dashboard.updatedAt', 'Updated')} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
           </div>
           <p className="mt-2 text-sm leading-6 text-[#B6C9DC]">
             {String(payload.explanation ?? payload.summary ?? 'Atmospheric and physical parameters remain within normal parameters with continuous automated sensor polling.')}
@@ -218,14 +228,16 @@ export default function ModuleDetailPage({
 
       <div className="rounded-3xl border border-[#285274] bg-[#0E2B49] p-5 shadow-xl text-[#F3F8FF]">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.28em] text-[#25C5DC] font-bold">Operational View</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-[#25C5DC] font-bold">
+            {t('common.operationalView', 'Operational View')}
+          </p>
           <button
             type="button"
             onClick={() => window.print()}
             className="inline-flex items-center gap-1.5 rounded-full border border-[#285274] bg-[#12385C] px-3 py-1.5 text-xs font-bold text-[#F3F8FF] transition hover:bg-[#102F50]"
           >
             <Download className="h-3.5 w-3.5 text-[#25C5DC]" />
-            {t('app.docs', 'Export Intelligence Report')}
+            {t('common.exportReport', 'Export Intelligence Report')}
           </button>
         </div>
         <div className="flex justify-center">
@@ -368,47 +380,55 @@ export default function ModuleDetailPage({
                   : 'bg-[#35C58B]/20 text-[#35C58B] border-[#35C58B]/40'
               }`}
             >
-              {level} Risk Tier
+              {level} {t('common.riskTier', 'Risk Tier')}
             </div>
           </div>
         </div>
 
         {/* Tab Navigation */}
         <div className="mt-5 flex flex-wrap gap-2 border-b border-[#285274] pb-3">
-          {tabs.map((t) => (
+          {tabDefs.map((item) => (
             <button
-              key={t}
+              key={item.key}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => setTab(item.key)}
               className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
-                tab === t
+                tab === item.key
                   ? 'bg-[#2389D7] text-white shadow-glow'
                   : 'text-[#B6C9DC] hover:bg-[#0E2B49] hover:text-[#F3F8FF]'
               }`}
             >
-              {t}
+              {item.label}
             </button>
           ))}
         </div>
 
         {/* Audience Selector (Citizen, Authority, Farmer) */}
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-xs font-bold text-[#B6C9DC]">Action Protocols for:</span>
+          <span className="text-xs font-bold text-[#B6C9DC]">{t('common.actionProtocolsFor', 'Action Protocols for:')}</span>
           <div className="flex rounded-xl bg-[#0E2B49] p-1 border border-[#285274]">
-            {(['Citizen', 'Authority', 'Farmer'] as ModuleAudience[]).map((aud) => (
-              <button
-                key={aud}
-                type="button"
-                onClick={() => setAudience(aud)}
-                className={`rounded-lg px-3 py-1 text-xs font-bold transition-colors ${
-                  audience === aud
-                    ? 'bg-[#2389D7] text-white shadow-sm'
-                    : 'text-[#B6C9DC] hover:text-[#F3F8FF]'
-                }`}
-              >
-                {aud}
-              </button>
-            ))}
+            {(['Citizen', 'Authority', 'Farmer'] as ModuleAudience[]).map((aud) => {
+              const audLabel =
+                aud === 'Citizen'
+                  ? t('common.citizen', 'Citizen')
+                  : aud === 'Authority'
+                  ? t('common.authority', 'Authority')
+                  : t('common.farmer', 'Farmer')
+              return (
+                <button
+                  key={aud}
+                  type="button"
+                  onClick={() => setAudience(aud)}
+                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-colors ${
+                    audience === aud
+                      ? 'bg-[#2389D7] text-white shadow-sm'
+                      : 'text-[#B6C9DC] hover:text-[#F3F8FF]'
+                  }`}
+                >
+                  {audLabel}
+                </button>
+              )
+            })}
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, Popup, useMap, Tooltip } from 'react-leaflet'
@@ -50,6 +51,7 @@ interface IndiaRiskMapProps {
 }
 
 export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapProps) {
+  const { t } = useTranslation()
   const { location, selectCity, cities, currentCity } = useLocationContext()
 
   return (
@@ -98,11 +100,11 @@ export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapP
                     </span>
                   </div>
                   <div className="text-[11px] text-[#B6C9DC]">
-                    Coordinates: {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
+                    {t('common.coordinates', 'Coordinates')}: {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
                   </div>
                   {city.rivers.length > 0 && (
                     <div className="text-[11px] text-[#8ED8F5]">
-                      Catchment: {city.rivers.map((r) => r.river).join(', ')}
+                      {t('common.catchment', 'Catchment')}: {city.rivers.map((r) => r.river).join(', ')}
                     </div>
                   )}
                   <button
@@ -110,7 +112,7 @@ export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapP
                     onClick={() => selectCity(city.id)}
                     className="w-full mt-2 rounded-lg bg-[#2389D7] hover:bg-[#25C5DC] hover:text-[#071A33] py-1 text-center font-bold text-white transition text-[11px]"
                   >
-                    Select City
+                    {t('common.selectCity', 'Select City')}
                   </button>
                 </div>
               </Popup>
@@ -123,20 +125,20 @@ export default function IndiaRiskMap({ selectedHazard = 'flood' }: IndiaRiskMapP
       <div className="absolute bottom-3 left-3 z-[1000] rounded-2xl border border-[#285274] bg-[#0E2B49]/90 px-3 py-2 shadow-lg backdrop-blur-md text-[10px] text-[#F3F8FF] space-y-1">
         <div className="font-bold uppercase tracking-wider text-[#25C5DC] flex items-center gap-1.5">
           <Navigation className="h-3 w-3" />
-          <span>India Monitoring Grid</span>
+          <span>{t('common.monitoringGrid', 'India Monitoring Grid')}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <span className="h-2.5 w-2.5 rounded-full bg-[#F06470] border border-[#071A33]" />
-            <span className="text-[#B6C9DC]">Selected</span>
+            <span className="text-[#B6C9DC]">{t('common.selected', 'Selected')}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-[#25C5DC] border border-[#071A33]" />
-            <span className="text-[#B6C9DC]">Compulsory Core</span>
+            <span className="text-[#B6C9DC]">{t('common.compulsoryCore', 'Compulsory Core')}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-[#2389D7] border border-[#071A33]" />
-            <span className="text-[#B6C9DC]">Monitored Node</span>
+            <span className="text-[#B6C9DC]">{t('common.monitoredNode', 'Monitored Node')}</span>
           </div>
         </div>
       </div>

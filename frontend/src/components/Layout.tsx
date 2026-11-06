@@ -176,7 +176,7 @@ export default function Layout() {
                   CLIMATEGUARD<span className="text-[#25C5DC]">.AI</span>
                 </span>
                 <span className="text-[9px] font-bold tracking-[0.2em] text-[#8ED8F5] mt-0.5 uppercase">
-                  NATIONAL CLIMATE INTELLIGENCE
+                  {t('app.nationalIntelligence', 'NATIONAL CLIMATE INTELLIGENCE')}
                 </span>
               </div>
             </Link>
@@ -304,14 +304,14 @@ export default function Layout() {
                     : 'text-[#B6C9DC] hover:bg-[#12385C] hover:text-[#F3F8FF] border border-transparent'
                 } ${sidebarCollapsed ? 'justify-center px-2' : ''}`
               }
-              title="Overview Dashboard"
+              title={t('nav.mainDashboard', 'Overview Dashboard')}
             >
               <div className="relative flex items-center justify-center shrink-0">
                 <LayoutDashboard className="w-4 h-4 text-[#25C5DC] group-hover:text-white" />
               </div>
               {!sidebarCollapsed && (
                 <div className="flex-1 min-w-0 flex items-center justify-between">
-                  <span className="text-xs font-black truncate">Main Overview</span>
+                  <span className="text-xs font-black truncate">{t('nav.mainDashboard', 'Main Overview')}</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#102F50] text-[#8ED8F5] font-bold">
                     Core
                   </span>
@@ -322,7 +322,7 @@ export default function Layout() {
             <div className="pt-2 pb-1">
               {!sidebarCollapsed && (
                 <div className="text-[9px] font-black uppercase tracking-widest text-[#B6C9DC]/60 px-3">
-                  Autonomous Modules
+                  {t('dashboard.modulesTitle', 'Autonomous Modules')}
                 </div>
               )}
             </div>
@@ -387,8 +387,8 @@ export default function Layout() {
           {!sidebarCollapsed && (
             <div className="p-3 border-t border-[#285274] bg-[#071A33]/50 text-[11px] text-[#B6C9DC] space-y-1">
               <div className="flex items-center justify-between font-bold text-[#8ED8F5]">
-                <span>Platform State</span>
-                <span className="text-[#35C58B]">24/7 Verified</span>
+                <span>{t('common.operational', 'Platform State')}</span>
+                <span className="text-[#35C58B]">{t('risk.verifiedOnline', '24/7 Verified')}</span>
               </div>
               <p className="text-[10px] leading-tight text-[#B6C9DC]/80">
                 Government-grade climate telemetry across Indian catchments.
@@ -431,29 +431,29 @@ export default function Layout() {
                 </div>
 
                 <div className="space-y-1.5 text-xs">
-                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">Prediction Engines</h4>
+                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">{t('dashboard.modulesTitle', 'Prediction Engines')}</h4>
                   <ul className="space-y-1 text-[#B6C9DC] font-medium">
-                    <li><Link to="/flood" className="hover:text-[#25C5DC]">Flood Guard AI</Link></li>
-                    <li><Link to="/heat" className="hover:text-[#25C5DC]">Heat Guard AI</Link></li>
-                    <li><Link to="/fire" className="hover:text-[#25C5DC]">Fire Guard AI</Link></li>
-                    <li><Link to="/crop" className="hover:text-[#25C5DC]">Crop Shield AI</Link></li>
-                    <li><Link to="/drainage" className="hover:text-[#25C5DC]">Drainage Network AI</Link></li>
+                    <li><Link to="/flood" className="hover:text-[#25C5DC]">{t('nav.flood', 'Flood Guard AI')}</Link></li>
+                    <li><Link to="/heat" className="hover:text-[#25C5DC]">{t('nav.heat', 'Heat Guard AI')}</Link></li>
+                    <li><Link to="/fire" className="hover:text-[#25C5DC]">{t('nav.fire', 'Fire Guard AI')}</Link></li>
+                    <li><Link to="/crop" className="hover:text-[#25C5DC]">{t('nav.crop', 'Crop Shield AI')}</Link></li>
+                    <li><Link to="/drainage" className="hover:text-[#25C5DC]">{t('nav.drainage', 'Drainage Network AI')}</Link></li>
                   </ul>
                 </div>
 
                 <div className="space-y-1.5 text-xs">
-                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">Platform Tools</h4>
+                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">{t('nav.sidebarSubtitle', 'Platform Tools')}</h4>
                   <ul className="space-y-1 text-[#B6C9DC] font-medium">
-                    <li><Link to="/dashboard" className="hover:text-[#25C5DC]">Command Dashboard</Link></li>
-                    <li><Link to="/simulation" className="hover:text-[#25C5DC]">Scenario Validation Lab</Link></li>
-                    <li><Link to="/methodology" className="hover:text-[#25C5DC]">Scientific Methodology</Link></li>
-                    <li><Link to="/alerts" className="hover:text-[#25C5DC]">Emergency Broadcasts</Link></li>
-                    <li><Link to="/data-sources" className="hover:text-[#25C5DC]">Data Registry</Link></li>
+                    <li><Link to="/dashboard" className="hover:text-[#25C5DC]">{t('nav.mainDashboard', 'Command Dashboard')}</Link></li>
+                    <li><Link to="/simulation" className="hover:text-[#25C5DC]">{t('nav.simulation', 'Scenario Validation Lab')}</Link></li>
+                    <li><Link to="/methodology" className="hover:text-[#25C5DC]">{t('nav.methodology', 'Scientific Methodology')}</Link></li>
+                    <li><Link to="/alerts" className="hover:text-[#25C5DC]">{t('nav.alerts', 'Emergency Broadcasts')}</Link></li>
+                    <li><Link to="/data-sources" className="hover:text-[#25C5DC]">{t('nav.sources', 'Data Registry')}</Link></li>
                   </ul>
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">Authoritative Sources</h4>
+                  <h4 className="font-bold text-[#F3F8FF] uppercase tracking-wider text-[11px]">{t('common.authoritativeSources', 'Authoritative Sources')}</h4>
                   <p className="text-[#B6C9DC] leading-relaxed text-[11px]">
                     Open-Meteo ECMWF/GFS, CWC River Basins, WRD Maharashtra, and NASA FIRMS.
                   </p>
@@ -466,7 +466,7 @@ export default function Layout() {
 
               <div className="pt-4 border-t border-[#285274] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#B6C9DC]">
                 <p className="font-medium text-[#F3F8FF]">
-                  ⚠️ Decision-support system. Follow official IMD / CWC / NDMA bulletins during severe events.
+                  {t('alerts.decisionSupport', '⚠️ Decision-support system. Follow official IMD / CWC / NDMA bulletins during severe events.')}
                 </p>
                 <p>© {new Date().getFullYear()} ClimateGuard AI • Government-Grade Resilience Platform</p>
               </div>

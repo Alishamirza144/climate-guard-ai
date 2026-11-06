@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Activity, AlertTriangle, CheckCircle2, RefreshCw, XCircle } from 'lucide-react'
 import { getLatencyMetric, subscribeLatency, LatencyMetric } from '../lib/latency'
+import { translateLatencyStatus } from '../i18n/dynamic'
 
 export default function DataLatencyIndicator() {
+  const { t } = useTranslation()
   const [metric, setMetric] = useState<LatencyMetric>(getLatencyMetric())
   const [collapsed, setCollapsed] = useState(false)
 
@@ -24,12 +27,7 @@ export default function DataLatencyIndicator() {
       ? 'bg-[#F4BC4D]'
       : 'bg-[#F06470]'
 
-  const statusText =
-    metric.status === 'green'
-      ? 'Normal Latency'
-      : metric.status === 'amber'
-      ? 'Propagation Delay'
-      : 'Network Lag / Fault'
+  const statusText = translateLatencyStatus(metric.status, t)
 
   return (
     <aside
@@ -56,7 +54,7 @@ export default function DataLatencyIndicator() {
             <span className={`w-2.5 h-2.5 rounded-full ${statusDot} ${metric.isFetching ? 'animate-ping' : ''}`} />
             <span className="text-xs font-bold tracking-wide uppercase text-[#F3F8FF] flex items-center gap-1.5">
               <Activity className="w-3.5 h-3.5 text-[#25C5DC]" />
-              Data Latency
+              {t('latency.title', 'Data Latency')}
             </span>
           </div>
 
@@ -74,36 +72,36 @@ export default function DataLatencyIndicator() {
             {metric.totalClientSeconds > 3.0 && (
               <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-[#F4BC4D]/20 border border-[#F4BC4D]/40 text-[#F4BC4D] text-[10px]">
                 <AlertTriangle className="w-3.5 h-3.5 text-[#F4BC4D] shrink-0 mt-0.5" />
-                <span>External APIs experiencing higher than average propagation delay.</span>
+                <span>{t('latency.highPropagation', 'External APIs experiencing higher than average propagation delay.')}</span>
               </div>
             )}
 
             {metric.hasError && (
               <div className="flex items-start gap-1.5 p-1.5 rounded-lg bg-[#F06470]/15 border border-[#F06470]/40 text-[#F06470] text-[10px]">
                 <XCircle className="w-3.5 h-3.5 text-[#F06470] shrink-0 mt-0.5" />
-                <span>{metric.errorMessage || 'Connection failure. Using cached telemetry.'}</span>
+                <span>{metric.errorMessage || t('latency.connectionFailure', 'Connection failure. Using cached telemetry.')}</span>
               </div>
             )}
 
             <div className="space-y-1.5 font-medium">
               <div className="flex justify-between items-center text-[#B6C9DC]">
-                <span>Weather API:</span>
+                <span>{t('latency.weatherApi', 'Weather API')}:</span>
                 <span className="font-mono font-semibold text-[#8ED8F5]">{metric.weatherApiSeconds} s</span>
               </div>
               <div className="flex justify-between items-center text-[#B6C9DC]">
-                <span>Risk Engine:</span>
+                <span>{t('latency.riskEngine', 'Risk Engine')}:</span>
                 <span className="font-mono font-semibold text-[#8ED8F5]">{metric.riskEngineSeconds} s</span>
               </div>
               <div className="flex justify-between items-center text-[#B6C9DC]">
-                <span>Backend Response:</span>
+                <span>{t('latency.backendResponse', 'Backend Response')}:</span>
                 <span className="font-mono font-semibold text-[#8ED8F5]">{metric.backendSeconds} s</span>
               </div>
               <div className="pt-1.5 border-t border-[#285274]/60 flex justify-between items-center text-[10px]">
-                <span className="text-[#B6C9DC]">Last Updated:</span>
+                <span className="text-[#B6C9DC]">{t('latency.lastUpdated', 'Last Updated')}:</span>
                 <span className="font-mono text-[#F3F8FF] font-bold">{metric.lastUpdated}</span>
               </div>
               <div className="flex justify-between items-center text-[10px]">
-                <span className="text-[#B6C9DC]">Status:</span>
+                <span className="text-[#B6C9DC]">{t('latency.status', 'Status')}:</span>
                 <span className="font-bold flex items-center gap-1">
                   {metric.status === 'green' ? (
                     <CheckCircle2 className="w-3 h-3 text-[#35C58B]" />

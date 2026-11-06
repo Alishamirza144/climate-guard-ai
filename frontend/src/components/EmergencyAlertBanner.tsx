@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ShieldAlert, ShieldCheck, AlertTriangle, AlertCircle, Clock, Droplets, Waves, Database, Compass } from 'lucide-react'
 import { EmergencyAlert } from '../lib/api'
+import { translateAlertTitle, translateAlertReason, translateRecommendedAction } from '../i18n/dynamic'
 
 interface EmergencyAlertBannerProps {
   alert?: EmergencyAlert | null
@@ -15,6 +16,20 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
   const isCritical = alert.status === 'CRITICAL'
   const isWarning = alert.status === 'WARNING'
   const isWatch = alert.status === 'WATCH'
+
+  const localizedTitle = translateAlertTitle(alert.title, t)
+  const localizedReason = translateAlertReason(alert.reason, t, alert.city_name, alert.state_name)
+  const localizedAction = translateRecommendedAction(alert.recommended_action, t, alert.city_name)
+  const localizedStatus =
+    alert.status === 'CRITICAL'
+      ? t('risk.critical', 'Critical')
+      : alert.status === 'WARNING'
+      ? t('risk.warning', 'Warning')
+      : alert.status === 'WATCH'
+      ? t('risk.watch', 'Watch')
+      : alert.status === 'INSUFFICIENT_DATA'
+      ? t('risk.insufficient', 'Insufficient Data')
+      : t('risk.normal', 'Normal')
 
   // Navy-blue theme aligned accent styles
   const config = isInsufficient
@@ -78,22 +93,22 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${config.badgeBg}`}>
-                {alert.status}
+                {localizedStatus}
               </span>
               <h2 className={`font-display font-black text-base sm:text-lg tracking-tight ${config.headerText}`}>
-                {alert.title}
+                {localizedTitle}
               </h2>
             </div>
             <p className="text-xs text-[#B6C9DC] font-medium mt-0.5 flex items-center gap-1.5">
               <Compass className="w-3.5 h-3.5 text-[#25C5DC]" />
-              <span>Catchment: {alert.city_name ? `${alert.city_name} Region (${alert.state_name || 'India'})` : 'Regional Municipal Catchment'}</span>
+              <span>{t('common.catchment', 'Catchment')}: {alert.city_name ? `${alert.city_name} ${t('common.region', 'Region')} (${alert.state_name || 'India'})` : 'Regional Municipal Catchment'}</span>
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 self-start lg:self-center text-xs font-semibold text-[#8ED8F5] bg-[#071A33]/80 px-3 py-1.5 rounded-xl border border-[#285274]">
           <Clock className="w-3.5 h-3.5 text-[#25C5DC]" />
-          <span>Issued: {alert.timestamp}</span>
+          <span>{t('common.issued', 'Issued')}: {alert.timestamp}</span>
         </div>
       </div>
 
@@ -134,16 +149,16 @@ export default function EmergencyAlertBanner({ alert, className = '' }: Emergenc
       <div className="space-y-2 pt-2 text-xs">
         <div className="bg-[#071A33]/70 p-3 rounded-xl border border-[#285274]">
           <span className="font-bold text-[#8ED8F5] uppercase tracking-wider text-[11px] block mb-1">
-            Causal Reason:
+            {t('common.causalReason', 'Causal Reason:')}
           </span>
-          <p className="text-[#F3F8FF] leading-relaxed">{alert.reason}</p>
+          <p className="text-[#F3F8FF] leading-relaxed">{localizedReason}</p>
         </div>
 
         <div className="bg-[#102F50]/90 p-3 rounded-xl border border-[#285274]">
           <span className="font-bold text-[#35C58B] uppercase tracking-wider text-[11px] block mb-1">
             {t('alerts.actionRequired', 'Precautionary Action Protocol:')}
           </span>
-          <p className="text-[#F3F8FF] leading-relaxed font-medium">{alert.recommended_action}</p>
+          <p className="text-[#F3F8FF] leading-relaxed font-medium">{localizedAction}</p>
         </div>
       </div>
     </div>

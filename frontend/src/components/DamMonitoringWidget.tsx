@@ -63,7 +63,7 @@ export default function DamMonitoringWidget() {
   if (!dam && loading) {
     return (
       <div className="bg-[#12385C] border border-[#285274] rounded-2xl p-6 text-center text-[#B6C9DC] animate-pulse">
-        Loading regional river basin reservoir capacity telemetry...
+        {t('reservoir.loading', 'Loading regional river basin reservoir capacity telemetry...')}
       </div>
     )
   }
@@ -81,21 +81,21 @@ export default function DamMonitoringWidget() {
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5 text-[#25C5DC]" />
             <h3 className="font-display font-extrabold text-base sm:text-lg text-[#F3F8FF]">
-              {t('dashboard.reservoirTitle', 'Dam & Reservoir Capacity Monitoring')}
+              {t('reservoir.title', 'Dam & Reservoir Capacity Monitoring')}
             </h3>
             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#2389D7]/20 text-[#25C5DC] border border-[#2389D7]/40">
-              WRD Register · Water-Balance Model
+              {t('reservoir.wrdRegister', 'WRD Register · Water-Balance Model')}
             </span>
           </div>
           <p className="text-xs text-[#B6C9DC] mt-0.5">
-            {dam.location} • {dam.river} flood retention & controlled spillway discharge (Model Balance Estimate)
+            {dam.location} • {dam.river} {t('reservoir.retentionSubtitle', 'flood retention & controlled spillway discharge (Model Balance Estimate)')}
           </p>
         </div>
 
         {/* Selector Dropdown */}
         <div className="flex items-center gap-2">
           <label htmlFor="reservoir-select" className="text-xs font-bold text-[#B6C9DC] shrink-0">
-            Select Dam:
+            {t('reservoir.selectDam', 'Select Dam:')}
           </label>
           <select
             id="reservoir-select"
@@ -116,7 +116,7 @@ export default function DamMonitoringWidget() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Storage Percentage Gauge */}
         <div className="bg-[#0E2B49] border border-[#285274] rounded-2xl p-4 flex flex-col items-center justify-center text-center">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#B6C9DC]">Storage Capacity</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-[#B6C9DC]">{t('reservoir.storageCapacity', 'Storage Capacity')}</span>
           <div className="relative w-28 h-28 my-2 flex items-center justify-center">
             {/* Circular Gauge Representation */}
             <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
@@ -139,7 +139,7 @@ export default function DamMonitoringWidget() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-black font-mono text-[#F3F8FF]">{dam.storage_percentage}%</span>
-              <span className="text-[10px] text-[#8ED8F5] font-bold">FILLED</span>
+              <span className="text-[10px] text-[#8ED8F5] font-bold">{t('reservoir.filled', 'FILLED')}</span>
             </div>
           </div>
           <span
@@ -155,18 +155,18 @@ export default function DamMonitoringWidget() {
         <div className="bg-[#0E2B49] border border-[#285274] rounded-2xl p-4 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center text-[#B6C9DC]">
-              <span className="text-xs font-bold uppercase tracking-wider">Current Water Storage</span>
+              <span className="text-xs font-bold uppercase tracking-wider">{t('reservoir.currentStorage', 'Current Water Storage')}</span>
               <Waves className="w-4 h-4 text-[#25C5DC]" />
             </div>
             <div className="text-2xl font-black font-mono text-[#F3F8FF] mt-2">
               {dam.current_storage_mcm} <span className="text-xs font-bold text-[#8ED8F5]">MCM</span>
             </div>
             <div className="text-xs font-medium text-[#B6C9DC] mt-0.5">
-              {dam.current_storage_tmc} TMC equivalent
+              {dam.current_storage_tmc} {t('reservoir.tmcEquivalent', 'TMC equivalent')}
             </div>
           </div>
           <div className="pt-2 border-t border-[#285274]/60 text-[11px] text-[#B6C9DC]">
-            Total Gross: <span className="font-bold text-[#F3F8FF]">{dam.total_capacity_mcm} MCM</span> ({dam.total_capacity_tmc} TMC)
+            {t('reservoir.totalGross', 'Total Gross:')} <span className="font-bold text-[#F3F8FF]">{dam.total_capacity_mcm} MCM</span> ({dam.total_capacity_tmc} TMC)
           </div>
         </div>
 
@@ -174,18 +174,18 @@ export default function DamMonitoringWidget() {
         <div className="bg-[#0E2B49] border border-[#285274] rounded-2xl p-4 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center text-[#B6C9DC]">
-              <span className="text-xs font-bold uppercase tracking-wider">Available Buffer Storage</span>
+              <span className="text-xs font-bold uppercase tracking-wider">{t('reservoir.availableBuffer', 'Available Buffer Storage')}</span>
               <Layers className="w-4 h-4 text-[#35C58B]" />
             </div>
             <div className="text-2xl font-black font-mono text-[#35C58B] mt-2">
               {dam.available_storage_mcm} <span className="text-xs font-bold text-[#B6C9DC]">MCM</span>
             </div>
             <div className="text-xs font-medium text-[#B6C9DC] mt-0.5">
-              {dam.available_storage_tmc} TMC remaining capacity
+              {dam.available_storage_tmc} {t('reservoir.tmcRemaining', 'TMC remaining capacity')}
             </div>
           </div>
           <div className="pt-2 border-t border-[#285274]/60 text-[11px] text-[#B6C9DC]">
-            Full Reservoir Level: <span className="font-bold text-[#F3F8FF]">{dam.frl_m} m</span> (Current: {dam.current_water_level_m} m)
+            {t('reservoir.frl', 'Full Reservoir Level:')} <span className="font-bold text-[#F3F8FF]">{dam.frl_m} m</span> ({t('dashboard.ambientLabel', 'Current')}: {dam.current_water_level_m} m)
           </div>
         </div>
 
@@ -193,7 +193,7 @@ export default function DamMonitoringWidget() {
         <div className="bg-[#0E2B49] border border-[#285274] rounded-2xl p-4 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center text-[#B6C9DC]">
-              <span className="text-xs font-bold uppercase tracking-wider">Discharge Telemetry</span>
+              <span className="text-xs font-bold uppercase tracking-wider">{t('reservoir.dischargeTelemetry', 'Discharge Telemetry')}</span>
               {isHighDischarge ? (
                 <AlertTriangle className="w-4 h-4 text-[#F06470]" />
               ) : (
@@ -203,20 +203,20 @@ export default function DamMonitoringWidget() {
             <div className="space-y-1.5 mt-2">
               <div className="flex justify-between items-center text-xs">
                 <span className="flex items-center gap-1 text-[#B6C9DC]">
-                  <ArrowDownRight className="w-3.5 h-3.5 text-[#35C58B]" /> Inflow:
+                  <ArrowDownRight className="w-3.5 h-3.5 text-[#35C58B]" /> {t('reservoir.inflowRate', 'Inflow')}:
                 </span>
                 <span className="font-mono font-bold text-[#F3F8FF]">{dam.inflow_cusecs.toLocaleString()} cusecs</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="flex items-center gap-1 text-[#B6C9DC]">
-                  <ArrowUpRight className="w-3.5 h-3.5 text-[#25C5DC]" /> Outflow:
+                  <ArrowUpRight className="w-3.5 h-3.5 text-[#25C5DC]" /> {t('reservoir.outflowSpillway', 'Outflow')}:
                 </span>
                 <span className="font-mono font-bold text-[#F3F8FF]">{dam.outflow_cusecs.toLocaleString()} cusecs</span>
               </div>
             </div>
           </div>
           <div className="pt-2 border-t border-[#285274]/60 text-[11px] text-[#B6C9DC]">
-            Warning Mark: <span className="font-bold text-[#F4BC4D]">{dam.downstream_warning_discharge_cusecs.toLocaleString()} cusecs</span>
+            {t('risk.warning', 'Warning')}: <span className="font-bold text-[#F4BC4D]">{dam.downstream_warning_discharge_cusecs.toLocaleString()} cusecs</span>
           </div>
         </div>
       </div>

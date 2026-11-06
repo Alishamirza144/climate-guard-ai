@@ -151,11 +151,11 @@ export default function Drainage() {
               <ShieldCheck className="h-5 w-5 text-[#35C58B]" />
             )}
             <span className="text-xs font-black uppercase tracking-[0.2em] text-[#25C5DC]">
-              Hydraulic Network Telemetry &amp; Blockage Status
+              {t('drainage.conduitStatus', 'Hydraulic Network Telemetry & Blockage Status')}
             </span>
           </div>
           <span className="text-[11px] text-[#B6C9DC]">
-            Source: {data.source || 'Municipal IoT Sensor Stream'}
+            {t('nav.sources', 'Source')}: {data.source || 'Municipal IoT Sensor Stream'}
           </span>
         </div>
 
@@ -173,11 +173,11 @@ export default function Drainage() {
         {/* Contributing Factors & Runoff Summary */}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div className="p-3 rounded-xl bg-[#12385C] border border-[#285274]">
-            <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">Rainfall (24h)</span>
+            <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">{t('dashboard.rainfall24h', 'Rainfall (24h)')}</span>
             <span className="text-sm font-black text-[#F3F8FF] font-mono">{data.rainfall_24h_mm ?? 0} mm</span>
           </div>
           <div className="p-3 rounded-xl bg-[#12385C] border border-[#285274]">
-            <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">Rainfall Intensity</span>
+            <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">{t('dashboard.intensity', 'Rainfall Intensity')}</span>
             <span className="text-sm font-black text-[#F3F8FF] font-mono">{data.rainfall_intensity_mm_h ?? 0} mm/h</span>
           </div>
           <div className="p-3 rounded-xl bg-[#12385C] border border-[#285274]">
