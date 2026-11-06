@@ -261,6 +261,13 @@ async def flood_risk(
     payload["top_zones"] = compute_zone_ranking(zone_candidates)
     payload["terrain"] = terrain
     payload["rainfall_accumulations"] = rainfall_accum
+    is_fallback = getattr(forecast, "is_climatological_fallback", False)
+    payload["input_freshness"] = "CLIMATOLOGICAL_FALLBACK" if is_fallback else "FRESH_NWP_ASSIMILATION"
+    payload["measurement_type"] = "climatological_estimate" if is_fallback else "model_estimate"
+    payload["observation_time"] = obs_time_str
+    payload["source"] = "Open-Meteo High-Resolution NWP & GloFAS Hydrological Model"
+    if is_fallback:
+        payload["freshness_warning"] = "Hydrometeorological inputs derived from seasonal baseline due to NWP rate limit."
     return payload
 
 

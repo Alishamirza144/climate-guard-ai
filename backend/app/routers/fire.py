@@ -139,6 +139,13 @@ async def fire_risk(
     payload["wind_speed_kmh"] = round(current_wind, 1)
     payload["precipitation_24h_mm"] = round(current_rain, 1)
     payload["soil_moisture_index"] = round(soil_values[-1], 3) if soil_values else 0.22
+    is_fallback = getattr(forecast, "is_climatological_fallback", False)
+    payload["input_freshness"] = "CLIMATOLOGICAL_FALLBACK" if is_fallback else "FRESH_NWP_ASSIMILATION"
+    payload["measurement_type"] = "climatological_estimate" if is_fallback else "model_estimate"
+    payload["observation_time"] = obs_time_str
+    if is_fallback:
+        payload["freshness_warning"] = "Fire weather inputs derived from seasonal climatological normals due to NWP rate limit."
+
     payload["source"] = "Open-Meteo Numerical Weather Model / Canadian FWI Engine"
     payload["data_type"] = "Numerical Weather Model Output with Physical Fire Weather Index"
     payload["timestamp"] = now_iso

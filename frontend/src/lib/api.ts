@@ -204,7 +204,9 @@ export interface RiskGridResponse {
 
 export interface ActualImdObservation {
   is_available: boolean
+  status?: 'Fresh observation' | 'Delayed observation' | 'Stale observation' | 'Model estimate' | 'Forecast' | 'Unavailable' | string
   station_id: string | null
+  wmo_id?: string | null
   station_name: string | null
   station_lat?: number | null
   station_lon?: number | null
@@ -212,11 +214,24 @@ export interface ActualImdObservation {
   authority?: string
   station_type?: string
   observation_date?: string | null
+  observation_timestamp_utc?: string | null
   observation_timestamp_ist?: string | null
   age_hours?: number | null
+  age_minutes?: number | null
+  age_label?: string
+  synoptic_cycle_ist?: string | null
+  next_expected_cycle_ist?: string | null
+  is_delayed?: boolean
+  is_stale?: boolean
+  warning_message?: string | null
   freshness?: string
   data_source?: string
   message?: string
+  rainfall_accumulation_window?: string
+  temperature_semantics?: {
+    max: string
+    min: string
+  }
   parameters?: {
     temp_max_c: number | null
     temp_min_c: number | null
@@ -238,17 +253,32 @@ export interface WeatherComparison {
   is_comparable: boolean
   station_name: string | null
   station_id: string | null
+  wmo_id?: string | null
   station_distance_km: number | null
+  station_status?: string
   station_obs_timestamp: string | null
+  station_obs_timestamp_ist?: string | null
+  station_obs_timestamp_utc?: string | null
+  station_age_hours?: number | null
+  station_age_label?: string
   station_freshness?: string
+  station_synoptic_cycle?: string | null
+  station_next_cycle?: string | null
+  station_is_delayed?: boolean
+  station_is_stale?: boolean
+  station_warning?: string | null
   station_temp_max_c: number | null
   station_temp_min_c: number | null
   station_rainfall_24h_mm: number | null
+  station_rainfall_window?: string
   station_rh_pct: number | null
+  model_status?: string
+  model_provider?: string
   model_temp_max_c: number | null
   model_temp_min_c: number | null
   model_current_temp_c: number | null
   model_rainfall_24h_mm: number | null
+  model_rainfall_window?: string
   model_rh_pct: number | null
   model_timestamp: string | null
   delta_temp_max_c: number | null
@@ -256,6 +286,7 @@ export interface WeatherComparison {
   delta_rainfall_24h_mm: number | null
   agreement_status: string
   methodology_note: string
+  instantaneous_temperature_semantics?: string
 }
 
 export interface HourlyForecastItem {

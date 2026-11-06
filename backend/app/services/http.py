@@ -6,6 +6,7 @@ Reference: httpx docs   — https://www.python-httpx.org/
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import time
@@ -71,7 +72,16 @@ class HttpClient:
         self._client: httpx.AsyncClient | None = None
 
     async def _get_client(self) -> httpx.AsyncClient:
-        if self._client is None or self._client.is_closed:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if (
+            self._client is None
+            or self._client.is_closed
+            or getattr(self, "_loop", None) is not loop
+        ):
+            self._loop = loop
             self._client = httpx.AsyncClient(
                 timeout=self._timeout,
                 headers=self._headers,

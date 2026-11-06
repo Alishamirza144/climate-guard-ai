@@ -39,19 +39,35 @@ def mock_openmeteo(monkeypatch):
     async def fake_fetch_imd(*args, **kwargs):
         return {
             "is_available": True,
+            "status": "Delayed observation",
             "station_id": "42921",
+            "wmo_id": None,
             "station_name": "Nashik City Observatory",
             "station_lat": 20.0000,
             "station_lon": 73.7800,
             "distance_km": 1.1,
             "observation_date": "2026-11-06",
-            "observation_timestamp_ist": "2026-11-06 12:30:05",
-            "age_hours": 12.0,
-            "freshness": "Observed 12.0h ago (12:30 IST cycle)",
+            "observation_timestamp_utc": "2026-11-06T12:30:05Z",
+            "observation_timestamp_ist": "2026-11-06 18:00:05 IST",
+            "age_hours": 7.8,
+            "age_minutes": 468,
+            "age_label": "7h 48m ago",
+            "synoptic_cycle_ist": "17:30 IST Evening Synoptic Cycle",
+            "next_expected_cycle_ist": "08:30 IST Morning Synoptic Cycle",
+            "is_delayed": True,
+            "is_stale": False,
+            "warning_message": "Station records synoptically twice daily (08:30 & 17:30 IST). Showing latest recorded synoptic cycle (7h 48m ago). Instantaneous ambient conditions are provided by hourly Model Estimate.",
+            "freshness": "Delayed observation (7h 48m ago)",
             "data_source": "IMD Public Surface Network Service",
+            "rainfall_accumulation_window": "24 hours ending at 08:30 IST",
+            "temperature_semantics": {
+                "max": "Day Peak recorded at 17:30 IST",
+                "min": "Day Low recorded at 08:30 IST",
+            },
             "parameters": {
                 "temp_max_c": 32.3,
                 "temp_min_c": 17.3,
+                "prevday_max_c": 33.9,
                 "rainfall_past_24h_mm": 0.0,
                 "relative_humidity_pct": 38.0,
             },
@@ -118,9 +134,56 @@ async def test_live_weather_endpoint():
         assert "comparison" in data
         assert data["actual_observation"]["station_id"] == "42921"
         assert data["actual_observation"]["is_available"] is True
+        assert data["actual_observation"]["status"] == "Delayed observation"
         assert data["comparison"]["station_distance_km"] == 1.1
         assert data["comparison"]["station_temp_max_c"] == 32.3
         assert data["comparison"]["delta_temp_max_c"] == -1.7
+        assert "Synoptic 24 hours" in data["comparison"]["station_rainfall_window"]
+        assert "Rolling 24 hours" in data["comparison"]["model_rainfall_window"]
+        assert "instantaneous_temperature_semantics" in data["comparison"]
+
+@pytest.mark.asyncio
+async def test_weather_freshness_thresholds():
+    from app.services.imd import parse_imd_observation_timing
+    from datetime import datetime, timezone, timedelta
+
+    # 1. Fresh observation (1 hour ago)
+    now_utc = datetime.now(timezone.utc)
+    t1 = (now_utc - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+    res1 = parse_imd_observation_timing(t1)
+    assert res1["status"] == "Fresh observation"
+    assert res1["is_delayed"] is False
+    assert res1["is_stale"] is False
+    assert res1["warning_message"] is None
+
+    # 2. Delayed observation (7 hours ago, regular synoptic gap)
+    t2 = (now_utc - timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S")
+    res2 = parse_imd_observation_timing(t2)
+    assert res2["status"] == "Delayed observation"
+    assert res2["is_delayed"] is True
+    assert res2["is_stale"] is False
+    assert "synoptically twice daily" in res2["warning_message"]
+
+    # 3. Stale observation (18 hours ago, missed cycle)
+    t3 = (now_utc - timedelta(hours=18)).strftime("%Y-%m-%d %H:%M:%S")
+    res3 = parse_imd_observation_timing(t3)
+    assert res3["status"] == "Stale observation"
+    assert res3["is_stale"] is True
+    assert "stale" in res3["warning_message"].lower()
+
+@pytest.mark.asyncio
+async def test_verified_imd_stations_coverage():
+    from app.services.imd import VERIFIED_IMD_STATIONS, find_nearest_verified_station
+    from app.data.cities import INDIA_CITIES
+
+    assert len(VERIFIED_IMD_STATIONS) >= 70
+    for c in INDIA_CITIES:
+        st = find_nearest_verified_station(c["lat"], c["lon"], c["id"])
+        assert st is not None
+        assert "station_id" in st
+        assert "station_name" in st
+        assert "distance_km" in st
+        assert st["distance_km"] < 100.0  # Station must be within 100km radius
 
 @pytest.mark.asyncio
 async def test_water_levels_endpoint():

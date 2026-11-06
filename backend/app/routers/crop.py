@@ -219,6 +219,13 @@ async def _process_crop_risk(
     result["precipitation_24h_mm"] = round(rain_24h, 1)
     result["precipitation_7d_forecast_mm"] = round(rain_7d, 1)
     result["soil_moisture_m3_m3"] = round(avg_soil_moisture, 3)
+    is_fallback = getattr(forecast, "is_climatological_fallback", False)
+    result["input_freshness"] = "CLIMATOLOGICAL_FALLBACK" if is_fallback else "FRESH_NWP_ASSIMILATION"
+    result["measurement_type"] = "climatological_estimate" if is_fallback else "model_estimate"
+    result["observation_time"] = obs_time_str
+    if is_fallback:
+        result["freshness_warning"] = "Agricultural weather inputs derived from climatological normals due to NWP rate limit."
+
     result["source"] = "Open-Meteo Soil & Hydrology Model / ICAR Agrometeorology"
     result["data_type"] = "Numerical Weather & Soil Moisture Model Output"
     result["timestamp"] = now_iso

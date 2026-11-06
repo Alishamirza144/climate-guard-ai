@@ -189,6 +189,13 @@ async def heat_risk(
     result["daily_min_c"] = round(tmin, 1)
     result["relative_humidity_pct"] = round(humidity, 1)
     result["wind_speed_kmh"] = round(wind, 1)
+    is_fallback = getattr(forecast, "is_climatological_fallback", False)
+    result["input_freshness"] = "CLIMATOLOGICAL_FALLBACK" if is_fallback else "FRESH_NWP_ASSIMILATION"
+    result["measurement_type"] = "climatological_estimate" if is_fallback else "model_estimate"
+    result["observation_time"] = obs_time_str
+    if is_fallback:
+        result["freshness_warning"] = "Weather inputs derived from seasonal climatological normals due to NWP rate limit. Live readings will resume automatically."
+
     result["source"] = "Open-Meteo Numerical Weather Model / IMD Climatology"
     result["data_type"] = "Numerical Weather Model Output (ECMWF/GFS)"
     result["timestamp"] = now_iso

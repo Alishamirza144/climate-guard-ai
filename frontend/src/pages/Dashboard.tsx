@@ -451,7 +451,7 @@ export default function Dashboard() {
               </span>
               {weatherQuery.data?.actual_observation?.parameters?.temp_max_c && (
                 <span className="text-[9px] text-[#35C58B] block mt-0.5 font-semibold">
-                  IMD Obs: {formatNumber(weatherQuery.data.actual_observation.parameters.temp_min_c)}°C — {formatNumber(weatherQuery.data.actual_observation.parameters.temp_max_c)}°C
+                  IMD Synoptic: {formatNumber(weatherQuery.data.actual_observation.parameters.temp_min_c)}°C — {formatNumber(weatherQuery.data.actual_observation.parameters.temp_max_c)}°C
                 </span>
               )}
             </div>
@@ -460,8 +460,13 @@ export default function Dashboard() {
               <span className="text-xs font-bold text-[#25C5DC] truncate mt-0.5 block">
                 {weatherQuery.data?.actual_observation?.station_name ? `${weatherQuery.data.actual_observation.station_name} (${typeof weatherQuery.data.comparison?.station_distance_km === 'number' ? `${formatNumber(weatherQuery.data.comparison.station_distance_km, { maximumFractionDigits: 1 })} km` : 'IMD'})` : 'IMD Ground Station'}
               </span>
+              {weatherQuery.data?.actual_observation?.status && (
+                <span className={`text-[9px] block mt-0.5 font-bold ${weatherQuery.data.actual_observation.is_stale ? 'text-[#F06470]' : weatherQuery.data.actual_observation.is_delayed ? 'text-[#F4BC4D]' : 'text-[#35C58B]'}`}>
+                  {weatherQuery.data.actual_observation.status}{weatherQuery.data.actual_observation.age_label ? ` (${weatherQuery.data.actual_observation.age_label})` : ''}
+                </span>
+              )}
               {weatherQuery.data?.comparison?.delta_temp_max_c !== undefined && weatherQuery.data?.comparison?.delta_temp_max_c !== null && (
-                <span className="text-[9px] text-[#F4BC4D] block mt-0.5 font-bold">
+                <span className="text-[9px] text-[#8ED8F5] block mt-0.5 font-bold">
                   Variance: {weatherQuery.data.comparison.delta_temp_max_c > 0 ? '+' : ''}{formatNumber(weatherQuery.data.comparison.delta_temp_max_c, { maximumFractionDigits: 1 })}°C (Unblended)
                 </span>
               )}
