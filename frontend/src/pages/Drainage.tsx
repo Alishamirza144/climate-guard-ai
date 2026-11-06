@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import {
   AlertTriangle,
@@ -16,6 +17,7 @@ import { useLocationContext } from '../components/LocationProvider'
 import { api } from '../lib/api'
 
 export default function Drainage() {
+  const { t } = useTranslation()
   const { location } = useLocationContext()
   const [simulated, setSimulated] = useState(false)
 
@@ -33,23 +35,23 @@ export default function Drainage() {
 
   const readings = [
     {
-      label: 'Water Level',
+      label: t('dashboard.riverTitle', 'Water Level'),
       value: `${telemetry.water_level_m ?? 0.42} m`,
-      status: telemetry.water_level_trend ?? 'Stable nominal baseflow',
+      status: telemetry.water_level_trend ?? t('drainage.clearanceNominal', 'Stable nominal baseflow'),
       color: isCritical ? 'text-[#F06470]' : 'text-[#35C58B]',
       icon: Droplets,
     },
     {
-      label: 'Flow Velocity',
+      label: t('drainage.flowVelocity', 'Flow Velocity'),
       value: `${telemetry.flow_velocity_mps ?? 2.6} m/s`,
       status: telemetry.flow_status ?? 'Optimal (Free-surface flow)',
       color: isCritical ? 'text-[#F4BC4D]' : 'text-[#25C5DC]',
       icon: Activity,
     },
     {
-      label: 'Conduit Surcharge',
+      label: t('drainage.conduitStatus', 'Conduit Surcharge'),
       value: `${telemetry.conduit_surcharge_pct ?? 18}%`,
-      status: telemetry.surcharge_status ?? 'Nominal — Full clearance',
+      status: telemetry.surcharge_status ?? t('drainage.clearanceNominal', 'Nominal — Full clearance'),
       color: isCritical ? 'text-[#F06470]' : 'text-[#35C58B]',
       icon: Gauge,
     },
@@ -74,7 +76,7 @@ export default function Drainage() {
         <div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-black uppercase tracking-[0.25em] text-[#25C5DC]">
-              DRAINAGE NETWORK AI
+              {t('nav.drainage', 'DRAINAGE NETWORK AI')}
             </span>
             <span className="rounded-full bg-[#102F50] border border-[#285274] px-2.5 py-0.5 text-[10px] font-bold text-[#8ED8F5]">
               {data.city_name || location.label.split(',')[0]} Catchment
@@ -103,7 +105,7 @@ export default function Drainage() {
           }`}
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          <span>{simulated ? 'Reset Nominal Hydraulic Flow' : 'Trigger Blocked-Drain Scenario'}</span>
+          <span>{simulated ? t('drainage.restoreNominal', 'Reset Nominal Hydraulic Flow') : t('drainage.simulateBlockage', 'Trigger Blocked-Drain Scenario')}</span>
         </button>
       </div>
 
@@ -183,9 +185,9 @@ export default function Drainage() {
             <span className="text-sm font-black text-[#25C5DC] font-mono">{data.runoff_depth_mm ?? 0} mm</span>
           </div>
           <div className="p-3 rounded-xl bg-[#12385C] border border-[#285274]">
-            <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">Risk Assessment</span>
+            <span className="text-[#B6C9DC] block text-[10px] uppercase font-bold">{t('risk.headline', 'Risk Assessment')}</span>
             <span className={`text-sm font-black ${isCritical ? 'text-[#F06470]' : 'text-[#35C58B]'}`}>
-              {data.level || 'Low'} ({data.risk_score ?? 15}/100)
+              {data.level ? t(`risk.${String(data.level).toLowerCase()}`, String(data.level)) : t('risk.low', 'Low')} ({data.risk_score ?? 15}/100)
             </span>
           </div>
         </div>
@@ -194,7 +196,7 @@ export default function Drainage() {
         {hotspots.length > 0 && (
           <div className="mt-5 space-y-2">
             <span className="text-xs font-black uppercase tracking-wider text-[#25C5DC]">
-              Culvert &amp; Sump Hotspot Vulnerability Nodes
+              {t('drainage.hotspots', 'Culvert & Sump Hotspot Vulnerability Nodes')}
             </span>
             <div className="grid gap-2.5 sm:grid-cols-3">
               {hotspots.map((hs: any) => (
@@ -227,7 +229,7 @@ export default function Drainage() {
         <div className="mt-5 rounded-2xl border border-[#285274] bg-[#12385C] p-4">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#25C5DC]">
             <AlertTriangle className="h-4 w-4" />
-            <span>Recommended Mitigation Protocol ({isSimulated ? 'SIMULATED FAULT' : 'OPERATIONAL'})</span>
+            <span>{t('alerts.actionRequired', 'Recommended Mitigation Protocol')} ({isSimulated ? 'SIMULATED FAULT' : 'OPERATIONAL'})</span>
           </div>
           <div className="mt-3 space-y-2">
             {actions.map((action: string, idx: number) => (

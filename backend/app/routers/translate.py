@@ -11,6 +11,8 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
 
+from app.config import get_settings
+
 router = APIRouter(tags=["translation"])
 
 # In-memory translation cache: (text, source_lang, target_lang) -> (translated_text, timestamp)
@@ -67,7 +69,7 @@ CORE_TERMS: Dict[str, Dict[str, str]] = {
         "bn": "দাবানল ঝুঁকি",
         "gu": "દાવાનળ જોખમ",
         "ta": "காட்டுத்தீ ஆபத்து",
-        "te": "దావాగ్ని ముప్పు",
+        "te": "ದಾವಾಗ್ನಿ ముప్పు",
         "kn": "ಕಾಡ್ಗಿಚ್ಚು ಅಪಾಯ",
         "ml": "കാട്ടുതീ സാധ്യത",
         "pa": "ਜੰਗਲੀ ਅੱਗ ਖਤਰਾ",
@@ -124,7 +126,7 @@ CORE_TERMS: Dict[str, Dict[str, str]] = {
         "hi": "मध्यम", "mr": "मध्यम", "bn": "মাঝারি", "gu": "મધ્યમ", "ta": "மிதமானது", "te": "మధ్యస్థం", "kn": "ಮಧ್ಯಮ", "ml": "മിതമായത്", "pa": "ਦਰਮਿਆਨਾ", "or": "ମଧ୍ୟମ", "as": "মধ্যমীয়া", "ur": "معتدل"
     },
     "High": {
-        "hi": "उच्च", "mr": "उच्च", "bn": "উচ্চ", "gu": "ઉચ્ચ", "ta": "அதிகம்", "te": "అధికం", "kn": "ಹೆಚ್ಚು", "ml": "കൂടിയത്", "pa": "ਵੱਧ", "or": "ଉଚ୍ଚ", "as": "উচ্চ", "ur": "زیادہ"
+        "hi": "उच्च", "mr": "उच्च", "bn": "উচ্চ", "gu": "ઉચ્ચ", "ta": "அதிகம்", "te": "அధికం", "kn": "ಹೆಚ್ಚು", "ml": "കൂടിയത്", "pa": "ਵੱਧ", "or": "ଉଚ୍ଚ", "as": "উচ্চ", "ur": "زیادہ"
     },
     "Critical": {
         "hi": "गंभीर", "mr": "गंभीर", "bn": "সংকটজনক", "gu": "ગંભીર", "ta": "ஆபத்தானது", "te": "ప్రమాదకరం", "kn": "ತೀವ್ರ", "ml": "ഗുരുതരമായത്", "pa": "ਨਾਜ਼ੁਕ", "or": "ଗୁରୁତର", "as": "সংকটজনক", "ur": "انتہائی سنگین"
@@ -158,6 +160,17 @@ class BatchTranslateResponse(BaseModel):
     source_lang: str
     target_lang: str
     engine: str
+
+
+class TranslateStatusResponse(BaseModel):
+    status: str
+    engine: str
+    dynamic_provider_configured: bool
+    google_cloud_configured: bool
+    bhashini_configured: bool
+    supported_languages_count: int
+    cached_entries_count: int
+    dictionary_terms_count: int
 
 
 def _resolve_translation(text: str, source_lang: str, target_lang: str) -> tuple[str, str]:
@@ -216,4 +229,24 @@ def translate_batch(payload: BatchTranslateRequest):
         source_lang=payload.source_lang,
         target_lang=payload.target_lang,
         engine="climate_guard_multilingual",
+    )
+
+
+@router.get("/translate/status", response_model=TranslateStatusResponse)
+def translate_status():
+    """Returns the operational status and transparency diagnostics for translation providers."""
+    settings = get_settings()
+    has_google = bool(getattr(settings, "google_translate_api_key", ""))
+    has_bhashini = bool(getattr(settings, "bhashini_api_key", "") and getattr(settings, "bhashini_user_id", ""))
+    active_engine = "google_cloud" if has_google else ("bhashini" if has_bhashini else "curated_dictionary_fallback")
+
+    return TranslateStatusResponse(
+        status="operational",
+        engine=active_engine,
+        dynamic_provider_configured=has_google or has_bhashini,
+        google_cloud_configured=has_google,
+        bhashini_configured=has_bhashini,
+        supported_languages_count=23,
+        cached_entries_count=len(_TRANSLATION_CACHE),
+        dictionary_terms_count=len(CORE_TERMS),
     )

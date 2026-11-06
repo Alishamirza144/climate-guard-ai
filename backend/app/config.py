@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite+aiosqlite:///./climateguard.db"
 
+    # Multilingual Translation Providers (optional external services)
+    google_translate_api_key: str = ""
+    bhashini_api_key: str = ""
+    bhashini_user_id: str = ""
+
     # Logging
     log_level: str = "INFO"
 

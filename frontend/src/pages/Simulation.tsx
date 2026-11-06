@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '../lib/api'
-import { FlaskConical, Play, History, CheckCircle2, FileText, ChevronRight } from 'lucide-react'
+import { FlaskConical, Play, History, CheckCircle2, FileText, ChevronRight, RotateCcw } from 'lucide-react'
 
 const defaultLat = 19.9975
 const defaultLon = 73.7898
 
 export default function Simulation() {
+  const { t } = useTranslation()
   const [selectedScenarioId, setSelectedScenarioId] = useState('cloudburst')
   const [lat, setLat] = useState(defaultLat)
   const [lon, setLon] = useState(defaultLon)
@@ -49,10 +51,10 @@ export default function Simulation() {
       <div className="rounded-3xl border-2 border-[#285274] bg-[#12385C] p-6 shadow-2xl">
         <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#2389D7]/40 bg-[#2389D7]/20 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-[#25C5DC]">
           <FlaskConical className="w-3.5 h-3.5" />
-          <span>SCENARIO VALIDATION LAB</span>
+          <span>{t('simulation.title', 'SCENARIO VALIDATION LAB')}</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-black text-[#F3F8FF]">
-          Extreme Weather Stress-Testing &amp; Archive Back-Testing
+          {t('simulation.subtitle', 'Disaster simulation and stress-testing engine')}
         </h1>
         <p className="mt-2 max-w-3xl text-xs sm:text-sm text-[#B6C9DC] leading-relaxed">
           Inject synthetic cloudburst, extreme heatwave, or drainage failure forcing vectors into each AI module to verify resilience thresholds, then backtest against historical archives.
@@ -115,21 +117,33 @@ export default function Simulation() {
             </label>
           </div>
 
-          <button
-            type="button"
-            onClick={runScenario}
-            disabled={running}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#2389D7] hover:bg-[#25C5DC] hover:text-[#071A33] px-5 py-3 font-bold text-white shadow-glow transition-all"
-          >
-            <Play className="w-4 h-4" />
-            <span>{running ? 'Executing Simulation Models...' : 'Execute Synthetic Scenario'}</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={runScenario}
+              disabled={running}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#2389D7] hover:bg-[#25C5DC] hover:text-[#071A33] px-5 py-3 font-bold text-white shadow-glow transition-all"
+            >
+              <Play className="w-4 h-4" />
+              <span>{running ? 'Executing...' : t('simulation.runScenario', 'Run Scenario')}</span>
+            </button>
+            {Object.keys(scenarioData).length > 0 && (
+              <button
+                type="button"
+                onClick={() => setScenarioData({})}
+                className="px-4 py-3 rounded-2xl border border-[#285274] bg-[#0E2B49] hover:bg-[#102F50] text-xs font-bold text-[#B6C9DC] flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{t('simulation.reset', 'Reset to Baseline')}</span>
+              </button>
+            )}
+          </div>
 
           {Object.keys(scenarioData).length > 0 && (
             <div className="mt-6 rounded-2xl border-2 border-[#35C58B]/50 bg-[#0E2B49] p-5 shadow-xl space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-[#285274]">
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-[#35C58B]">
-                  Simulation Execution Output
+                  {t('simulation.simulatedTelemetry', 'Simulated Disaster Telemetry')}
                 </span>
                 <span className="text-xs font-mono font-bold text-[#25C5DC]">
                   Score: {String((scenarioData.summary as Record<string, unknown>)?.score ?? '85')} / 100

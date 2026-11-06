@@ -4,6 +4,7 @@ from app.routers.translate import (
     _resolve_translation,
     translate_text,
     translate_batch,
+    translate_status,
     TranslateRequest,
     BatchTranslateRequest,
 )
@@ -48,3 +49,13 @@ def test_endpoint_translate_batch():
     resp = translate_batch(req)
     assert "Flood Risk" in resp.translations
     assert "પૂર જોખમ" in resp.translations["Flood Risk"]
+
+
+def test_endpoint_translate_status():
+    status = translate_status()
+    assert status.status == "operational"
+    assert status.supported_languages_count == 23
+    assert status.dynamic_provider_configured is False
+    assert status.google_cloud_configured is False
+    assert status.bhashini_configured is False
+    assert status.engine == "curated_dictionary_fallback"

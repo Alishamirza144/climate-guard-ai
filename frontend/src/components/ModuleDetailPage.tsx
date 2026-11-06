@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import {
   AlertTriangle,
@@ -68,6 +69,7 @@ export default function ModuleDetailPage({
   fetchData,
   recommendations,
 }: ModuleDetailPageProps) {
+  const { t } = useTranslation()
   const { location } = useLocationContext()
   const [audience, setAudience] = useState<ModuleAudience>('Citizen')
   const [tab, setTab] = useState('Overview')
@@ -118,27 +120,27 @@ export default function ModuleDetailPage({
   const summaryMetrics = useMemo(() => {
     return [
       {
-        label: 'Risk score',
+        label: t('risk.score', 'Risk score'),
         value: isInsufficient ? 'N/A' : `${Math.round(riskScore)}/100`,
         icon: Gauge,
       },
       {
-        label: 'Model Confidence',
+        label: t('risk.confidence', 'Model Confidence'),
         value: isInsufficient ? '0%' : `${Math.min(99, Math.round(normalizePercent(payload.confidence ?? payload.probability ?? 0.90)))}%`,
         icon: ShieldCheck,
       },
       {
-        label: 'Lead time',
+        label: t('dashboard.cycle', 'Lead time'),
         value: `${Math.max(0, Math.round(asNumber(payload.lead_time_hours ?? 24)))}h`,
         icon: ClockIcon,
       },
       {
-        label: 'Catchment',
+        label: t('city.currentLocation', 'Catchment'),
         value: String(payload.city_name ? `${payload.city_name}` : location.label.split(',')[0]),
         icon: MapPinned,
       },
     ]
-  }, [payload, riskScore, isInsufficient, location.label])
+  }, [payload, riskScore, isInsufficient, location.label, t])
 
   const tabs = ['Overview', 'Contributing Factors', 'History & Forecast', 'Scientific Model', 'Authoritative Sources']
 
@@ -156,7 +158,7 @@ export default function ModuleDetailPage({
       <div className="mx-auto max-w-3xl px-4 py-10 text-[#F3F8FF]">
         <div className="rounded-[28px] border border-[#285274] bg-[#0E2B49] p-8 text-center shadow-md">
           <p className="text-xs uppercase tracking-[0.28em] text-[#25C5DC] font-bold">{title}</p>
-          <h2 className="mt-3 text-2xl font-black text-[#F3F8FF]">Data unavailable</h2>
+          <h2 className="mt-3 text-2xl font-black text-[#F3F8FF]">{t('risk.insufficient', 'Data unavailable')}</h2>
           <p className="mt-3 text-sm leading-6 text-[#B6C9DC]">
             The latest upstream feed for this hazard did not return usable numeric values. Try refreshing or switch to a nearby location.
           </p>
@@ -223,7 +225,7 @@ export default function ModuleDetailPage({
             className="inline-flex items-center gap-1.5 rounded-full border border-[#285274] bg-[#12385C] px-3 py-1.5 text-xs font-bold text-[#F3F8FF] transition hover:bg-[#102F50]"
           >
             <Download className="h-3.5 w-3.5 text-[#25C5DC]" />
-            Export Intelligence Report
+            {t('app.docs', 'Export Intelligence Report')}
           </button>
         </div>
         <div className="flex justify-center">
