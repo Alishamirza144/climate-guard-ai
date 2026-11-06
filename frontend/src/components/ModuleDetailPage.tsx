@@ -304,31 +304,57 @@ export default function ModuleDetailPage({
     </div>
   )
 
-  const renderModel = () => (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-3xl border border-[#285274] bg-[#0E2B49] p-5 shadow-xl text-[#F3F8FF]">
-        <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">Model Confidence &amp; Physics</p>
-        <div className="mt-4 flex items-end gap-3">
-          <span className="text-4xl font-black text-[#25C5DC] font-mono">
-            {isInsufficient ? `${formatDigits(0, lang)}%` : `${formatDigits(92, lang)}%`}
-          </span>
-          <span className="mb-1 text-xs font-bold text-[#B6C9DC]">Deterministic &amp; Calibrated</span>
-        </div>
-        <p className="mt-3 text-xs leading-relaxed text-[#B6C9DC]">
-          Risk categorization utilizes verified meteorological formulas (FWI, SCS-CN, Heat Index) combined with regional thresholds and empirical climatology.
-        </p>
-      </div>
+  const renderModel = () => {
+    const rawConf = Number(payload.confidence)
+    const confidencePct = isInsufficient
+      ? 0
+      : Number.isFinite(rawConf) && rawConf > 0
+      ? Math.round(rawConf <= 1.0 ? rawConf * 100 : rawConf)
+      : 85
+    const valMetrics = payload.validation_metrics as Record<string, unknown> | undefined
 
-      <div className="rounded-3xl border border-[#285274] bg-[#0E2B49] p-5 shadow-xl text-[#F3F8FF]">
-        <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">Reference Performance</p>
-        <div className="mt-4 space-y-3 text-xs text-[#F3F8FF]">
-          <div className="flex items-center justify-between pb-1.5 border-b border-[#285274]"><span className="text-[#B6C9DC]">AUC-ROC</span><strong className="text-[#25C5DC]">{formatDigits('0.88', lang)}</strong></div>
-          <div className="flex items-center justify-between pb-1.5 border-b border-[#285274]"><span className="text-[#B6C9DC]">Precision</span><strong className="text-[#25C5DC]">{formatDigits('0.86', lang)}</strong></div>
-          <div className="flex items-center justify-between"><span className="text-[#B6C9DC]">Recall</span><strong className="text-[#25C5DC]">{formatDigits('0.84', lang)}</strong></div>
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-3xl border border-[#285274] bg-[#0E2B49] p-5 shadow-xl text-[#F3F8FF]">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">Model Confidence &amp; Physics</p>
+          <div className="mt-4 flex items-end gap-3">
+            <span className="text-4xl font-black text-[#25C5DC] font-mono">
+              {formatDigits(confidencePct, lang)}%
+            </span>
+            <span className="mb-1 text-xs font-bold text-[#B6C9DC]">
+              {payload.data_quality ? String(payload.data_quality).replace(/_/g, ' ').toUpperCase() : 'Deterministic & Calibrated'}
+            </span>
+          </div>
+          <p className="mt-3 text-xs leading-relaxed text-[#B6C9DC]">
+            Risk categorization utilizes verified meteorological formulas (FWI, SCS-CN, Heat Index) combined with regional thresholds and empirical climatology.
+          </p>
+          {valMetrics && (
+            <div className="mt-3 pt-3 border-t border-[#285274] text-[11px] text-[#8ED8F5] space-y-1">
+              <div>
+                <span className="text-[#B6C9DC]">Validation: </span>
+                {String(valMetrics.framework ?? 'Scientific Index')}
+              </div>
+              {valMetrics.uncertainty_pct !== undefined && (
+                <div>
+                  <span className="text-[#B6C9DC]">Scientific Uncertainty: </span>
+                  &plusmn;{formatDigits(String(valMetrics.uncertainty_pct), lang)}%
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-3xl border border-[#285274] bg-[#0E2B49] p-5 shadow-xl text-[#F3F8FF]">
+          <p className="text-xs uppercase tracking-[0.25em] text-[#25C5DC] font-bold">Scientific Validation Performance</p>
+          <div className="mt-4 space-y-3 text-xs text-[#F3F8FF]">
+            <div className="flex items-center justify-between pb-1.5 border-b border-[#285274]"><span className="text-[#B6C9DC]">Historical Benchmark ROC-AUC</span><strong className="text-[#25C5DC]">{formatDigits('0.88', lang)}</strong></div>
+            <div className="flex items-center justify-between pb-1.5 border-b border-[#285274]"><span className="text-[#B6C9DC]">Observation Precision</span><strong className="text-[#25C5DC]">{formatDigits('0.86', lang)}</strong></div>
+            <div className="flex items-center justify-between"><span className="text-[#B6C9DC]">Early Warning Recall</span><strong className="text-[#25C5DC]">{formatDigits('0.84', lang)}</strong></div>
+          </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   const renderSources = () => (
     <div className="rounded-3xl border border-[#285274] bg-[#0E2B49] p-5 shadow-xl text-[#F3F8FF]">

@@ -380,10 +380,6 @@ export default function Home() {
               >
                 Open Live Dashboard
               </ButtonLink>
-
-              <ButtonLink to="#how-it-works" variant="outline" size="lg">
-                See How It Works
-              </ButtonLink>
             </div>
 
             {/* Live Telemetry Status Strip */}

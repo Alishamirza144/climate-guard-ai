@@ -4,11 +4,11 @@ import { GlassCard } from '../components/ui/GlassCard'
 import { localizeLocationLabel } from '../i18n/locations'
 
 const team = [
-  { name: 'Umesh R Jadhav', role: 'Team Leader', expertise: 'System architecture and risk orchestration' },
-  { name: 'Aniket S Patil', role: 'AI/ML Lead', expertise: 'Predictive modeling and feature engineering' },
-  { name: 'Ashish S Dandage', role: 'Software Developer', expertise: 'Full-stack engineering and resilient APIs' },
-  { name: 'Alisha A Mirza', role: 'UI & Research Lead', expertise: 'Climate science research and system storytelling' },
-  { name: 'Madhulika R Muthal', role: 'Hardware & IoT Lead', expertise: 'Stormwater telemetry and edge sensing' },
+  { name: 'Umesh R Jadhav', expertise: 'System architecture and risk orchestration' },
+  { name: 'Aniket S Patil', expertise: 'Predictive modeling and feature engineering' },
+  { name: 'Ashish S Dandage', expertise: 'Full-stack engineering and resilient APIs' },
+  { name: 'Alisha A Mirza', expertise: 'Climate science research and system storytelling' },
+  { name: 'Madhulika R Muthal', expertise: 'Stormwater telemetry and edge sensing' },
 ]
 
 export default function About() {
@@ -23,9 +23,9 @@ export default function About() {
       <GlassCard className="mb-8 p-6" variant="primary">
         <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-lime">Institution</p>
-            <h2 className="mt-3 text-2xl font-black text-white">K K Wagh Institute of Engineering Education & Research</h2>
-            <p className="mt-3 text-slate-200">{localizeLocationLabel('Nashik, Maharashtra', i18n.language)}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-lime">Location</p>
+            <h2 className="mt-3 text-2xl font-black text-white">{localizeLocationLabel('Nashik, Maharashtra', i18n.language)}</h2>
+            <p className="mt-3 text-slate-200">Climate Resilience &amp; Applied AI Initiative</p>
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-lime">Hackathon context</p>
@@ -48,7 +48,6 @@ export default function About() {
                 .join('')}
             </div>
             <h2 className="text-lg font-bold text-white">{member.name}</h2>
-            <p className="mt-1 text-sm font-medium text-lime">{member.role}</p>
             <p className="mt-3 text-sm leading-6 text-slate-300">{member.expertise}</p>
           </GlassCard>
         ))}

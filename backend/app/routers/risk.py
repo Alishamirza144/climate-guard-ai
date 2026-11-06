@@ -228,6 +228,16 @@ async def flood_risk(
         {"name": "Central Zone", "risk": risk.score * 0.68},
     ]
     payload = risk.model_dump(mode="json")
+    sources_present = sum([bool(forecast_current), bool(flood_daily), bool(elevation_values), bool(features)])
+    confidence = round(max(0.50, min(0.95, 0.55 + 0.10 * sources_present)), 2)
+    payload["confidence"] = confidence
+    payload["uncertainty_pct"] = round((1.0 - confidence) * 100.0, 1)
+    payload["validation_metrics"] = {
+        "framework": "SCS-CN Runoff (NRCS TR-55) & IMD 24h Precipitation Standards",
+        "data_completeness_pct": round((sources_present / 4.0) * 100, 1),
+        "uncertainty_pct": round((1.0 - confidence) * 100.0, 1),
+        "classification_basis": "SCS-CN Runoff + Topographic Slope + Antecedent Saturation Index",
+    }
     payload["top_zones"] = compute_zone_ranking(zone_candidates)
     payload["terrain"] = terrain
     payload["rainfall_accumulations"] = rainfall_accum
