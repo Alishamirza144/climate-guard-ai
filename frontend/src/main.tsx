@@ -19,11 +19,8 @@ const queryClient = new QueryClient({
   },
 })
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => undefined)
-  })
-}
+// Service worker registration is managed automatically by Progressier via script.js and /progressier.js.
+// Manual registration of /sw.js is omitted to prevent duplicate service worker registrations and scope conflicts.
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
