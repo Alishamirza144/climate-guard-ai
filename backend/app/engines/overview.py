@@ -223,16 +223,26 @@ async def build_overview_snapshot(
 
     rainfall_24h = flood.get("rainfall_24h_mm", 0.0) if isinstance(flood, dict) else 0.0
 
+    highest_hazard = highest.get("hazard", "flood")
+    highest_hazard_title = _hazard_title(highest_hazard).upper()
+
+    if has_insufficient_data:
+        emergency_title = f"ℹ️ INSUFFICIENT DATA – {city_name.upper()} REGION"
+    elif is_all_normal:
+        emergency_title = f"✅ NO ACTIVE FLOOD THREAT – {city_name.upper()} REGION"
+    else:
+        if highest_hazard == "flood":
+            if alert_category == "WATCH":
+                emergency_title = f"⚠️ FLOOD WATCH – {city_name.upper()} REGION"
+            elif alert_category == "WARNING":
+                emergency_title = f"⚠️ FLOOD WARNING – {city_name.upper()} REGION"
+            else:
+                emergency_title = f"🚨 FLOOD CRITICAL – {city_name.upper()} REGION"
+        else:
+            emergency_title = f"⚠️ {highest_hazard_title} {alert_category} – {city_name.upper()} REGION"
+
     emergency_alert = {
-        "title": (
-            f"ℹ️ INSUFFICIENT DATA – {city_name.upper()} REGION"
-            if has_insufficient_data
-            else (
-                f"✅ NO ACTIVE FLOOD THREAT – {city_name.upper()} REGION"
-                if is_all_normal
-                else f"⚠️ FLOOD {alert_category} – {city_name.upper()} REGION"
-            )
-        ),
+        "title": emergency_title,
         "status": alert_category,
         "color_category": (
             "blue"
@@ -256,7 +266,11 @@ async def build_overview_snapshot(
             else (
                 f"No significant rainfall recorded in {city_name} ({state_name}). River water level and runoff remain within nominal limits."
                 if is_all_normal
-                else f"Elevated hydrometeorological risk signals detected in {city_name} catchment."
+                else (
+                    f"Elevated hydrometeorological risk signals detected in {city_name} catchment."
+                    if highest_hazard == "flood"
+                    else f"Elevated {_hazard_title(highest_hazard).lower()} stress conditions detected in {city_name} region."
+                )
             )
         ),
         "recommended_action": (

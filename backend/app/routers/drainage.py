@@ -56,15 +56,35 @@ async def _process_drainage(lat: float, lon: float, simulated: bool) -> dict[str
 
     try:
         forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
+        current = getattr(forecast, "current", {}) or {}
         hourly = getattr(forecast, "hourly", {}) or {}
         rain_vals = [float(v) for v in hourly.get("precipitation", []) if v is not None]
         intensities = [float(v) for v in hourly.get("rain", []) if v is not None]
+        obs_time = current.get("time")
+        hourly_times = hourly.get("time", [])
+        curr_idx = -1
+        if obs_time and hourly_times:
+            prefix = obs_time[:13] + ":00"
+            if prefix in hourly_times:
+                curr_idx = hourly_times.index(prefix)
+            elif obs_time in hourly_times:
+                curr_idx = hourly_times.index(obs_time)
+        if curr_idx < 0 and hourly_times:
+            curr_idx = min(len(hourly_times) - 1, max(0, 24 if len(hourly_times) >= 25 else 0))
     except Exception:
+        current = {}
         rain_vals = [0.0]
         intensities = [0.0]
+        curr_idx = 0
 
-    rain_24h = sum(rain_vals[-24:]) if rain_vals else 0.0
-    intensity = max(intensities[-3:]) if intensities else 0.0
+    if curr_idx >= 0 and rain_vals:
+        start_idx = max(0, curr_idx - 23)
+        rain_24h = sum(rain_vals[start_idx : curr_idx + 1])
+    else:
+        rain_24h = sum(rain_vals[:24]) if rain_vals else 0.0
+
+    curr_precip = current.get("precipitation", current.get("rain"))
+    intensity = float(curr_precip) if curr_precip is not None else (max(intensities[:3]) if intensities else 0.0)
     runoff_depth = scs_runoff(rain_24h, cn=82.0)  # Urban impervious curve number
 
     if simulated:

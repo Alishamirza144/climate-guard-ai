@@ -390,8 +390,10 @@ export interface WaterLevelsResponse {
 
 export const api = {
   health: () => request<HealthResponse>('/api/health'),
-  liveWeather: (lat: number, lon: number) =>
-    request<LiveWeatherResponse>(`/api/weather/live?lat=${lat}&lon=${lon}`),
+  liveWeather: (lat: number, lon: number, cityId?: string) => {
+    const q = cityId ? `&city_id=${encodeURIComponent(cityId)}` : ''
+    return request<LiveWeatherResponse>(`/api/weather/live?lat=${lat}&lon=${lon}${q}`)
+  },
   waterLevels: (lat: number, lon: number, cityId?: string) => {
     const q = cityId ? `&city_id=${encodeURIComponent(cityId)}` : ''
     return request<WaterLevelsResponse>(`/api/water-levels?lat=${lat}&lon=${lon}${q}`)
@@ -410,11 +412,16 @@ export const api = {
     request<{ display_name?: string; address?: Record<string, string> }>(
       `/api/location/reverse?lat=${lat}&lon=${lon}`,
     ),
-  riskOverview: (lat: number, lon: number) =>
-    request<RiskOverviewResponse>(`/api/risk/overview?lat=${lat}&lon=${lon}`),
+  riskOverview: (lat: number, lon: number, cityId?: string) => {
+    const q = cityId ? `&city_id=${encodeURIComponent(cityId)}` : ''
+    return request<RiskOverviewResponse>(`/api/risk/overview?lat=${lat}&lon=${lon}${q}`)
+  },
   listAlerts: () => request<AlertListResponse>('/api/alerts'),
   dataSources: () => request<DataSourceRegistryResponse>('/api/data-sources'),
-  riskFlood: (lat: number, lon: number) => request<Record<string, unknown>>(`/api/risk/flood?lat=${lat}&lon=${lon}`),
+  riskFlood: (lat: number, lon: number, cityId?: string) => {
+    const q = cityId ? `&city_id=${encodeURIComponent(cityId)}` : ''
+    return request<Record<string, unknown>>(`/api/risk/flood?lat=${lat}&lon=${lon}${q}`)
+  },
   riskHeat: (lat: number, lon: number) => request<Record<string, unknown>>(`/api/risk/heat?lat=${lat}&lon=${lon}`),
   riskFire: (lat: number, lon: number) => request<Record<string, unknown>>(`/api/risk/fire?lat=${lat}&lon=${lon}`),
   riskCrop: (lat: number, lon: number, profile?: Record<string, unknown>) => {

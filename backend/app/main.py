@@ -95,7 +95,10 @@ async def lifespan(app: FastAPI):
     app.state.alert_scheduler = start_scheduler()
     yield
     if getattr(app.state, "alert_scheduler", None) is not None:
-        app.state.alert_scheduler.shutdown()
+        try:
+            app.state.alert_scheduler.shutdown(wait=False)
+        except Exception:
+            pass
     log.info("climateguard_shutdown")
 
 

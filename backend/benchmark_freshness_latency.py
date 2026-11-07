@@ -19,6 +19,8 @@ def run_benchmark():
         ("mumbai", 19.0760, 72.8777),
         ("delhi", 28.6139, 77.2090),
         ("bengaluru", 12.9716, 77.5946),
+        ("srinagar", 34.0837, 74.7973),
+        ("leh", 34.1526, 77.5771),
     ]
     
     print("\n" + "="*80)
@@ -31,7 +33,7 @@ def run_benchmark():
         
         # 1. First-load (cold)
         t0 = time.perf_counter()
-        res_cold = client.get(f"/api/weather/live?lat={lat}&lon={lon}")
+        res_cold = client.get(f"/api/weather/live?lat={lat}&lon={lon}&city_id={city_id}")
         cold_latency_ms = (time.perf_counter() - t0) * 1000.0
         
         assert res_cold.status_code == 200, f"Failed with {res_cold.status_code}"
@@ -39,7 +41,7 @@ def run_benchmark():
         
         # 2. Second-load (warm / cached)
         t0 = time.perf_counter()
-        res_warm = client.get(f"/api/weather/live?lat={lat}&lon={lon}")
+        res_warm = client.get(f"/api/weather/live?lat={lat}&lon={lon}&city_id={city_id}")
         warm_latency_ms = (time.perf_counter() - t0) * 1000.0
         
         assert res_warm.status_code == 200

@@ -144,6 +144,10 @@ def evaluate_winter_conditions(
     drainage_blockage_pct: float = 0.0,
     tmax_c: float = 26.0,
     soil_saturation: float = 0.25,
+    city_name: str | None = None,
+    river_name: str | None = None,
+    station_name: str | None = None,
+    reservoir_name: str | None = None,
 ) -> dict[str, Any]:
     """Specialized seasonal evaluation for Maharashtra winter.
     
@@ -166,7 +170,8 @@ def evaluate_winter_conditions(
 
     # 2. River level & rate of change
     if river_water_level_m <= config["normal_river_level_m"]:
-        reasons.append(f"River gauge at Ramkund is steady at {river_water_level_m:.1f} m (normal winter baseline).")
+        gauge_label = station_name if station_name else ("Ramkund" if not city_name or city_name.lower() == "nashik" else f"{city_name} Reach")
+        reasons.append(f"River gauge at {gauge_label} is steady at {river_water_level_m:.1f} m (normal winter baseline).")
     elif river_water_level_m < 4.0:
         reasons.append(f"River water level at {river_water_level_m:.1f} m remains safely below warning mark (5.0 m).")
     else:
@@ -179,7 +184,8 @@ def evaluate_winter_conditions(
 
     # 3. Upstream Dam / Reservoir flow
     if dam_discharge_cusecs <= 1500.0:
-        reasons.append("Gangapur Dam spillway release is at normal baseflow (<1,500 cusecs).")
+        dam_label = f"{reservoir_name} spillway release" if reservoir_name else ("Gangapur Dam spillway release" if not city_name or city_name.lower() == "nashik" else f"{city_name} Regional Dam spillway release")
+        reasons.append(f"{dam_label} is at normal baseflow (<1,500 cusecs).")
     elif dam_discharge_cusecs < 10000.0:
         reasons.append(f"Regulated canal release ({dam_discharge_cusecs:,.0f} cusecs) safely absorbed by channel.")
     else:

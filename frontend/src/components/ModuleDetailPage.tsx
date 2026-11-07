@@ -29,7 +29,7 @@ export interface ModuleDetailPageProps {
   moduleKey: ModuleKey
   accentClass: string
   badge: string
-  fetchData: (lat: number, lon: number) => Promise<Record<string, unknown>>
+  fetchData: (lat: number, lon: number, cityId?: string) => Promise<Record<string, unknown>>
   recommendations: Record<ModuleAudience, string[]>
 }
 
@@ -79,8 +79,8 @@ export default function ModuleDetailPage({
   const [addedRainMm, setAddedRainMm] = useState(25)
 
   const riskQuery = useQuery({
-    queryKey: ['module-detail', moduleKey, location.lat, location.lon],
-    queryFn: () => fetchData(location.lat, location.lon),
+    queryKey: ['module-detail', moduleKey, location.lat, location.lon, location.cityId],
+    queryFn: () => fetchData(location.lat, location.lon, location.cityId),
     placeholderData: (prev) => prev,
     staleTime: 60_000,
     retry: 1,

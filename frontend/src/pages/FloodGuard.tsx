@@ -9,8 +9,8 @@ export default function FloodGuard() {
   const { location } = useLocationContext()
 
   const overviewQuery = useQuery({
-    queryKey: ['dashboard-overview', location.lat, location.lon],
-    queryFn: () => api.riskOverview(location.lat, location.lon),
+    queryKey: ['dashboard-overview', location.lat, location.lon, location.cityId],
+    queryFn: () => api.riskOverview(location.lat, location.lon, location.cityId),
     staleTime: 60_000,
   })
 
@@ -35,7 +35,7 @@ export default function FloodGuard() {
         moduleKey="flood"
         accentClass="from-[#2389D7]/30 via-[#102F50] to-[#071A33]"
         badge="PRECISION HYDROLOGY · PAN-INDIA CATCHMENTS"
-        fetchData={(lat, lon) => api.riskFlood(lat, lon) as Promise<Record<string, unknown>>}
+        fetchData={(lat, lon, cityId) => api.riskFlood(lat, lon, cityId) as Promise<Record<string, unknown>>}
         recommendations={{
           Citizen: [
             'Relocate electrical equipment, vehicles, and valuables from low-lying ground before peak runoff arrives.',

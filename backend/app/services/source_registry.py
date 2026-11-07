@@ -33,7 +33,7 @@ SOURCE_REGISTRY: list[dict[str, Any]] = [
         "name": "OpenStreetMap Overpass",
         "category": "Hydrology",
         "description": "River and drainage-network geometry extraction for flood and urban drainage analysis.",
-        "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%3Bnode%5B%22waterway%22%5D%2837.76%2C-122.42%2C37.79%2C-122.38%29%3Bout%20body%3B%5D",
+        "url": "https://api.openstreetmap.org/api/0.6/capabilities",
     },
     {
         "key": "nominatim",

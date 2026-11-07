@@ -19,27 +19,15 @@ from app.engines.flood import (
 )
 from app.engines.grid import build_grid
 from app.engines.overview import build_overview_snapshot
-from app.data.cities import find_nearest_city
+from app.data.cities import CITY_BY_ID, find_nearest_city
 from app.services import openmeteo, overpass
 
 router = APIRouter(tags=["risk"])
 
 
-async def _safe_waterways(lat: float, lon: float) -> dict[str, Any]:
-    try:
-        return await asyncio.wait_for(overpass.query_waterways(lat, lon, radius_km=3.0), timeout=1.8)
-    except Exception:
-        nearest = find_nearest_city(lat, lon)
-        rivers = nearest.get("rivers", [])
-        features = [
-            {
-                "type": "Feature",
-                "properties": {"name": r.get("river", "River"), "waterway": "river"},
-                "geometry": {"type": "Point", "coordinates": [lon, lat]},
-            }
-            for r in rivers
-        ]
-        return {"type": "FeatureCollection", "features": features}
+async def _safe_waterways(lat: float, lon: float, city_hint: str | None = None) -> dict[str, Any]:
+    city = CITY_BY_ID[city_hint.lower().strip()] if (city_hint and city_hint.lower().strip() in CITY_BY_ID) else find_nearest_city(lat, lon)
+    return await overpass.query_waterways(lat, lon, radius_km=3.0, city_hint=city.get("id"))
 
 
 class FloodWhatIfRequest(BaseModel):
@@ -136,12 +124,14 @@ async def flood_what_if(payload: FloodWhatIfRequest) -> dict[str, Any]:
 async def flood_risk(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
+    city_id: str | None = Query(None, description="City ID"),
 ) -> dict[str, Any]:
     """Return a flood-risk assessment for a point built from forecast, flood, and terrain inputs."""
+    city = CITY_BY_ID[city_id.lower().strip()] if (city_id and city_id.lower().strip() in CITY_BY_ID) else find_nearest_city(lat, lon)
     forecast_task = openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
     flood_task = openmeteo.get_flood(lat, lon, past_days=3, forecast_days=3)
     elevation_task = openmeteo.elevation([(lat, lon)])
-    waterways_task = _safe_waterways(lat, lon)
+    waterways_task = _safe_waterways(lat, lon, city.get("id"))
 
     results = await asyncio.gather(
         forecast_task,
@@ -211,18 +201,23 @@ async def flood_risk(
     elif isinstance(elevation, dict):
         elevation_values = [float(value) for value in elevation.get("elevation", []) if value is not None]
     median_elev = median(elevation_values) if elevation_values else 0.0
-    nearest_waterway = 250.0
-    waterway_density = 0.0
+    wm = waterways.get("metadata", {}) if isinstance(waterways, dict) else {}
+    nearest_waterway_km = float(wm.get("distance_to_river_km", 1.5))
+    waterway_density = float(wm.get("drainage_density_km_km2", 1.2))
+    hist_susceptibility = float(wm.get("susceptibility_score", 30.0))
+    nearest_waterway_m = nearest_waterway_km * 1000.0
+
     features = waterways.get("features", []) if isinstance(waterways, dict) else getattr(waterways, "features", [])
-    if features:
-        waterway_density = min(1.0, len(features) / 10.0)
-        nearest_waterway = 125.0 if len(features) > 0 else 10000.0
     terrain = compute_terrain_exposure(
         elevation_values[0] if elevation_values else 0.0,
         median_elev,
-        nearest_waterway,
+        nearest_waterway_m,
         waterway_density,
     )
+
+    primary_river_name = wm.get("primary_river") or (city["rivers"][0]["river"] if city.get("rivers") else "River")
+    primary_station_name = city["rivers"][0]["station"] if city.get("rivers") else None
+    primary_reservoir_name = city["reservoirs"][0].replace("_", " ").title() + " Dam" if city.get("reservoirs") else None
 
     risk = score_flood_risk(
         rainfall_24h_mm=rainfall_24h,
@@ -230,7 +225,7 @@ async def flood_risk(
         soil_saturation=soil_saturation,
         river_ratio=river_ratio,
         terrain_exposure=terrain["exposure_index"],
-        affected_zone="Local catchment",
+        affected_zone=f"{city['name']} catchment",
         lead_time_hours=24,
         hourly_trend=[value for value in (hourly.get("precipitation", []) or [])[:24]],
         data_quality={
@@ -239,14 +234,29 @@ async def flood_risk(
             "elevation": bool(elevation_values),
             "waterways": bool(features),
         },
+        nearest_waterway_km=nearest_waterway_km,
+        historical_susceptibility_score=hist_susceptibility,
+        city_name=city["name"],
+        river_name=primary_river_name,
+        station_name=primary_station_name,
+        reservoir_name=primary_reservoir_name,
     )
-    zone_candidates = [
-        {"name": "Riverside Area", "risk": risk.score * 0.98},
-        {"name": "East Zone", "risk": risk.score * 0.88},
-        {"name": "North Zone", "risk": risk.score * 0.76},
-        {"name": "West Zone", "risk": risk.score * 0.72},
-        {"name": "Central Zone", "risk": risk.score * 0.68},
-    ]
+
+    known_zones = wm.get("known_flood_prone_zones", [])
+    if known_zones and len(known_zones) >= 3:
+        multipliers = [0.98, 0.90, 0.82, 0.74, 0.65]
+        zone_candidates = [
+            {"name": zone_name, "risk": risk.score * multipliers[min(i, len(multipliers) - 1)]}
+            for i, zone_name in enumerate(known_zones[:5])
+        ]
+    else:
+        zone_candidates = [
+            {"name": f"{city['name']} Riverside Lowlands", "risk": risk.score * 0.98},
+            {"name": f"{city['name']} East Sector", "risk": risk.score * 0.88},
+            {"name": f"{city['name']} North Drainage Basin", "risk": risk.score * 0.76},
+            {"name": f"{city['name']} West Sector", "risk": risk.score * 0.72},
+            {"name": f"{city['name']} Central Core", "risk": risk.score * 0.68},
+        ]
     payload = risk.model_dump(mode="json")
     sources_present = sum([bool(forecast_current), bool(flood_daily), bool(elevation_values), bool(features)])
     confidence = round(max(0.50, min(0.95, 0.55 + 0.10 * sources_present)), 2)
@@ -275,21 +285,22 @@ async def flood_risk(
 async def risk_overview(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
+    city_id: str | None = Query(None, description="City ID"),
 ) -> dict[str, Any]:
     """Return a compact risk overview across flood, heat, fire, and crop conditions."""
 
     async def safe_flood() -> dict[str, Any]:
         try:
-            flood = await flood_risk(lat=lat, lon=lon)
+            flood = await flood_risk(lat=lat, lon=lon, city_id=city_id)
             return {
                 "score": float(flood.get("score", 0.0) or 0.0),
                 "level": str(flood.get("level", "Low") or "Low"),
                 "probability": float(flood.get("probability", 0.0) or 0.0),
                 "drivers": flood.get("drivers", []) or [],
                 "expected_severity": flood.get("expected_severity"),
-                "rainfall_24h_mm": float(flood.get("rainfall_accumulations", {}).get("24h", 0.0) or 0.0),
+                "rainfall_24h_mm": float(flood.get("rainfall_accumulations", {}).get("past_24h", 0.0) or 0.0),
                 "reasons": flood.get("reasons", []),
-                "status_text": flood.get("status_text", "NO ACTIVE FLOOD THREAT"),
+                "status_text": flood.get("status_text", "No active flood warning detected"),
                 "status_badge": flood.get("status_badge", "NORMAL"),
             }
         except Exception:
@@ -306,10 +317,11 @@ async def risk_overview(
         try:
             forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
             hourly = getattr(forecast, "hourly", {}) or {}
+            current = getattr(forecast, "current", {}) or {}
             temps = [float(value) for value in hourly.get("temperature_2m", []) if value is not None]
             rh = [float(value) for value in hourly.get("relative_humidity_2m", []) if value is not None]
-            t = temps[-1] if temps else 26.0
-            r = rh[-1] if rh else 50.0
+            t = float(current.get("temperature_2m")) if current.get("temperature_2m") is not None else (temps[0] if temps else 26.0)
+            r = float(current.get("relative_humidity_2m")) if current.get("relative_humidity_2m") is not None else (rh[0] if rh else 50.0)
             # IMD-aligned: heatwave only occurs when max temp reaches >= 40°C in plains
             if t <= 30.0:
                 score = max(5.0, (t / 30.0) * 12.0)
@@ -336,10 +348,11 @@ async def risk_overview(
         try:
             forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
             hourly = getattr(forecast, "hourly", {}) or {}
+            current = getattr(forecast, "current", {}) or {}
             temps = [float(value) for value in hourly.get("temperature_2m", []) if value is not None]
             rh = [float(value) for value in hourly.get("relative_humidity_2m", []) if value is not None]
-            t = temps[-1] if temps else 26.0
-            r = rh[-1] if rh else 50.0
+            t = float(current.get("temperature_2m")) if current.get("temperature_2m") is not None else (temps[0] if temps else 26.0)
+            r = float(current.get("relative_humidity_2m")) if current.get("relative_humidity_2m") is not None else (rh[0] if rh else 50.0)
             # Fire danger rises when humidity < 25% and temp > 35°C
             if t <= 28.0 or r >= 40.0:
                 score = max(5.0, min(18.0, (t / 28.0) * 10.0 + max(0.0, 50.0 - r) * 0.15))

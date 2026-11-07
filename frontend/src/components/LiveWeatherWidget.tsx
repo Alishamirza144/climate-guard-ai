@@ -60,10 +60,10 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
               Atmospheric Telemetry & Model Assimilation
             </h3>
             <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-[#2389D7]/20 text-[#25C5DC] border border-[#2389D7]/40">
-              ECMWF IFS & IMD Reference
+              {weather?.model_provider ? (weather.model_provider.length > 26 ? 'ECMWF / IMD Assimilation' : weather.model_provider) : 'ECMWF IFS & IMD'}
             </span>
             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-[#F4BC4D]/15 text-[#F4BC4D] border border-[#F4BC4D]/30">
-              Model Estimate
+              {weather?.measurement_type === 'station_observation' ? 'Station Observation' : 'Model Estimate'}
             </span>
             {stationStatus && (
               <span
@@ -80,9 +80,9 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
             )}
           </div>
           <p className="text-xs text-[#B6C9DC] mt-1">
-            Station: <span className="font-bold text-[#F3F8FF]">{weather?.reference_station?.name || `IMD ${weather?.city || ''} Observatory`}</span>
-            {weather?.reference_station?.station_id ? ` (IMD ID: ${weather.reference_station.station_id})` : ''}
-            {weather?.reference_station?.wmo_id ? ` (WMO: ${weather.reference_station.wmo_id})` : ''} •{' '}
+            Station: <span className="font-bold text-[#F3F8FF]">{actualObs?.station_name || weather?.reference_station?.name || `IMD ${weather?.city || ''} Observatory`}</span>
+            {(actualObs?.station_id || weather?.reference_station?.station_id) ? ` (IMD ID: ${actualObs?.station_id || weather?.reference_station?.station_id})` : ''}
+            {(actualObs?.wmo_id || weather?.reference_station?.wmo_id) ? ` (WMO: ${actualObs?.wmo_id || weather?.reference_station?.wmo_id})` : ''} •{' '}
             <span className="font-semibold text-[#8ED8F5]">
               {weather?.city ? localizeCity(weather.city, lang) : ''}, {weather?.state ? localizeState(weather.state, lang) : ''}
             </span>
@@ -100,7 +100,7 @@ export default function LiveWeatherWidget({ weather, isLoading }: LiveWeatherWid
             Cycle: {weather?.observation_time ? formatDigits(weather.observation_time.replace('T', ' '), lang) : 'Current'} ({weather?.timezone || 'IST'})
           </span>
           <span className="rounded-xl bg-[#0E2B49] px-2.5 py-1 border border-[#285274] text-[10px] text-[#25C5DC] font-bold">
-            ECMWF Hourly Assimilation
+            {weather?.freshness || 'Hourly Assimilation'}
           </span>
         </div>
       </div>

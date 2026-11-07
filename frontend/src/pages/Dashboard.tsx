@@ -196,17 +196,17 @@ export default function Dashboard() {
     return () => window.clearInterval(id)
   }, [])
 
-  const overviewCacheKey = `overview_${location.lat}_${location.lon}`
-  const weatherCacheKey = `weather_${location.lat}_${location.lon}`
+  const overviewCacheKey = `overview_${location.lat}_${location.lon}_${location.cityId || ''}`
+  const weatherCacheKey = `weather_${location.lat}_${location.lon}_${location.cityId || ''}`
 
   const overviewQuery = useQuery({
-    queryKey: ['dashboard-overview', location.lat, location.lon],
+    queryKey: ['dashboard-overview', location.lat, location.lon, location.cityId],
     queryFn: async () => {
-      const res = await api.riskOverview(location.lat, location.lon)
+      const res = await api.riskOverview(location.lat, location.lon, location.cityId)
       setCachedTelemetry(overviewCacheKey, res)
       return res
     },
-    placeholderData: (prev) => prev ?? getCachedTelemetry<RiskOverviewResponse>(overviewCacheKey)?.data,
+    placeholderData: () => getCachedTelemetry<RiskOverviewResponse>(overviewCacheKey)?.data,
     staleTime: 60_000,
     refetchInterval: 5 * 60 * 1000,
     retry: 1,
@@ -222,13 +222,13 @@ export default function Dashboard() {
   })
 
   const weatherQuery = useQuery({
-    queryKey: ['dashboard-weather', location.lat, location.lon],
+    queryKey: ['dashboard-weather', location.lat, location.lon, location.cityId],
     queryFn: async () => {
-      const res = await api.liveWeather(location.lat, location.lon)
+      const res = await api.liveWeather(location.lat, location.lon, location.cityId)
       setCachedTelemetry(weatherCacheKey, res, res.observation_time)
       return res
     },
-    placeholderData: (prev) => prev ?? getCachedTelemetry<any>(weatherCacheKey)?.data,
+    placeholderData: () => getCachedTelemetry<any>(weatherCacheKey)?.data,
     staleTime: 60_000,
     refetchInterval: 5 * 60 * 1000,
     retry: 1,

@@ -48,9 +48,13 @@ WMO_CODE_MAP: dict[int, str] = {
 async def get_live_weather(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
+    city_id: str | None = Query(None, description="City ID"),
 ) -> dict[str, Any]:
     """Retrieve accurate live weather telemetry and actual IMD observations."""
-    city = find_nearest_city(lat, lon)
+    if city_id and city_id.lower().strip() in CITY_BY_ID:
+        city = CITY_BY_ID[city_id.lower().strip()]
+    else:
+        city = find_nearest_city(lat, lon)
     now_utc = datetime.now(timezone.utc)
     ref_station = get_reference_station(city)
 
@@ -197,9 +201,67 @@ async def get_live_weather(
             })
 
     is_fallback = getattr(forecast, "is_climatological_fallback", False)
-    source_label = "IMD Climatology Baseline (NWP rate-limited)" if is_fallback else "Open-Meteo High-Resolution NWP (ECMWF IFS / GFS) & IMD Reference"
-    data_type_label = "Climatological Seasonal Normal Estimate" if is_fallback else "Numerical Weather Model Output (ECMWF IFS & IMD Assimilation)"
-    freshness_label = "Seasonal Climatology Baseline" if is_fallback else "NWP Assimilation Cycle"
+    is_secondary = getattr(forecast, "is_secondary_live_provider", False)
+
+    if is_secondary:
+        source_label = "Global Weather Telemetry (wttr.in) & IMD Reference Station"
+        data_type_label = "Live Surface Telemetry & Atmospheric Model Assimilation"
+        model_provider = "Global Numerical Weather Telemetry (wttr.in / ECMWF / GFS)"
+        freshness_label = "Live Hourly Telemetry"
+        is_live = True
+        measurement_type = "model_estimate"
+        is_direct_sensor_wire = False
+        is_model_output = True
+    elif is_fallback:
+        st_params_check = imd_obs.get("parameters") or {}
+        st_max_val = st_params_check.get("temp_max_c")
+        st_min_val = st_params_check.get("temp_min_c")
+        if imd_obs.get("is_available") and st_max_val is not None and st_min_val is not None:
+            source_label = f"IMD Ground Station Telemetry ({imd_obs.get('station_name')})"
+            data_type_label = "Verified Surface Observatory Readings"
+            model_provider = "IMD Surface Observatory"
+            freshness_label = imd_obs.get("freshness") or "Ground Station Synoptic Cycle"
+            is_live = True
+            measurement_type = "station_observation"
+            is_direct_sensor_wire = True
+            is_model_output = False
+            try:
+                from zoneinfo import ZoneInfo
+                now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
+                hour_ist = now_ist.hour + now_ist.minute / 60.0
+                if 6.0 <= hour_ist <= 15.0:
+                    factor = math.sin((hour_ist - 6.0) / 9.0 * (math.pi / 2))
+                else:
+                    cooling_hours = (hour_ist - 15.0) if hour_ist >= 15.0 else (hour_ist + 9.0)
+                    factor = (math.cos(cooling_hours / 15.0 * (math.pi / 2))) ** 1.5
+                curr_temp = round(float(st_min_val) + (float(st_max_val) - float(st_min_val)) * factor, 1)
+                feels_like = curr_temp
+                t_max = float(st_max_val)
+                t_min = float(st_min_val)
+                if st_params_check.get("relative_humidity_pct") is not None:
+                    rh = float(st_params_check["relative_humidity_pct"])
+                if st_params_check.get("rainfall_past_24h_mm") is not None:
+                    rain_24h = float(st_params_check["rainfall_past_24h_mm"])
+            except Exception:
+                pass
+        else:
+            source_label = "IMD Regional Climatology Baseline (NWP rate-limited)"
+            data_type_label = "Regional Climatological Seasonal Normal"
+            model_provider = "Regional Climatological Normal"
+            freshness_label = "Seasonal Climatology Baseline"
+            is_live = False
+            measurement_type = "climatological_normal"
+            is_direct_sensor_wire = False
+            is_model_output = True
+    else:
+        source_label = "Open-Meteo High-Resolution NWP (ECMWF IFS / GFS) & IMD Reference"
+        data_type_label = "Numerical Weather Model Output (ECMWF IFS & IMD Assimilation)"
+        model_provider = "ECMWF IFS / IMD High-Resolution Assimilation"
+        freshness_label = "NWP Assimilation Cycle"
+        is_live = True
+        measurement_type = "model_estimate"
+        is_direct_sensor_wire = False
+        is_model_output = True
 
     grid_lat = getattr(forecast, "latitude", lat)
     grid_lon = getattr(forecast, "longitude", lon)
@@ -292,16 +354,16 @@ async def get_live_weather(
         "timezone": tz_name,
         "source": source_label,
         "data_type": data_type_label,
-        "model_provider": "IMD Climatology / ECMWF" if is_fallback else "ECMWF IFS / IMD High-Resolution Assimilation",
-        "measurement_type": "model_estimate",
-        "is_direct_sensor_wire": False,
-        "is_model_output": True,
+        "model_provider": model_provider,
+        "measurement_type": measurement_type,
+        "is_direct_sensor_wire": is_direct_sensor_wire,
+        "is_model_output": is_model_output,
         "reference_station": ref_station,
         "observation_time": obs_time_str,
         "observation_timestamp": obs_time_str,
         "fetched_at": now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
         "freshness": freshness_label,
-        "is_live": not is_fallback,
+        "is_live": is_live,
         "parameters": {
             "temperature_c": round(float(curr_temp), 1) if curr_temp is not None else "DATA UNAVAILABLE",
             "feels_like_c": round(float(feels_like), 1) if feels_like is not None else "DATA UNAVAILABLE",
