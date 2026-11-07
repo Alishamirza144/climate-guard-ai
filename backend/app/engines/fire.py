@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import math
 from datetime import date, timedelta
 from typing import Any, Sequence
@@ -103,12 +104,13 @@ def dc(temp_c: float, rain_mm: float, dc_0: float = 60.0) -> float:
 
 
 def isi(ffmc_value: float, wind_kmh: float) -> float:
-    """Initial Spread Index (ISI)."""
+    """Initial Spread Index (ISI) following Canadian Forest Fire Weather Index standard."""
     f = clamp(_clean_float(ffmc_value, 85.0), 0.0, 101.0)
     w = max(0.0, _clean_float(wind_kmh))
     m = 147.2 * (101.0 - f) / (59.5 + f)
-    s = 0.208 * w * (1.0 + math.exp(-0.08 * w))
-    isi_value = 0.208 * s * (m / (0.5 + 0.001 * m))
+    fw = math.exp(0.05039 * w)
+    ff = 91.9 * math.exp(-0.1386 * m) * (1.0 + (m ** 5.31) / 4.93e7)
+    isi_value = 0.208 * fw * ff
     return clamp(isi_value, 0.0, 100.0)
 
 
@@ -162,18 +164,27 @@ def temperature_anomaly_30d(current_temp: float, normal_temp: float) -> float:
     return max(0.0, _clean_float(current_temp) - _clean_float(normal_temp, current_temp))
 
 
+_spinup_cache: dict[str, dict[str, float]] = {}
+
+
 async def _spin_up_fwi(lat: float, lon: float) -> dict[str, float]:
     """Seed the moisture codes using recent archive/forecast data. This keeps the FWI engine stable."""
+    cache_key = f"{round(lat, 2)}_{round(lon, 2)}_{date.today().isoformat()}"
+    if cache_key in _spinup_cache:
+        return _spinup_cache[cache_key]
     default = {"ffmc": 85.0, "dmc": 20.0, "dc": 60.0}
     try:
         start_date = (date.today() - timedelta(days=90)).isoformat()
         end_date = (date.today() + timedelta(days=3)).isoformat()
-        archive = await openmeteo.get_archive(
-            lat,
-            lon,
-            start_date,
-            end_date,
-            daily=["temperature_2m_max", "relative_humidity_2m_max", "wind_speed_10m_max", "precipitation_sum"],
+        archive = await asyncio.wait_for(
+            openmeteo.get_archive(
+                lat,
+                lon,
+                start_date,
+                end_date,
+                daily=["temperature_2m_max", "relative_humidity_2m_max", "wind_speed_10m_max", "precipitation_sum"],
+            ),
+            timeout=2.0,
         )
         daily = archive.daily or {}
         temps = [_clean_float(v) for v in daily.get("temperature_2m_max", [])]
@@ -190,7 +201,9 @@ async def _spin_up_fwi(lat: float, lon: float) -> dict[str, float]:
             ffmc_value = ffmc(temp, humidity, wind, rain, ffmc_value)
             dmc_value = dmc(temp, humidity, rain, dmc_value)
             dc_value = dc(temp, rain, dc_value)
-        return {"ffmc": ffmc_value, "dmc": dmc_value, "dc": dc_value}
+        res = {"ffmc": ffmc_value, "dmc": dmc_value, "dc": dc_value}
+        _spinup_cache[cache_key] = res
+        return res
     except Exception:
         return default
 
@@ -303,7 +316,8 @@ async def score_fire_risk(
     rain_deficit = seven_day_rain_deficit([], expected_mm=25.0)
     temp_anomaly = temperature_anomaly_30d(temp_c, temp_normal_30d_c if temp_normal_30d_c is not None else temp_c)
 
-    score = clamp((weather["fwi"] / 50.0) * 100.0, 0.0, 100.0)
+    raw_weather_score = clamp((weather["fwi"] / 40.0) * 100.0, 0.0, 100.0)
+    score = raw_weather_score
     fire_detected = False
     nearest_distance = None
     pressure = 0.0
@@ -340,6 +354,17 @@ async def score_fire_risk(
     else:
         model_mode = "weather-only/no-satellite"
 
+    # Evidence-based fire risk gating:
+    # Under mild/humid conditions (T <= 32°C or RH >= 35%) with NO satellite hotspots detected,
+    # ignition and spread potential is minimal (Low).
+    if (temp_c <= 32.0 or rh >= 35.0) and not fire_detected:
+        score = min(14.0, raw_weather_score * 0.35)
+    else:
+        score = raw_weather_score
+
+    if fire_detected:
+        score += min(35.0, pressure * 15.0)
+
     if ml_probability is not None and ml_validation_auc is not None:
         ml_prob = _clean_float(ml_probability)
         auc = _clean_float(ml_validation_auc)
@@ -352,7 +377,7 @@ async def score_fire_risk(
     drivers = [
         {"factor": "FWI", "value": weather["fwi"], "unit": "index", "score": weather["fwi"]},
         {"factor": "VPD", "value": round(vpd, 2), "unit": "kPa", "score": clamp(vpd * 20.0, 0.0, 100.0)},
-        {"factor": "Top-layer soil moisture", "value": round(soil_index, 2), "unit": "index", "score": clamp(100.0 - soil_index, 0.0, 100.0)},
+        {"factor": "Top-layer soil moisture", "value": round(soil_index, 2), "unit": "index", "score": clamp(100.0 - soil_index, 0.0, 100.0) if soil_index > 0 else 15.0},
         {"factor": "Observed fire pressure", "value": round(pressure, 2), "unit": "FRP-weighted", "score": clamp(pressure * 20.0, 0.0, 100.0)},
     ]
 

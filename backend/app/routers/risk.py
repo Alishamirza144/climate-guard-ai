@@ -26,7 +26,8 @@ router = APIRouter(tags=["risk"])
 
 
 async def _safe_waterways(lat: float, lon: float, city_hint: str | None = None) -> dict[str, Any]:
-    city = CITY_BY_ID[city_hint.lower().strip()] if (city_hint and city_hint.lower().strip() in CITY_BY_ID) else find_nearest_city(lat, lon)
+    valid_hint = city_hint.strip().lower() if isinstance(city_hint, str) and city_hint.strip() else None
+    city = CITY_BY_ID[valid_hint] if (valid_hint and valid_hint in CITY_BY_ID) else find_nearest_city(lat, lon)
     return await overpass.query_waterways(lat, lon, radius_km=3.0, city_hint=city.get("id"))
 
 
@@ -125,10 +126,12 @@ async def flood_risk(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
     city_id: str | None = Query(None, description="City ID"),
+    preloaded_forecast: Any = None,
 ) -> dict[str, Any]:
     """Return a flood-risk assessment for a point built from forecast, flood, and terrain inputs."""
-    city = CITY_BY_ID[city_id.lower().strip()] if (city_id and city_id.lower().strip() in CITY_BY_ID) else find_nearest_city(lat, lon)
-    forecast_task = openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
+    valid_id = city_id.strip().lower() if isinstance(city_id, str) and city_id.strip() else None
+    city = CITY_BY_ID[valid_id] if (valid_id and valid_id in CITY_BY_ID) else find_nearest_city(lat, lon)
+    forecast_task = asyncio.sleep(0, result=preloaded_forecast) if preloaded_forecast is not None else openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
     flood_task = openmeteo.get_flood(lat, lon, past_days=3, forecast_days=3)
     elevation_task = openmeteo.elevation([(lat, lon)])
     waterways_task = _safe_waterways(lat, lon, city.get("id"))
@@ -288,10 +291,12 @@ async def risk_overview(
     city_id: str | None = Query(None, description="City ID"),
 ) -> dict[str, Any]:
     """Return a compact risk overview across flood, heat, fire, and crop conditions."""
+    valid_city_id = city_id.strip().lower() if isinstance(city_id, str) and city_id.strip() else None
+    forecast = await openmeteo.get_forecast(lat, lon, past_days=3, forecast_days=3)
 
     async def safe_flood() -> dict[str, Any]:
         try:
-            flood = await flood_risk(lat=lat, lon=lon, city_id=city_id)
+            flood = await flood_risk(lat=lat, lon=lon, city_id=valid_city_id, preloaded_forecast=forecast)
             return {
                 "score": float(flood.get("score", 0.0) or 0.0),
                 "level": str(flood.get("level", "Low") or "Low"),
@@ -302,6 +307,7 @@ async def risk_overview(
                 "reasons": flood.get("reasons", []),
                 "status_text": flood.get("status_text", "No active flood warning detected"),
                 "status_badge": flood.get("status_badge", "NORMAL"),
+                "data_quality": flood.get("data_quality", "verified_model_output"),
             }
         except Exception:
             return {
@@ -315,24 +321,31 @@ async def risk_overview(
 
     async def safe_heat() -> dict[str, Any]:
         try:
-            forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
-            hourly = getattr(forecast, "hourly", {}) or {}
             current = getattr(forecast, "current", {}) or {}
+            hourly = getattr(forecast, "hourly", {}) or {}
             temps = [float(value) for value in hourly.get("temperature_2m", []) if value is not None]
             rh = [float(value) for value in hourly.get("relative_humidity_2m", []) if value is not None]
             t = float(current.get("temperature_2m")) if current.get("temperature_2m") is not None else (temps[0] if temps else 26.0)
             r = float(current.get("relative_humidity_2m")) if current.get("relative_humidity_2m") is not None else (rh[0] if rh else 50.0)
-            # IMD-aligned: heatwave only occurs when max temp reaches >= 40°C in plains
-            if t <= 30.0:
-                score = max(5.0, (t / 30.0) * 12.0)
-            elif t <= 36.0:
-                score = 12.0 + ((t - 30.0) / 6.0) * 23.0
-            elif t <= 40.0:
-                score = 35.0 + ((t - 36.0) / 4.0) * 25.0
+            
+            # IMD-aligned: heatwave requires Tmax >= 40°C in plains (37°C coastal).
+            if t <= 34.0:
+                score = max(5.0, (t / 34.0) * 12.0)
+                level = "Low"
+                headline = "Normal seasonal temperatures; no heatwave threat."
+            elif t <= 38.0:
+                score = 15.0 + ((t - 34.0) / 4.0) * 20.0
+                level = "Moderate" if score >= 25.0 else "Low"
+                headline = f"Warm daytime temperatures ({t:.1f}°C)."
+            elif t <= 42.0:
+                score = 40.0 + ((t - 38.0) / 4.0) * 30.0
+                level = "High"
+                headline = f"Elevated heatwave threat ({t:.1f}°C)."
             else:
-                score = min(100.0, 60.0 + (t - 40.0) * 7.0)
-            level = "Critical" if score >= 85 else "High" if score >= 60 else "Moderate" if score >= 35 else "Low"
-            headline = "Normal seasonal temperatures; no heatwave threat." if level == "Low" else f"Elevated daytime heat ({t:.1f}°C)."
+                score = min(100.0, 75.0 + (t - 42.0) * 5.0)
+                level = "Critical"
+                headline = f"Severe heatwave conditions ({t:.1f}°C)."
+
             return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["temperature", "humidity"], "headline": headline, "data_quality": "live"}
         except Exception:
             return {
@@ -346,20 +359,29 @@ async def risk_overview(
 
     async def safe_fire() -> dict[str, Any]:
         try:
-            forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
-            hourly = getattr(forecast, "hourly", {}) or {}
             current = getattr(forecast, "current", {}) or {}
+            hourly = getattr(forecast, "hourly", {}) or {}
             temps = [float(value) for value in hourly.get("temperature_2m", []) if value is not None]
             rh = [float(value) for value in hourly.get("relative_humidity_2m", []) if value is not None]
+            winds = [float(value) for value in hourly.get("wind_speed_10m", []) if value is not None]
             t = float(current.get("temperature_2m")) if current.get("temperature_2m") is not None else (temps[0] if temps else 26.0)
             r = float(current.get("relative_humidity_2m")) if current.get("relative_humidity_2m") is not None else (rh[0] if rh else 50.0)
-            # Fire danger rises when humidity < 25% and temp > 35°C
-            if t <= 28.0 or r >= 40.0:
-                score = max(5.0, min(18.0, (t / 28.0) * 10.0 + max(0.0, 50.0 - r) * 0.15))
+            w = float(current.get("wind_speed_10m")) if current.get("wind_speed_10m") is not None else (winds[0] if winds else 10.0)
+
+            # Fire danger requires dry fuel (RH < 25%), high temperatures (T > 35°C), and strong wind.
+            if t <= 32.0 or r >= 35.0:
+                score = max(5.0, min(14.0, (t / 32.0) * 8.0 + max(0.0, 45.0 - r) * 0.1))
+                level = "Low"
+                headline = "Low fire danger; stable atmospheric humidity."
+            elif t <= 38.0 and r >= 20.0:
+                score = 20.0 + ((t - 32.0) / 6.0) * 20.0 + max(0.0, 35.0 - r) * 0.5
+                level = "Moderate"
+                headline = "Moderate dry fuel fire potential."
             else:
-                score = min(100.0, 18.0 + (t - 28.0) * 3.0 + max(0.0, 40.0 - r) * 1.2)
-            level = "Critical" if score >= 85 else "High" if score >= 60 else "Moderate" if score >= 35 else "Low"
-            headline = "Low fire danger; stable winter humidity." if level == "Low" else "Elevated dry fuel fire risk."
+                score = min(100.0, 50.0 + (t - 38.0) * 4.0 + max(0.0, 20.0 - r) * 1.5 + (w / 30.0) * 10.0)
+                level = "Critical" if score >= 75 else "High"
+                headline = "High wildfire danger: critical fuel dryness and wind."
+
             return {"score": round(score, 1), "level": level, "probability": round(score / 100.0, 3), "drivers": ["fuel dryness"], "headline": headline, "data_quality": "live"}
         except Exception:
             return {
@@ -373,24 +395,45 @@ async def risk_overview(
 
     async def safe_crop() -> dict[str, Any]:
         try:
-            forecast = await openmeteo.get_forecast(lat, lon, past_days=1, forecast_days=2)
             hourly = getattr(forecast, "hourly", {}) or {}
-            soil_vals = [float(v) for v in hourly.get("soil_moisture_0_to_1cm", []) if v is not None]
+            soil_0_1 = [float(v) for v in hourly.get("soil_moisture_0_to_1cm", []) if v is not None]
+            soil_1_3 = [float(v) for v in hourly.get("soil_moisture_1_to_3cm", []) if v is not None]
+            soil_3_9 = [float(v) for v in hourly.get("soil_moisture_3_to_9cm", []) if v is not None]
+            soil_9_27 = [float(v) for v in hourly.get("soil_moisture_9_to_27cm", []) if v is not None]
+            soil_27_81 = [float(v) for v in hourly.get("soil_moisture_27_to_81cm", []) if v is not None]
+            
+            sm_0_1 = sum(soil_0_1[-24:]) / len(soil_0_1[-24:]) if soil_0_1 else 0.20
+            sm_1_3 = sum(soil_1_3[-24:]) / len(soil_1_3[-24:]) if soil_1_3 else 0.22
+            sm_3_9 = sum(soil_3_9[-24:]) / len(soil_3_9[-24:]) if soil_3_9 else 0.24
+            sm_9_27 = sum(soil_9_27[-24:]) / len(soil_9_27[-24:]) if soil_9_27 else 0.26
+            sm_27_81 = sum(soil_27_81[-24:]) / len(soil_27_81[-24:]) if soil_27_81 else 0.28
+            
+            # FAO-56 agronomically weighted root-zone soil moisture (0-81cm depth)
+            root_zone_moisture = (
+                0.15 * ((sm_0_1 + sm_1_3 + sm_3_9) / 3.0)
+                + 0.35 * sm_9_27
+                + 0.50 * sm_27_81
+            )
             rain_vals = [float(v) for v in hourly.get("precipitation", []) if v is not None]
-            avg_soil = sum(soil_vals) / len(soil_vals) if soil_vals else 0.24
-            rain_sum = sum(rain_vals) if rain_vals else 0.0
-            if avg_soil < 0.15:
+            rain_24h = sum(rain_vals[-24:]) if rain_vals else 0.0
+
+            if root_zone_moisture < 0.12 and rain_24h < 2.0:
                 score = 65.0
                 level = "High"
-                headline = "Topsoil moisture depletion; supplemental irrigation recommended."
-            elif avg_soil < 0.20:
-                score = 38.0
+                headline = "Root-zone moisture depletion; irrigation required."
+            elif root_zone_moisture < 0.16 and rain_24h < 2.0:
+                score = 35.0
                 level = "Moderate"
                 headline = "Moderate root-zone moisture stress."
+            elif rain_24h > 65.0:
+                score = 60.0
+                level = "High"
+                headline = "Field waterlogging risk from heavy rainfall."
             else:
-                score = 15.0
+                score = 10.0
                 level = "Low"
                 headline = "Crop root-zone moisture optimal."
+
             return {"score": score, "level": level, "probability": round(score / 100.0, 3), "drivers": ["soil moisture", "precipitation"], "headline": headline, "data_quality": "live"}
         except Exception:
             return {

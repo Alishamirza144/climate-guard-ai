@@ -128,9 +128,12 @@ async def build_overview_snapshot(
     def _is_hazard_insufficient(h: dict[str, Any] | None) -> bool:
         if not h or not isinstance(h, dict):
             return True
-        if h.get("data_quality") in {"insufficient_data", "failed", "stale", "unavailable"}:
+        dq = h.get("data_quality")
+        if isinstance(dq, str) and dq.lower() in {"insufficient_data", "failed", "stale", "unavailable"}:
             return True
-        if h.get("level") in {"Insufficient Data", "Data Unavailable", "Error"}:
+        if isinstance(dq, dict) and dq.get("insufficient_data") is True:
+            return True
+        if str(h.get("level", "")).lower() in {"insufficient data", "data unavailable", "error"}:
             return True
         if h.get("data_unavailable") is True:
             return True
@@ -229,7 +232,7 @@ async def build_overview_snapshot(
     if has_insufficient_data:
         emergency_title = f"ℹ️ INSUFFICIENT DATA – {city_name.upper()} REGION"
     elif is_all_normal:
-        emergency_title = f"✅ NO ACTIVE FLOOD THREAT – {city_name.upper()} REGION"
+        emergency_title = f"✅ CONDITIONS NORMAL – {city_name.upper()} REGION"
     else:
         if highest_hazard == "flood":
             if alert_category == "WATCH":
@@ -238,6 +241,22 @@ async def build_overview_snapshot(
                 emergency_title = f"⚠️ FLOOD WARNING – {city_name.upper()} REGION"
             else:
                 emergency_title = f"🚨 FLOOD CRITICAL – {city_name.upper()} REGION"
+        elif highest_hazard == "heat":
+            if alert_category == "WATCH":
+                emergency_title = f"⚠️ HEAT WATCH – {city_name.upper()} REGION"
+            elif alert_category == "WARNING":
+                emergency_title = f"⚠️ HEAT WARNING – {city_name.upper()} REGION"
+            else:
+                emergency_title = f"🚨 HEAT CRITICAL – {city_name.upper()} REGION"
+        elif highest_hazard == "fire":
+            if alert_category == "WATCH":
+                emergency_title = f"⚠️ WILDFIRE WATCH – {city_name.upper()} REGION"
+            elif alert_category == "WARNING":
+                emergency_title = f"⚠️ WILDFIRE WARNING – {city_name.upper()} REGION"
+            else:
+                emergency_title = f"🚨 WILDFIRE CRITICAL – {city_name.upper()} REGION"
+        elif highest_hazard == "crop":
+            emergency_title = f"⚠️ CROP STRESS ADVISORY – {city_name.upper()} REGION"
         else:
             emergency_title = f"⚠️ {highest_hazard_title} {alert_category} – {city_name.upper()} REGION"
 

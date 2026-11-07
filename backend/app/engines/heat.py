@@ -155,13 +155,13 @@ def _compute_subscores(
     humidity_percent: float,
     night_recovery_c: float,
 ) -> dict[str, float]:
-    anomaly = clamp((temp_anomaly_c / 12.0) * 100.0, 0.0, 100.0)
-    hi_score = clamp((heat_index_c / 55.0) * 100.0, 0.0, 100.0)
-    duration_score = clamp((duration_days / 7.0) * 100.0, 0.0, 100.0)
-    solar_score = clamp((shortwave_radiation_wm2 / 1000.0) * 100.0, 0.0, 100.0)
-    wind_score = clamp((1.0 - min(wind_speed_kph / 25.0, 1.0)) * 100.0, 0.0, 100.0)
-    humidity_score = clamp((humidity_percent / 100.0) * 100.0, 0.0, 100.0)
-    night_recovery_score = clamp((night_recovery_c / 8.0) * 100.0, 0.0, 100.0)
+    anomaly = clamp((temp_anomaly_c / 6.0) * 100.0, 0.0, 100.0)
+    hi_score = clamp(((heat_index_c - 30.0) / 18.0) * 100.0, 0.0, 100.0)
+    duration_score = clamp(((duration_days - 1) / 5.0) * 100.0, 0.0, 100.0)
+    solar_score = clamp((max(0.0, shortwave_radiation_wm2 - 400.0) / 600.0) * 100.0, 0.0, 100.0)
+    wind_score = clamp((1.0 - min(wind_speed_kph / 25.0, 1.0)) * 100.0, 0.0, 100.0) if heat_index_c >= 35.0 else 0.0
+    humidity_score = clamp(((humidity_percent - 40.0) / 60.0) * 100.0, 0.0, 100.0) if heat_index_c >= 32.0 else 0.0
+    night_recovery_score = clamp((-night_recovery_c / 5.0) * 100.0, 0.0, 100.0) if night_recovery_c < 0 else 0.0
     return {
         "temperature_anomaly": anomaly,
         "heat_index": hi_score,
@@ -257,6 +257,11 @@ def score_heat_risk(
         + subscores["humidity_stress"] * DEFAULT_WEIGHTS["humidity_stress"]
         + subscores["night_recovery"] * DEFAULT_WEIGHTS["night_recovery"]
     ) / weight_total
+    # Physical gating for heat:
+    # If maximum temperature is <= 34°C and Heat Index <= 36°C, conditions are normal seasonal warmth (no heatwave).
+    if tmax <= 34.0 and heat_idx <= 36.0:
+        physics_score = min(14.0, (tmax / 34.0) * 12.0)
+
     final_score = clamp(physics_score, 0.0, 100.0)
     model_mode = "physics"
     if ml_probability is not None and ml_validation_auc is not None:

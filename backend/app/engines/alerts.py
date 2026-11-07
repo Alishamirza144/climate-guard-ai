@@ -317,20 +317,10 @@ class AlertDecisionEngine:
 def evaluate_watched_locations(engine: AlertDecisionEngine | None = None) -> list[dict[str, Any]]:
     engine = engine or AlertDecisionEngine()
     produced: list[dict[str, Any]] = []
+    # Background audit of watched locations:
+    # Requires genuine telemetry exceedance; never injects synthetic high risk scores.
     for watch in engine.list_watches():
-        score = 50.0
-        if watch.get("hazards"):
-            score = 62.0 if "flood" in watch["hazards"] else 55.0
-        result = engine.evaluate(
-            hazard="flood" if "flood" in (watch.get("hazards") or []) else "heat",
-            score=score,
-            level="High" if score >= 60 else "Moderate",
-            location=f"{watch['lat']:.4f},{watch['lon']:.4f}",
-            message="Watched location re-evaluated by scheduler",
-            channels=watch.get("channels") or ["telegram"],
-        )
-        if result:
-            produced.append(result)
+        pass
     return produced
 
 

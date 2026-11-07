@@ -447,7 +447,7 @@ def _disease_favourability(crop: str, temp_c: float, rh_pct: float) -> list[dict
         temp_low, temp_high = item["temp_window_c"]
         in_window = temp_low <= temp_c <= temp_high
         wetness = rh_pct >= item["rh_threshold_pct"]
-        score = 100.0 if in_window and wetness else 45.0 if in_window else 15.0
+        score = 90.0 if in_window and wetness else (20.0 if in_window and rh_pct >= 60.0 else 5.0)
         results.append(
             {
                 "name": item["name"],
@@ -526,14 +526,12 @@ def score_crop_risk(
     water_stress = clamp((1.0 - ks) * 100.0, 0.0, 100.0)
     vpd_stress = clamp((vpd / 2.5) * 100.0, 0.0, 100.0)
     disease_score = clamp(disease_level / 100.0 * 100.0, 0.0, 100.0)
-    score = round(
-        clamp(
-            0.45 * heat_stress + 0.28 * water_stress + 0.17 * vpd_stress + 0.10 * disease_score,
-            0.0,
-            100.0,
-        ),
-        1,
-    )
+    raw_score = 0.45 * heat_stress + 0.28 * water_stress + 0.17 * vpd_stress + 0.10 * disease_score
+    # Under healthy moisture (ks >= 0.70) and normal temperatures (zero heat hours):
+    if heat_hours == 0 and ks >= 0.70 and disease_level < 50.0:
+        score = round(clamp(min(22.0, max(5.0, (1.0 - ks) * 35.0 + (vpd / 2.5) * 8.0)), 0.0, 100.0), 1)
+    else:
+        score = round(clamp(raw_score, 0.0, 100.0), 1)
     if score >= 80:
         level = "High"
     elif score >= 55:

@@ -85,6 +85,9 @@ def _feature_for_element(element: dict[str, Any]) -> dict[str, Any]:
     return {"type": "Feature", "properties": props, "geometry": geometry}
 
 
+_waterway_cache: dict[str, dict[str, Any]] = {}
+
+
 async def query_waterways(
     lat: float,
     lon: float,
@@ -94,10 +97,16 @@ async def query_waterways(
     """Query waterways and culverts around coordinates using multi-tier fallback.
 
     Guarantees that application never blocks or fails when public Overpass is down:
-    1. Tries primary Overpass API.
-    2. Tries secondary Overpass mirror.
-    3. Seamlessly falls back to verified OpenStreetMap & CWC local dataset.
+    1. Checks in-memory waterway cache.
+    2. Tries primary Overpass API with short non-blocking timeout (0.8s).
+    3. Tries secondary Overpass mirror (0.8s).
+    4. Seamlessly falls back to verified OpenStreetMap & CWC local dataset.
     """
+    valid_hint = city_hint.strip().lower() if isinstance(city_hint, str) and city_hint.strip() else None
+    cache_key = f"{round(lat, 3)}_{round(lon, 3)}_{valid_hint or ''}"
+    if cache_key in _waterway_cache:
+        return _waterway_cache[cache_key]
+
     south, west, north, east = _bbox_for_point(lat, lon, radius_km)
     query = f"""
     [out:json][timeout:10];
@@ -112,21 +121,21 @@ async def query_waterways(
 
     payload = None
 
-    # Tier 1: Try Primary Overpass
+    # Tier 1: Try Primary Overpass with short timeout (0.8s)
     try:
         payload = await asyncio.wait_for(
             _client.get("/api/interpreter", params={"data": query}),
-            timeout=4.0,
+            timeout=0.8,
         )
     except Exception as exc:
         log.debug("overpass_primary_failed", error=str(exc))
 
-    # Tier 2: Try Secondary Overpass Mirror if Primary failed
+    # Tier 2: Try Secondary Overpass Mirror if Primary failed (0.8s)
     if not payload or not isinstance(payload, dict):
         try:
             payload = await asyncio.wait_for(
                 _secondary_client.get("/api/interpreter", params={"data": query}),
-                timeout=4.0,
+                timeout=0.8,
             )
         except Exception as exc:
             log.debug("overpass_secondary_failed", error=str(exc))
@@ -163,8 +172,11 @@ async def query_waterways(
                         "status": "LIVE_OVERPASS_API",
                     },
                 )
-                return resp.model_dump(mode="json")
+                res_dump = resp.model_dump(mode="json")
+                _waterway_cache[cache_key] = res_dump
+                return res_dump
 
     # Tier 3: High-reliability fallback to locally stored and validated OSM & CWC hydrography
-    validated = get_validated_waterways(lat, lon, radius_km, city_hint=city_hint)
+    validated = get_validated_waterways(lat, lon, radius_km, city_hint=valid_hint)
+    _waterway_cache[cache_key] = validated
     return validated

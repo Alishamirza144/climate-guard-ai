@@ -34,13 +34,17 @@ async def get_crop_risk(
     irrigation: str = Query("drip", description="Irrigation type"),
 ) -> dict[str, Any]:
     """Evaluate crop stress and agricultural weather conditions for a coordinate."""
+    actual_crop = crop if isinstance(crop, str) and crop.strip() else None
+    actual_sowing_date = sowing_date if isinstance(sowing_date, str) and sowing_date.strip() else None
+    actual_soil_type = soil_type if isinstance(soil_type, str) and soil_type.strip() else "loam"
+    actual_irrigation = irrigation if isinstance(irrigation, str) and irrigation.strip() else "drip"
     return await _process_crop_risk(
         lat=lat,
         lon=lon,
-        crop=crop,
-        sowing_date=sowing_date,
-        soil_type=soil_type,
-        irrigation=irrigation,
+        crop=actual_crop,
+        sowing_date=actual_sowing_date,
+        soil_type=actual_soil_type,
+        irrigation=actual_irrigation,
     )
 
 
@@ -170,22 +174,26 @@ async def _process_crop_risk(
         result["crop_specified"] = True
     else:
         # General Agricultural Weather Baseline
-        # Drought risk: based on root-zone soil moisture and rainfall
-        drought_score = max(5.0, min(95.0, (0.35 - avg_soil_moisture) * 200.0 + max(0.0, 30.0 - curr_temp)))
-        if avg_soil_moisture < 0.15:
+        # Drought risk: based on multi-depth root-zone soil moisture and rainfall
+        # FC ~0.35, WP ~0.12. Drought occurs only when root-zone moisture approaches wilting point AND no rain.
+        if avg_soil_moisture < 0.12 and rain_24h < 2.0:
             agri_level = "High"
-            agri_headline = f"Severe topsoil dryness in {city_name} agricultural belt."
-            irrigation_rec = "Deficit irrigation strongly advised. Irrigate early morning to limit evaporative loss."
-        elif avg_soil_moisture < 0.22:
+            drought_score = min(95.0, 65.0 + max(0.0, (0.12 - avg_soil_moisture) / 0.05 * 25.0))
+            agri_headline = f"Severe root-zone dryness in {city_name} agricultural belt."
+            irrigation_rec = "Immediate deficit irrigation advised to prevent wilting."
+        elif avg_soil_moisture < 0.16 and rain_24h < 2.0:
             agri_level = "Moderate"
+            drought_score = min(50.0, 30.0 + max(0.0, (0.16 - avg_soil_moisture) / 0.04 * 20.0))
             agri_headline = f"Moderate root-zone moisture depletion in {city_name} region."
-            irrigation_rec = "Schedule regular drip or furrow irrigation to maintain seedling vigor."
-        elif rain_24h > 50.0:
+            irrigation_rec = "Schedule routine irrigation to maintain optimal soil moisture."
+        elif rain_24h > 65.0:
             agri_level = "High"
-            agri_headline = f"Excess rainfall and waterlogging risk in {city_name} fields."
+            drought_score = 60.0
+            agri_headline = f"Excess rainfall and waterlogging potential in {city_name} fields."
             irrigation_rec = "Halt irrigation and inspect field drainage channels to prevent root rot."
         else:
             agri_level = "Low"
+            drought_score = max(5.0, min(14.0, 12.0 - max(0.0, avg_soil_moisture - 0.20) * 15.0))
             agri_headline = f"Optimal soil moisture and agricultural weather in {city_name}."
             irrigation_rec = "Soil moisture within normal field capacity; no emergency irrigation required."
 
